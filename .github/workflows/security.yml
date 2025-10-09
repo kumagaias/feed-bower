@@ -16,15 +16,20 @@ jobs:
   gitleaks:
     name: GitLeaks - Secret Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   trivy-fs:
     name: Trivy - Filesystem Scan
@@ -241,4 +246,4 @@ jobs:
           echo "✅ CodeQL: ${{ needs.codeql.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ Terraform Security: ${{ needs.terraform-security.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "詳細は [Security] タブを確認してください。" >> $GITHUB_STEP_SUMMARY
+          echo "For details, check the [Security] tab." >> $GITHUB_STEP_SUMMARY

@@ -187,6 +187,15 @@ The script will switch to the existing branch and add commits there.
 
 Create the PR manually. GitHub Actions will still automatically generate summaries.
 
+### GitHub Actions Permission Errors
+
+If you see "Resource not accessible by integration" errors:
+
+1. **Check repository settings**: Go to Settings > Actions > General
+2. **Workflow permissions**: Set to "Read and write permissions"
+3. **Token permissions**: Ensure GITHUB_TOKEN has required scopes
+4. **Branch protection**: Verify branch protection rules allow Actions
+
 ## 🔒 Security Considerations
 
 - Automatic secret detection

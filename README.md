@@ -162,6 +162,9 @@ npm run lint
 We provide an automated system for post-task completion workflows:
 
 ```bash
+# Validate GitHub setup first (recommended)
+./scripts/validate-github-setup.sh
+
 # Interactive task completion flow execution
 ./scripts/complete-task.sh
 
