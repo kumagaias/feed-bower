@@ -1,0 +1,110 @@
+# Task completion automation configuration file
+
+# Test settings
+testing:
+  # Behavior on test failure
+  on_test_failure: "continue"  # continue | stop
+  
+  # Tests to run
+  run_tests:
+    prototype: true
+    frontend: true
+    backend: true
+    lint: true
+    build: true
+  
+  # Allow build failures in prototype environment
+  allow_build_failures:
+    prototype: true
+    frontend: false
+    backend: false
+  
+  # Test timeout (minutes)
+  timeout_minutes: 10
+
+# Git settings
+git:
+  # Auto commit settings
+  auto_commit:
+    enabled: true
+    message_template: "feat: {task_name}\n\n- Task completed: {task_name}\n- Automated tests executed\n- Automated flow commit\n\nCo-authored-by: Kiro AI <kiro@example.com>"
+  
+  # Auto push settings
+  auto_push:
+    enabled: true
+    force: false
+
+# PR settings
+pull_request:
+  # Auto PR creation
+  auto_create:
+    enabled: true
+    base_branch: "main"
+  
+  # PR template
+  template:
+    title: "feat: {task_name}"
+    labels: ["enhancement", "automated"]
+    reviewers: []  # List of GitHub usernames
+    assignees: []  # List of GitHub usernames
+  
+  # PR summary generation
+  auto_summary:
+    enabled: true
+    include_test_results: true
+    include_file_changes: true
+    include_commit_history: true
+
+# Notification settings
+notifications:
+  # Slack notifications (optional)
+  slack:
+    enabled: false
+    webhook_url: ""  # Slack Webhook URL
+    channel: "#development"
+  
+  # Discord notifications (optional)
+  discord:
+    enabled: false
+    webhook_url: ""  # Discord Webhook URL
+
+# Security settings
+security:
+  # Secret information check
+  check_secrets: true
+  
+  # Allowed file extensions
+  allowed_extensions:
+    - ".js"
+    - ".ts"
+    - ".tsx"
+    - ".go"
+    - ".md"
+    - ".yml"
+    - ".yaml"
+    - ".json"
+    - ".sh"
+    - ".tf"
+  
+  # Excluded directories
+  excluded_directories:
+    - "node_modules"
+    - ".git"
+    - "dist"
+    - "build"
+    - ".next"
+
+# Custom commands
+custom_commands:
+  # Commands to run before task completion
+  pre_completion: []
+  
+  # Commands to run after task completion
+  post_completion: []
+  
+  # Examples:
+  # pre_completion:
+  #   - "npm run format"
+  #   - "go fmt ./..."
+  # post_completion:
+  #   - "echo 'Task completed successfully!'"
