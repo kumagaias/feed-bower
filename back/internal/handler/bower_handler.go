@@ -87,7 +87,7 @@ func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CreateBowerRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *BowerHandler) UpdateBower(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req UpdateBowerRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 

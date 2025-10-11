@@ -92,7 +92,7 @@ func (h *ChickHandler) UpdateStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req UpdateStatsRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -148,7 +148,7 @@ func (h *ChickHandler) CheckDate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CheckDateRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -178,7 +178,7 @@ func (h *ChickHandler) UncheckDate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CheckDateRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 

@@ -96,7 +96,7 @@ type UserResponse struct {
 // CreateGuestUser creates a temporary guest user
 func (h *AuthHandler) CreateGuestUser(w http.ResponseWriter, r *http.Request) {
 	var req CreateGuestUserRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *AuthHandler) CreateGuestUser(w http.ResponseWriter, r *http.Request) {
 // Register creates a new user account
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // Login authenticates a user
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -192,7 +192,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // RefreshToken generates a new token from an existing token
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req RefreshTokenRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -232,7 +232,7 @@ func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req ChangePasswordRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 

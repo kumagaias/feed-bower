@@ -77,7 +77,7 @@ func (h *FeedHandler) AddFeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req AddFeedRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
@@ -257,7 +257,7 @@ func (h *FeedHandler) PreviewFeed(w http.ResponseWriter, r *http.Request) {
 // ValidateFeedURL validates if a URL is a valid RSS/Atom feed
 func (h *FeedHandler) ValidateFeedURL(w http.ResponseWriter, r *http.Request) {
 	var req ValidateFeedURLRequest
-	if !ParseJSONBody(w, r, &req) {
+	if !ParseJSONBodySecure(w, r, &req) {
 		return
 	}
 
