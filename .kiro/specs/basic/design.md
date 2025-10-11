@@ -709,7 +709,7 @@ const STORAGE_KEYS = {
 ### 6.3 Go パッケージ構成
 
 ```
-back/go/
+back/
 ├── cmd/
 │   └── lambda/
 │       └── main.go                    # Lambda エントリーポイント（単一Lambda）
@@ -1305,22 +1305,22 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: front/next.js/package-lock.json
+          cache-dependency-path: front/package-lock.json
 
       - name: Install dependencies
-        working-directory: front/next.js
+        working-directory: front/
         run: npm ci
 
       - name: Run linter
-        working-directory: front/next.js
+        working-directory: front/
         run: npm run lint
 
       - name: Run tests
-        working-directory: front/next.js
+        working-directory: front/
         run: npm test
 
       - name: Build
-        working-directory: front/next.js
+        working-directory: front/
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
@@ -1375,22 +1375,22 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.23"
-          cache-dependency-path: back/go/go.sum
+          cache-dependency-path: back/.sum
 
       - name: Run linter
-        working-directory: back/go
+        working-directory: back/
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           golangci-lint run
 
       - name: Run tests
-        working-directory: back/go
+        working-directory: back/
         run: go test -v -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./back/go/coverage.out
+          files: ./back/coverage.out
           flags: backend
 
       - name: Configure AWS credentials
@@ -1405,7 +1405,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        working-directory: back/go
+        working-directory: back/
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -1472,22 +1472,22 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          cache-dependency-path: front/next.js/package-lock.json
+          cache-dependency-path: front/package-lock.json
 
       - name: Install dependencies
-        working-directory: front/next.js
+        working-directory: front/
         run: npm ci
 
       - name: Lint
-        working-directory: front/next.js
+        working-directory: front/
         run: npm run lint
 
       - name: Test
-        working-directory: front/next.js
+        working-directory: front/
         run: npm test
 
       - name: Build
-        working-directory: front/next.js
+        working-directory: front/
         run: npm run build
 
   backend-check:
@@ -1501,16 +1501,16 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.23"
-          cache-dependency-path: back/go/go.sum
+          cache-dependency-path: back/.sum
 
       - name: Lint
-        working-directory: back/go
+        working-directory: back/
         run: |
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
           golangci-lint run
 
       - name: Test
-        working-directory: back/go
+        working-directory: back/
         run: go test -v -race ./...
 ```
 
@@ -1549,7 +1549,7 @@ GitHub リポジトリの Settings > Secrets and variables > Actions で設定:
 
 ```bash
 # 初回セットアップ
-cd infra/terraform/environments/prod
+cd infra/environments/prod
 terraform init
 
 # プラン確認
@@ -1559,7 +1559,7 @@ terraform plan
 terraform apply
 
 # 環境別の適用
-cd infra/terraform/environments/dev
+cd infra/environments/dev
 terraform apply
 ```
 
@@ -1690,7 +1690,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     volumes:
-      - ../front/next.js:/workspace/front
+      - ../front/:/workspace/front
       - /workspace/front/node_modules
     ports:
       - "3000:3000"
@@ -1706,7 +1706,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     volumes:
-      - ../back/go:/workspace/back
+      - ../back/:/workspace/back
     ports:
       - "8080:8080"
     environment:
@@ -1854,12 +1854,12 @@ echo "🚀 Setting up Feed Bower development environment..."
 
 # フロントエンドのセットアップ
 echo "📦 Installing frontend dependencies..."
-cd /workspace/front/next.js
+cd /workspace/front/
 npm install
 
 # バックエンドのセットアップ
 echo "🔧 Installing backend dependencies..."
-cd /workspace/back/go
+cd /workspace/back/
 go mod download
 
 # DynamoDB テーブル作成
@@ -1944,12 +1944,12 @@ code .
 
 ```bash
 # フロントエンド開発
-cd /workspace/front/next.js
+cd /workspace/front/
 npm run dev
 # → http://localhost:3000
 
 # バックエンド開発
-cd /workspace/back/go
+cd /workspace/back/
 air  # ホットリロード有効
 # → http://localhost:8080
 
@@ -1994,14 +1994,14 @@ curl -X POST http://localhost:8080/api/bowers \
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
-      "cwd": "${workspaceFolder}/front/next.js"
+      "cwd": "${workspaceFolder}/front/"
     },
     {
       "name": "Go: Debug Lambda",
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "program": "${workspaceFolder}/back/go/cmd/lambda",
+      "program": "${workspaceFolder}/back/cmd/lambda",
       "env": {
         "AWS_REGION": "ap-northeast-1",
         "DYNAMODB_ENDPOINT": "http://localhost:8000"
@@ -2039,7 +2039,7 @@ echo $NEXT_PUBLIC_API_URL
 
 ```bash
 # 解決策: Air の設定確認
-cd /workspace/back/go
+cd /workspace/back/
 cat .air.toml
 
 # Air の再起動

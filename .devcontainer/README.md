@@ -41,13 +41,13 @@ The dev container includes the following services:
 
 ### Frontend Development
 ```bash
-cd front/next.js
+cd front/
 npm run dev
 ```
 
 ### Backend Development
 ```bash
-cd back/go
+cd back/
 go run cmd/lambda/main.go
 ```
 

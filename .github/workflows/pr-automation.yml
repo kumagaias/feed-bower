@@ -29,7 +29,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             prototype/package-lock.json
-            front/next.js/package-lock.json
+            front/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@v4
@@ -48,8 +48,8 @@ jobs:
 
       # フロントエンドテスト
       - name: Test Frontend
-        if: hashFiles('front/next.js/package.json') != ''
-        working-directory: front/next.js
+        if: hashFiles('front/package.json') != ''
+        working-directory: front
         run: |
           if [ -f package-lock.json ]; then
             npm ci
@@ -65,8 +65,8 @@ jobs:
 
       # バックエンドテスト
       - name: Test Backend
-        if: hashFiles('back/go/go.mod') != ''
-        working-directory: back/go
+        if: hashFiles('back/.mod') != ''
+        working-directory: back
         run: |
           go mod tidy
           go test ./... || echo "Test errors found but continuing..."

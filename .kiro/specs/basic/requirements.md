@@ -24,14 +24,19 @@ AI が見つける、ユーザーだけのパーソナライズされた RSS フ
 
 ```
 feed-bower/
-├── back/                      # バックエンド
-│   └── go/                    # Go言語実装
-│       ├── lambda/            # AWS Lambda関数
-│       └── Dockerfile         # ECRコンテナイメージ
-├── front/                     # フロントエンド
-│   └── next.js/               # Next.js 14アプリケーション
-├── infra/                     # インフラストラクチャ
-│   └── terraform/             # Terraform IaCコード
+├── back/                      # バックエンド (Go言語実装)
+│   ├── cmd/                   # エントリーポイント
+│   ├── internal/              # 内部パッケージ
+│   ├── pkg/                   # 公開パッケージ
+│   ├── go.mod                 # Go モジュール
+│   └── Dockerfile             # ECRコンテナイメージ
+├── front/                     # フロントエンド (Next.js アプリケーション)
+│   ├── src/                   # ソースコード
+│   ├── public/                # 静的ファイル
+│   └── package.json           # Node.js パッケージ
+├── infra/                     # インフラストラクチャ (Terraform IaCコード)
+│   ├── modules/               # Terraformモジュール
+│   └── environments/          # 環境別設定
 └── prototype/                 # プロトタイプ（現在の実装）
 ```
 

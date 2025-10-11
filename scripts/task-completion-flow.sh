@@ -42,9 +42,9 @@ if [ -d "prototype" ] && [ -f "prototype/package.json" ]; then
 fi
 
 # Frontend tests (if exists)
-if [ -d "front/next.js" ] && [ -f "front/next.js/package.json" ]; then
+if [ -d "front" ] && [ -f "front/package.json" ]; then
     echo "  🎨 Running frontend tests..."
-    cd front/next.js
+    cd front
     
     if npm list --depth=0 > /dev/null 2>&1; then
         npm run lint || echo "    ⚠️  Lint warnings found but continuing..."
@@ -59,14 +59,14 @@ if [ -d "front/next.js" ] && [ -f "front/next.js/package.json" ]; then
         npm install
     fi
     
-    cd ../..
+    cd ..
     echo "  ✅ Frontend tests completed"
 fi
 
 # Backend tests (if exists)
-if [ -d "back/go" ] && [ -f "back/go/go.mod" ]; then
+if [ -d "back" ] && [ -f "back/.mod" ]; then
     echo "  🔧 Running backend tests..."
-    cd back/go
+    cd back
     
     # Check Go modules
     if [ -f "go.mod" ]; then
@@ -75,7 +75,7 @@ if [ -d "back/go" ] && [ -f "back/go/go.mod" ]; then
         go build ./... || echo "    ⚠️  Build errors found but continuing..."
     fi
     
-    cd ../..
+    cd ..
     echo "  ✅ Backend tests completed"
 fi
 

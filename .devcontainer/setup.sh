@@ -12,17 +12,17 @@ go install -v github.com/go-delve/delve/cmd/dlv@latest
 go install -v honnef.co/go/tools/cmd/staticcheck@latest
 
 # Install frontend dependencies if package.json exists
-if [ -f "front/next.js/package.json" ]; then
+if [ -f "front/package.json" ]; then
     echo "📦 Installing frontend dependencies..."
-    cd front/next.js
+    cd front
     npm install
     cd /workspace
 fi
 
 # Install backend dependencies if go.mod exists
-if [ -f "back/go/go.mod" ]; then
+if [ -f "back/.mod" ]; then
     echo "🔧 Installing backend dependencies..."
-    cd back/go
+    cd back
     go mod download
     go mod tidy
     cd /workspace
@@ -71,8 +71,8 @@ echo "  - DynamoDB Local: http://localhost:8000"
 echo "  - DynamoDB Admin: http://localhost:8001"
 echo ""
 echo "🚀 To get started:"
-echo "  1. Open a terminal and navigate to front/next.js"
+echo "  1. Open a terminal and navigate to front/"
 echo "  2. Run 'npm run dev' to start the frontend"
-echo "  3. Open another terminal and navigate to back/go"
+echo "  3. Open another terminal and navigate to back/"
 echo "  4. Run 'go run cmd/lambda/main.go' to start the backend"
 echo ""
