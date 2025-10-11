@@ -66,7 +66,7 @@
 
 ### タスク 2.1: Go プロジェクト初期化
 
-- [ ] タスク 2.1: Go プロジェクト初期化
+- [x] タスク 2.1: Go プロジェクト初期化
   - back/go/go.mod 初期化
   - 必要なパッケージのインストール（AWS SDK for Go v2、Lambda runtime、UUID 生成、JWT 認証）
   - ディレクトリ構造作成（cmd, internal, pkg）
