@@ -37,9 +37,9 @@ Feed Bowerは、キーワードベースでRSSフィードを整理し、鳥の�
 
 ```
 feed-bower/
-├── back/go/              # バックエンド (Go + Lambda)
-├── front/next.js/        # フロントエンド (Next.js)
-├── infra/terraform/      # インフラ (Terraform)
+├── back/                 # バックエンド (Go + Lambda)
+├── front/                # フロントエンド (Next.js)
+├── infra/                # インフラ (Terraform)
 ├── prototype/            # プロトタイプ
 └── .devcontainer/        # Dev Container設定
 ```
@@ -88,12 +88,11 @@ npm run dev
 
 ```bash
 # フロントエンド環境
-cd front/next.js
+cd front
 npm install
 
 # バックエンド環境
-cd back/go
-go mod init github.com/your-org/feed-bower
+cd back
 go mod tidy
 
 # DynamoDB Local 起動
@@ -187,7 +186,7 @@ For details, see [Task Automation Guide](docs/task-automation.md).
 #### Frontend
 
 ```bash
-cd front/next.js
+cd front
 
 # Start development server
 npm run dev
@@ -205,7 +204,7 @@ npm run build
 #### Backend
 
 ```bash
-cd back/go
+cd back
 
 # Start development server (hot reload)
 air
@@ -241,7 +240,7 @@ aws dynamodb delete-table --table-name Users --endpoint-url http://localhost:800
 ### Infrastructure Setup (Manual)
 
 ```bash
-cd infra/terraform/environments/prod
+cd infra
 terraform init
 terraform plan
 terraform apply

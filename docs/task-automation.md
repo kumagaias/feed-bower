@@ -49,7 +49,7 @@ npm run build   # Build testing (errors allowed in prototype)
 
 #### Frontend Tests
 ```bash
-cd front/next.js
+cd front/
 npm run lint    # Lint checking
 npm run build   # Build testing
 npm test        # Unit tests (if available)
@@ -57,7 +57,7 @@ npm test        # Unit tests (if available)
 
 #### Backend Tests
 ```bash
-cd back/go
+cd back/
 go mod tidy     # Dependency management
 go test ./...   # Unit tests
 go build ./...  # Build testing
