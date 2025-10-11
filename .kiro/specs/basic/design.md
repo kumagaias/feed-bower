@@ -1374,7 +1374,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.25"
+          go-version: "1.23"
           cache-dependency-path: back/go/go.sum
 
       - name: Run linter
@@ -1500,7 +1500,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: "1.25"
+          go-version: "1.23"
           cache-dependency-path: back/go/go.sum
 
       - name: Lint
