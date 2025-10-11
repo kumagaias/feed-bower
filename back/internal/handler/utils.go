@@ -3,9 +3,12 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"feed-bower-api/internal/middleware"
 	"feed-bower-api/internal/model"
@@ -37,25 +40,27 @@ func ParseJSONBody(w http.ResponseWriter, r *http.Request, dest interface{}) boo
 
 	// Limit request body size to prevent DoS attacks (1MB limit)
 	const maxBodySize = 1 << 20 // 1MB
-	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	
+	// Create a limited reader to prevent reading too much data
+	limitedReader := io.LimitReader(r.Body, maxBodySize+1) // +1 to detect if size exceeded
+	defer r.Body.Close()
 
-	// Create decoder with limited reader
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(dest); err != nil {
-		// Check if error is due to body size limit
-		if err.Error() == "http: request body too large" {
-			response.BadRequest(w, "Request body too large (max 1MB)")
-			return false
-		}
-		response.BadRequest(w, "Invalid JSON format: "+err.Error())
+	// Read body with size limit
+	body, err := io.ReadAll(limitedReader)
+	if err != nil {
+		response.BadRequest(w, "Failed to read request body: "+err.Error())
 		return false
 	}
 
-	// Ensure there's no additional data after the JSON object
-	if decoder.More() {
-		response.BadRequest(w, "Request body contains multiple JSON objects")
+	// Check if body size exceeds limit
+	if len(body) > maxBodySize {
+		response.BadRequest(w, "Request body too large (max 1MB)")
+		return false
+	}
+
+	// Parse JSON from the read body
+	if err := json.Unmarshal(body, dest); err != nil {
+		response.BadRequest(w, "Invalid JSON format: "+err.Error())
 		return false
 	}
 
@@ -137,18 +142,20 @@ func (p *SecureJSONParser) ParseSecureJSON(w http.ResponseWriter, r *http.Reques
 		return false
 	}
 
-	// Limit request body size
-	r.Body = http.MaxBytesReader(w, r.Body, p.MaxBodySize)
+	// Create a limited reader to prevent reading too much data
+	limitedReader := io.LimitReader(r.Body, p.MaxBodySize+1) // +1 to detect if size exceeded
 	defer r.Body.Close()
 
 	// Read body with size limit
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(limitedReader)
 	if err != nil {
-		if err.Error() == "http: request body too large" {
-			response.BadRequest(w, "Request body too large")
-			return false
-		}
 		response.BadRequest(w, "Failed to read request body: "+err.Error())
+		return false
+	}
+
+	// Check if body size exceeds limit
+	if int64(len(body)) > p.MaxBodySize {
+		response.BadRequest(w, "Request body too large")
 		return false
 	}
 
@@ -158,10 +165,7 @@ func (p *SecureJSONParser) ParseSecureJSON(w http.ResponseWriter, r *http.Reques
 		return false
 	}
 
-	// Parse JSON
-	decoder := json.NewDecoder(io.LimitReader(r.Body, p.MaxBodySize))
-	decoder.DisallowUnknownFields()
-
+	// Parse JSON from the read body
 	if err := json.Unmarshal(body, dest); err != nil {
 		response.BadRequest(w, "Invalid JSON format: "+err.Error())
 		return false
@@ -249,4 +253,103 @@ func (s *SanitizeInput) ValidateStringLength(input string, minLen, maxLen int) b
 // DefaultSanitizer returns a default input sanitizer
 func DefaultSanitizer() *SanitizeInput {
 	return &SanitizeInput{}
+}
+
+// SecureBodyReader provides secure reading of HTTP request bodies
+type SecureBodyReader struct {
+	MaxSize     int64
+	MaxReadTime time.Duration
+}
+
+// DefaultSecureBodyReader returns a secure body reader with default settings
+func DefaultSecureBodyReader() *SecureBodyReader {
+	return &SecureBodyReader{
+		MaxSize:     1 << 20,        // 1MB
+		MaxReadTime: 10 * time.Second, // 10 seconds max read time
+	}
+}
+
+// ReadBody safely reads an HTTP request body with size and time limits
+func (sbr *SecureBodyReader) ReadBody(r *http.Request) ([]byte, error) {
+	if r.Body == nil {
+		return nil, fmt.Errorf("request body is nil")
+	}
+
+	// Create context with timeout for reading
+	ctx, cancel := context.WithTimeout(r.Context(), sbr.MaxReadTime)
+	defer cancel()
+
+	// Create a channel to handle the read operation
+	type readResult struct {
+		data []byte
+		err  error
+	}
+
+	resultChan := make(chan readResult, 1)
+
+	// Perform the read operation in a goroutine
+	go func() {
+		defer r.Body.Close()
+		
+		// Create limited reader
+		limitedReader := io.LimitReader(r.Body, sbr.MaxSize+1)
+		
+		// Read the body
+		data, err := io.ReadAll(limitedReader)
+		
+		resultChan <- readResult{data: data, err: err}
+	}()
+
+	// Wait for either completion or timeout
+	select {
+	case result := <-resultChan:
+		if result.err != nil {
+			return nil, fmt.Errorf("failed to read body: %w", result.err)
+		}
+		
+		// Check size limit
+		if int64(len(result.data)) > sbr.MaxSize {
+			return nil, fmt.Errorf("request body exceeds maximum size of %d bytes", sbr.MaxSize)
+		}
+		
+		return result.data, nil
+		
+	case <-ctx.Done():
+		return nil, fmt.Errorf("request body read timeout exceeded")
+	}
+}
+
+// ParseJSONBodyWithTimeout parses JSON with timeout protection
+func ParseJSONBodyWithTimeout(w http.ResponseWriter, r *http.Request, dest interface{}, timeout time.Duration) bool {
+	if r.Header.Get("Content-Type") != "application/json" {
+		response.BadRequest(w, "Content-Type must be application/json")
+		return false
+	}
+
+	reader := &SecureBodyReader{
+		MaxSize:     1 << 20, // 1MB
+		MaxReadTime: timeout,
+	}
+
+	body, err := reader.ReadBody(r)
+	if err != nil {
+		if strings.Contains(err.Error(), "timeout") {
+			response.BadRequest(w, "Request processing timeout")
+			return false
+		}
+		if strings.Contains(err.Error(), "exceeds maximum size") {
+			response.BadRequest(w, "Request body too large")
+			return false
+		}
+		response.BadRequest(w, "Failed to read request body")
+		return false
+	}
+
+	// Parse JSON
+	if err := json.Unmarshal(body, dest); err != nil {
+		response.BadRequest(w, "Invalid JSON format: "+err.Error())
+		return false
+	}
+
+	return true
 }
