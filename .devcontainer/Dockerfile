@@ -2,17 +2,20 @@
 FROM node:24-bookworm
 
 # Install sudo and create vscode user
-RUN apt-get update && apt-get install -y sudo \
+RUN apt-get update && apt-get install -y --no-install-recommends sudo \
     && groupadd vscode \
     && useradd -g vscode -s /bin/bash -m vscode \
     && echo vscode ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/vscode \
-    && chmod 0440 /etc/sudoers.d/vscode
+    && chmod 0440 /etc/sudoers.d/vscode \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install Go 1.23
 ARG GO_VERSION=1.23.2
-RUN wget -O go.tar.gz "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" \
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates \
+    && wget -O go.tar.gz "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz" \
     && tar -C /usr/local -xzf go.tar.gz \
-    && rm go.tar.gz
+    && rm go.tar.gz \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Set Go environment variables
 ENV GOROOT=/usr/local/go
@@ -39,10 +42,12 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 # Install Terraform
 ARG TERRAFORM_VERSION=1.6.2
-RUN wget -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
+RUN apt-get update && apt-get install -y --no-install-recommends unzip \
+    && wget -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
     && unzip terraform.zip \
     && mv terraform /usr/local/bin/ \
-    && rm terraform.zip
+    && rm terraform.zip \
+    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install global npm packages as root
 RUN npm install -g \
