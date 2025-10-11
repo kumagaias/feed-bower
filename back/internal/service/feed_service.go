@@ -9,6 +9,7 @@ import (
 
 	"feed-bower-api/internal/model"
 	"feed-bower-api/internal/repository"
+	"feed-bower-api/pkg/httpclient"
 )
 
 // FeedService defines the interface for feed operations
@@ -352,23 +353,19 @@ func (s *feedService) ValidateFeedURL(feedURL string) error {
 		return errors.New("feed URL is required")
 	}
 
-	// Parse URL
+	// Use secure HTTP client validation
+	config := httpclient.DefaultSecureHTTPConfig()
+	if err := httpclient.ValidateURL(feedURL, config); err != nil {
+		return fmt.Errorf("URL security validation failed: %w", err)
+	}
+
+	// Parse URL for additional feed-specific validation
 	parsedURL, err := url.Parse(feedURL)
 	if err != nil {
 		return fmt.Errorf("invalid URL format: %w", err)
 	}
 
-	// Check scheme
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return errors.New("URL must use http or https protocol")
-	}
-
-	// Check host
-	if parsedURL.Host == "" {
-		return errors.New("URL must have a valid host")
-	}
-
-	// Check for common feed patterns
+	// Check for common feed patterns (optional validation)
 	path := strings.ToLower(parsedURL.Path)
 	query := strings.ToLower(parsedURL.RawQuery)
 	
