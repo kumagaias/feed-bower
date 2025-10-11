@@ -110,7 +110,7 @@
 
 ### タスク 2.4: Service 層実装
 
-- [ ] タスク 2.4: Service 層実装
+- [x] タスク 2.4: Service 層実装
   - internal/service/auth_service.go 実装（ゲストログイン、JWT トークン生成）
   - internal/service/bower_service.go 実装（バウアー作成・更新・削除、バウアー一覧取得）
   - internal/service/feed_service.go 実装（フィード追加・削除、フィードプレビュー）
