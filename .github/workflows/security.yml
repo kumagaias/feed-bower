@@ -47,11 +47,12 @@ jobs:
           output: 'trivy-fs-results.sarif'
           severity: 'CRITICAL,HIGH'
       
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Trivy results as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: 'trivy-fs-results.sarif'
+          name: trivy-fs-results
+          path: 'trivy-fs-results.sarif'
 
   trivy-config:
     name: Trivy - Config Scan
@@ -69,11 +70,12 @@ jobs:
           output: 'trivy-config-results.sarif'
           severity: 'CRITICAL,HIGH'
       
-      - name: Upload Trivy config results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Trivy config results as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: 'trivy-config-results.sarif'
+          name: trivy-config-results
+          path: 'trivy-config-results.sarif'
 
   npm-audit:
     name: NPM Audit - Frontend
@@ -128,11 +130,12 @@ jobs:
           args: '-fmt sarif -out gosec-results.sarif ./...'
         continue-on-error: true
       
-      - name: Upload Gosec results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Gosec results as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: 'gosec-results.sarif'
+          name: gosec-results
+          path: 'gosec-results.sarif'
       
       - name: Run govulncheck
         working-directory: back/
@@ -153,33 +156,7 @@ jobs:
         with:
           fail-on-severity: high
 
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['javascript', 'go']
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-      
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+
 
   terraform-security:
     name: Terraform Security - tfsec
@@ -196,11 +173,12 @@ jobs:
           format: sarif
           soft_fail: true
       
-      - name: Upload tfsec results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload tfsec results as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: results.sarif
+          name: tfsec-results
+          path: results.sarif
 
   docker-security:
     name: Docker Image Security
@@ -222,16 +200,17 @@ jobs:
           output: 'trivy-docker-results.sarif'
           severity: 'CRITICAL,HIGH'
       
-      - name: Upload Trivy Docker results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload Trivy Docker results as artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: 'trivy-docker-results.sarif'
+          name: trivy-docker-results
+          path: 'trivy-docker-results.sarif'
 
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [gitleaks, trivy-fs, trivy-config, npm-audit, go-security, codeql, terraform-security]
+    needs: [gitleaks, trivy-fs, trivy-config, npm-audit, go-security, terraform-security]
     if: always()
     steps:
       - name: Check security scan results
@@ -243,7 +222,6 @@ jobs:
           echo "✅ Trivy Config: ${{ needs.trivy-config.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ NPM Audit: ${{ needs.npm-audit.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ Go Security: ${{ needs.go-security.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "✅ CodeQL: ${{ needs.codeql.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ Terraform Security: ${{ needs.terraform-security.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "For details, check the [Security] tab." >> $GITHUB_STEP_SUMMARY

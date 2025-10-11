@@ -94,7 +94,7 @@
 
 ### タスク 2.3: Repository 層実装
 
-- [ ] タスク 2.3: Repository 層実装
+- [x] タスク 2.3: Repository 層実装
   - pkg/dynamodb/client.go 作成（DynamoDB クライアント）
   - internal/repository/user_repository.go 実装
   - internal/repository/bower_repository.go 実装
