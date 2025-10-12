@@ -99,28 +99,37 @@ func (c *SecureHTTPClient) Get(ctx context.Context, urlStr string) (*http.Respon
 
 // Do performs a secure HTTP request
 func (c *SecureHTTPClient) Do(ctx context.Context, method, urlStr string, headers map[string]string) (*http.Response, error) {
+	// Sanitize and validate input URL string first
+	sanitizedURL, err := sanitizeURLString(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("URL sanitization failed: %w", err)
+	}
+
 	// Parse and validate URL
-	parsedURL, err := url.Parse(urlStr)
+	parsedURL, err := url.Parse(sanitizedURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
-	// Validate URL
+	// Validate URL against security policies
 	if err := validateURL(parsedURL, c.allowedSchemes, c.blockedHosts, c.blockedNetworks); err != nil {
 		return nil, fmt.Errorf("URL validation failed: %w", err)
 	}
 
-	// Create request
+	// Create request with the validated and sanitized URL
 	req, err := http.NewRequestWithContext(ctx, method, parsedURL.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set default headers
+	// Set default headers with sanitized values
 	req.Header.Set("User-Agent", "Feed-Bower/1.0 (RSS Reader)")
 
-	// Set custom headers
+	// Set custom headers with validation
 	for key, value := range headers {
+		if err := validateHeaderValue(key, value); err != nil {
+			return nil, fmt.Errorf("invalid header %s: %w", key, err)
+		}
 		req.Header.Set(key, value)
 	}
 
@@ -251,7 +260,13 @@ func ValidateURL(urlStr string, config *SecureHTTPConfig) error {
 		config = DefaultSecureHTTPConfig()
 	}
 
-	parsedURL, err := url.Parse(urlStr)
+	// Sanitize URL string first
+	sanitizedURL, err := sanitizeURLString(urlStr)
+	if err != nil {
+		return fmt.Errorf("URL sanitization failed: %w", err)
+	}
+
+	parsedURL, err := url.Parse(sanitizedURL)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %w", err)
 	}
@@ -283,4 +298,128 @@ func parsePort(portStr string) int {
 		port = port*10 + int(r-'0')
 	}
 	return port
+}
+
+// sanitizeURLString sanitizes and validates the input URL string
+func sanitizeURLString(urlStr string) (string, error) {
+	// Check for null bytes and other dangerous characters
+	if strings.Contains(urlStr, "\x00") {
+		return "", fmt.Errorf("URL contains null bytes")
+	}
+
+	// Trim whitespace
+	urlStr = strings.TrimSpace(urlStr)
+
+	// Check maximum URL length (RFC 2616 suggests 2048 characters)
+	if len(urlStr) > 2048 {
+		return "", fmt.Errorf("URL too long (max 2048 characters)")
+	}
+
+	// Check for minimum URL length
+	if len(urlStr) < 7 { // Minimum: "http://"
+		return "", fmt.Errorf("URL too short")
+	}
+
+	// Check for dangerous URL patterns
+	dangerousPatterns := []string{
+		"javascript:",
+		"data:",
+		"file:",
+		"ftp:",
+		"gopher:",
+		"ldap:",
+		"dict:",
+		"telnet:",
+		"ssh:",
+		"sftp:",
+	}
+
+	urlLower := strings.ToLower(urlStr)
+	for _, pattern := range dangerousPatterns {
+		if strings.HasPrefix(urlLower, pattern) {
+			return "", fmt.Errorf("dangerous URL scheme detected: %s", pattern)
+		}
+	}
+
+	// Check for credential injection attempts
+	if strings.Contains(urlStr, "@") {
+		// Parse URL to check if @ is in the authority part
+		if parsedURL, err := url.Parse(urlStr); err == nil {
+			if parsedURL.User != nil {
+				return "", fmt.Errorf("potential credential injection detected")
+			}
+		}
+	}
+
+	// Check for control characters (excluding common whitespace)
+	for _, r := range urlStr {
+		if r < 32 && r != 9 && r != 10 && r != 13 { // Allow tab, LF, CR
+			return "", fmt.Errorf("URL contains control characters")
+		}
+		// Also check for other problematic characters
+		if r == '\r' || r == '\n' {
+			return "", fmt.Errorf("URL contains CRLF characters")
+		}
+	}
+
+	return urlStr, nil
+}
+
+// isValidEmailInURL checks if @ symbol is part of a valid email in URL context
+func isValidEmailInURL(urlStr string) bool {
+	// Simple check: @ should not appear in the authority part for credential injection
+	// This is a basic check - in practice, @ in URLs for email contexts is rare for RSS feeds
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+	
+	// If there's user info (credentials), it's not valid for our use case
+	if parsedURL.User != nil {
+		return false
+	}
+	
+	return true
+}
+
+// validateHeaderValue validates HTTP header values
+func validateHeaderValue(key, value string) error {
+	// Check for null bytes
+	if strings.Contains(key, "\x00") || strings.Contains(value, "\x00") {
+		return fmt.Errorf("header contains null bytes")
+	}
+
+	// Check for CRLF injection
+	if strings.Contains(key, "\r") || strings.Contains(key, "\n") ||
+		strings.Contains(value, "\r") || strings.Contains(value, "\n") {
+		return fmt.Errorf("header contains CRLF characters")
+	}
+
+	// Check header key format (basic validation)
+	if key == "" {
+		return fmt.Errorf("header key cannot be empty")
+	}
+
+	// Check for dangerous header keys
+	dangerousHeaders := []string{
+		"authorization",
+		"cookie",
+		"set-cookie",
+		"x-forwarded-for",
+		"x-real-ip",
+	}
+
+	keyLower := strings.ToLower(key)
+	for _, dangerous := range dangerousHeaders {
+		if keyLower == dangerous {
+			return fmt.Errorf("dangerous header key not allowed: %s", key)
+		}
+	}
+
+	// Check maximum header value length
+	if len(value) > 8192 {
+		return fmt.Errorf("header value too long (max 8192 characters)")
+	}
+
+	return nil
 }

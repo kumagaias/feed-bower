@@ -229,3 +229,112 @@ func TestIsBlockedHost(t *testing.T) {
 		}
 	}
 }
+
+func TestSanitizeURLString(t *testing.T) {
+	testCases := []struct {
+		input       string
+		expectError bool
+		description string
+	}{
+		{"https://example.com/feed.xml", false, "valid URL"},
+		{"  https://example.com/feed.xml  ", false, "URL with whitespace"},
+		{"https://example.com/feed.xml\x00", true, "URL with null byte"},
+		{"javascript:alert('xss')", true, "dangerous scheme"},
+		{"data:text/html,content", true, "data scheme"},
+		{"file:///etc/passwd", true, "file scheme"},
+		{"http://user:pass@example.com", true, "credential injection"},
+		{"", true, "empty URL"},
+		{"ht", true, "too short URL"},
+		{string(make([]byte, 3000)), true, "too long URL"},
+		{"https://example.com/feed\r.xml", true, "CRLF characters"},
+	}
+
+	for _, tc := range testCases {
+		_, err := sanitizeURLString(tc.input)
+		hasError := err != nil
+		if hasError != tc.expectError {
+			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)", 
+				tc.description, tc.expectError, hasError, err)
+		}
+	}
+}
+
+func TestValidateHeaderValue(t *testing.T) {
+	testCases := []struct {
+		key         string
+		value       string
+		expectError bool
+		description string
+	}{
+		{"Content-Type", "application/xml", false, "valid header"},
+		{"User-Agent", "Test/1.0", false, "valid user agent"},
+		{"", "value", true, "empty key"},
+		{"Key\x00", "value", true, "null byte in key"},
+		{"Key", "value\x00", true, "null byte in value"},
+		{"Key\r\n", "value", true, "CRLF in key"},
+		{"Key", "value\r\n", true, "CRLF in value"},
+		{"Authorization", "Bearer token", true, "dangerous header"},
+		{"Cookie", "session=123", true, "dangerous header"},
+		{"Set-Cookie", "session=123", true, "dangerous header"},
+		{"X-Forwarded-For", "192.168.1.1", true, "dangerous header"},
+		{"X-Real-IP", "192.168.1.1", true, "dangerous header"},
+		{"Test", string(make([]byte, 10000)), true, "too long value"},
+	}
+
+	for _, tc := range testCases {
+		err := validateHeaderValue(tc.key, tc.value)
+		hasError := err != nil
+		if hasError != tc.expectError {
+			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)", 
+				tc.description, tc.expectError, hasError, err)
+		}
+	}
+}
+
+func TestIsValidEmailInURL(t *testing.T) {
+	testCases := []struct {
+		url      string
+		expected bool
+	}{
+		{"https://example.com/feed.xml", true},
+		{"https://user:pass@example.com/feed.xml", false}, // credential injection
+		{"https://example.com/contact?email=test@example.com", true}, // email in query
+		{"mailto:test@example.com", true}, // valid email URL
+	}
+
+	for _, tc := range testCases {
+		result := isValidEmailInURL(tc.url)
+		if result != tc.expected {
+			t.Errorf("For URL %s, expected %v, got %v", tc.url, tc.expected, result)
+		}
+	}
+}
+
+func TestSecureHTTPClient_DoWithDangerousHeaders(t *testing.T) {
+	config := DefaultSecureHTTPConfig()
+	config.BlockedHosts = []string{} // Allow localhost for testing
+	config.BlockedNetworks = []string{}
+	
+	client, err := NewSecureHTTPClient(config)
+	if err != nil {
+		t.Fatalf("Failed to create secure client: %v", err)
+	}
+
+	// Create test server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Try to set dangerous headers
+	dangerousHeaders := map[string]string{
+		"Authorization": "Bearer token",
+		"Cookie":        "session=123",
+	}
+
+	ctx := context.Background()
+	_, err = client.Do(ctx, "GET", server.URL, dangerousHeaders)
+	if err == nil {
+		t.Error("Expected request with dangerous headers to be blocked")
+	}
+}
