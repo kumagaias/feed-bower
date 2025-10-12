@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"feed-bower-api/internal/model"
+	"feed-bower-api/pkg/httpclient"
 )
 
 // RSSService defines the interface for RSS feed operations
@@ -111,15 +112,22 @@ type AtomContent struct {
 
 // rssService implements RSSService interface
 type rssService struct {
-	httpClient *http.Client
+	secureClient *httpclient.SecureHTTPClient
 }
 
 // NewRSSService creates a new RSS service
 func NewRSSService() RSSService {
+	config := httpclient.DefaultSecureHTTPConfig()
+	config.UserAgent = "Feed-Bower/1.0 (RSS Reader)"
+	
+	secureClient, err := httpclient.NewSecureHTTPClient(config)
+	if err != nil {
+		// Fallback to default config if there's an error
+		secureClient, _ = httpclient.NewSecureHTTPClient(nil)
+	}
+
 	return &rssService{
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
+		secureClient: secureClient,
 	}
 }
 
@@ -129,18 +137,19 @@ func (s *rssService) FetchFeed(ctx context.Context, feedURL string) (*FeedData, 
 		return nil, errors.New("feed URL is required")
 	}
 
-	// Create HTTP request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+	// Validate URL before making request
+	config := httpclient.DefaultSecureHTTPConfig()
+	if err := httpclient.ValidateURL(feedURL, config); err != nil {
+		return nil, fmt.Errorf("invalid feed URL: %w", err)
 	}
 
-	// Set user agent
-	req.Header.Set("User-Agent", "Feed-Bower/1.0 (RSS Reader)")
-	req.Header.Set("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml")
+	// Set headers for RSS/Atom feeds
+	headers := map[string]string{
+		"Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml",
+	}
 
-	// Make request
-	resp, err := s.httpClient.Do(req)
+	// Make secure request
+	resp, err := s.secureClient.Do(ctx, "GET", feedURL, headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch feed: %w", err)
 	}
@@ -150,10 +159,17 @@ func (s *rssService) FetchFeed(ctx context.Context, feedURL string) (*FeedData, 
 		return nil, fmt.Errorf("HTTP error: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
+	// Read response body with size limit
+	const maxFeedSize = 10 * 1024 * 1024 // 10MB limit
+	limitedReader := io.LimitReader(resp.Body, maxFeedSize)
+	body, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Check if we hit the size limit
+	if len(body) == maxFeedSize {
+		return nil, errors.New("feed size exceeds maximum allowed size (10MB)")
 	}
 
 	// Determine feed type and parse

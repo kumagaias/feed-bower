@@ -126,7 +126,7 @@
 
 ### タスク 2.5: Handler 層実装
 
-- [ ] タスク 2.5: Handler 層実装
+- [x] タスク 2.5: Handler 層実装
   - internal/handler/auth_handler.go 実装
   - internal/handler/bower_handler.go 実装
   - internal/handler/feed_handler.go 実装
