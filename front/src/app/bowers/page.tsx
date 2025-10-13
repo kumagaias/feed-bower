@@ -1,32 +1,432 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useApp } from '@/contexts/AppContext'
+import { useTranslation } from '@/lib/i18n'
+import { useBowers } from '@/hooks/useBowers'
 import Layout from '@/components/Layout'
+import BowerCard from '@/components/BowerCard'
+import DeleteConfirmModal from '@/components/DeleteConfirmModal'
+import LoadingAnimation from '@/components/LoadingAnimation'
+import Toast from '@/components/Toast'
+import { colors } from '@/styles/colors'
 
 export default function BowersPage() {
-  return (
-    <Layout>
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">
-            バウアー
-          </h1>
-          
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🪺</div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                バウアーがまだありません
-              </h2>
-              <p className="text-gray-500 mb-6">
-                最初のバウアーを作成して、AIにフィードを見つけてもらいましょう
-              </p>
-              <button className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors">
-                新しいバウアーを作成
-              </button>
+  const { language, user } = useApp()
+  const t = useTranslation(language)
+  const router = useRouter()
+  const { bowers, loading, error, createBower, updateBower, deleteBower } = useBowers()
+
+  // State management
+  const [activeTab, setActiveTab] = useState<'my' | 'preset'>('my')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [bowerToDelete, setBowerToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+
+  const itemsPerPage = 9 // 3x3 grid
+
+  // Mock public bowers for demonstration
+  const getMockPublicBowers = () => {
+    const mockColors = ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8']
+    
+    return [
+      {
+        id: 'mock-1',
+        name: language === 'ja' ? 'テクノロジーニュース' : 'Tech News',
+        keywords: ['AI', 'Programming', 'Web Dev', 'Cloud', 'Security'],
+        feeds: [],
+        color: mockColors[0],
+        createdAt: new Date('2024-09-15'),
+        isPublic: true,
+        creatorId: 'user-mock-1',
+        creatorName: language === 'ja' ? '田中太郎' : 'John Doe',
+        likes: 42,
+        likedBy: [],
+        eggColors: ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD']
+      },
+      {
+        id: 'mock-2',
+        name: language === 'ja' ? 'デザイン＆UI' : 'Design & UI',
+        keywords: ['Design', 'UI/UX', 'Figma', 'Typography', 'Color'],
+        feeds: [],
+        color: mockColors[1],
+        createdAt: new Date('2024-09-20'),
+        isPublic: true,
+        creatorId: 'user-mock-2',
+        creatorName: language === 'ja' ? '佐藤花子' : 'Jane Smith',
+        likes: 38,
+        likedBy: [],
+        eggColors: ['#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8']
+      },
+      {
+        id: 'mock-3',
+        name: language === 'ja' ? 'スタートアップ情報' : 'Startup News',
+        keywords: ['Startup', 'Business', 'Innovation', 'Funding', 'Growth'],
+        feeds: [],
+        color: mockColors[2],
+        createdAt: new Date('2024-09-25'),
+        isPublic: true,
+        creatorId: 'user-mock-3',
+        creatorName: language === 'ja' ? '鈴木一郎' : 'Mike Johnson',
+        likes: 35,
+        likedBy: [],
+        eggColors: ['#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460']
+      }
+    ]
+  }
+
+  // Handle create bower
+  const handleCreateBower = async () => {
+    // For now, redirect to a simple creation flow
+    // In a full implementation, this would open a modal or navigate to a creation page
+    router.push('/bowers/new')
+  }
+
+  // Handle edit bower
+  const handleEditBower = (bower: any) => {
+    // For now, just show a toast. In a full implementation, this would open an edit modal
+    setToast({
+      message: language === 'ja' ? 'バウアー編集機能は開発中です' : 'Bower editing feature is under development',
+      type: 'warning'
+    })
+  }
+
+  // Handle delete bower
+  const handleDeleteBower = (bower: any) => {
+    setBowerToDelete({ id: bower.id, name: bower.name })
+    setDeleteModalOpen(true)
+  }
+
+  // Confirm delete bower
+  const confirmDeleteBower = async () => {
+    if (!bowerToDelete) return
+
+    const success = await deleteBower(bowerToDelete.id)
+    if (success) {
+      setToast({
+        message: language === 'ja' ? 'バウアーを削除しました' : 'Bower deleted successfully',
+        type: 'success'
+      })
+    } else {
+      setToast({
+        message: language === 'ja' ? 'バウアーの削除に失敗しました' : 'Failed to delete bower',
+        type: 'error'
+      })
+    }
+
+    setDeleteModalOpen(false)
+    setBowerToDelete(null)
+  }
+
+  // Handle like bower (for public bowers)
+  const handleLikeBower = (bowerId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    // For now, just show a toast. In a full implementation, this would call an API
+    setToast({
+      message: language === 'ja' ? 'いいね機能は開発中です' : 'Like feature is under development',
+      type: 'warning'
+    })
+  }
+
+  // Redirect to home if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push('/')
+    }
+  }, [user, router])
+
+  // Don't render if not logged in
+  if (!user) {
+    return null
+  }
+
+  // Show error state
+  if (error && !loading) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-xl font-semibold text-red-600 mb-2">
+                  {language === 'ja' ? 'エラーが発生しました' : 'An error occurred'}
+                </h2>
+                <p className="text-red-500 mb-6">
+                  {error}
+                </p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors"
+                >
+                  {language === 'ja' ? '再読み込み' : 'Reload'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      </Layout>
+    )
+  }
+
+  // Search bar component
+  const searchBar = (
+    <div className="relative w-full md:w-64">
+      <div className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+        🔍
       </div>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder={t.searchBowers}
+        className="w-full pl-8 md:pl-10 pr-8 md:pr-4 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors text-sm"
+        style={{ outline: 'none' }}
+        onFocus={(e) => e.currentTarget.style.borderColor = '#14b8a6'}
+        onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
+      />
+      {searchQuery && (
+        <button
+          onClick={() => setSearchQuery('')}
+          className="absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  )
+
+  // Filter bowers based on active tab and search query
+  let filteredBowers = bowers
+  const mockBowers = getMockPublicBowers()
+  
+  // Tab filtering
+  if (activeTab === 'my') {
+    filteredBowers = bowers.filter(b => !b.creatorId || b.creatorId === user?.id)
+  } else if (activeTab === 'preset') {
+    filteredBowers = mockBowers
+  }
+  
+  // Search filtering
+  if (searchQuery.trim()) {
+    filteredBowers = filteredBowers.filter(b =>
+      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }
+  
+  // Pagination
+  const totalPages = Math.ceil(filteredBowers.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedBowers = filteredBowers.slice(startIndex, endIndex)
+
+  return (
+    <Layout searchBar={searchBar}>
+      <div className="p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Page Title */}
+          <div className="hidden md:block py-4">
+            <h1 className="text-xl font-bold mb-2" style={{ color: colors.primary }}>
+              {t.bowers}
+            </h1>
+            <p className="text-sm" style={{ color: colors.accent }}>
+              {language === 'ja' 
+                ? 'キーワードで鳥の巣を作り、AIが自動でフィードを発見します'
+                : 'Create your nest with keywords and discover feeds automatically'
+              }
+            </p>
+          </div>
+
+          <div className="mb-6 md:hidden">
+            <h1 className="text-xl font-bold" style={{ color: colors.primary }}>{t.bowers}</h1>
+          </div>
+
+          {/* Tabs - Centered */}
+          <div className="mb-6 relative">
+            <div className="absolute bottom-0 left-0 right-0 border-b-2 border-gray-200"></div>
+            <div className="flex justify-center relative">
+              <div className="inline-flex">
+                <button
+                  onClick={() => setActiveTab('my')}
+                  className={`px-6 py-3 font-semibold transition-all text-base whitespace-nowrap ${
+                    activeTab === 'my'
+                      ? 'border-b-2 -mb-0.5'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  style={activeTab === 'my' ? { borderColor: '#14b8a6', color: '#14b8a6' } : {}}
+                >
+                  {t.myBowers}
+                </button>
+                <button
+                  onClick={() => setActiveTab('preset')}
+                  className={`px-6 py-3 font-semibold transition-all text-base whitespace-nowrap ${
+                    activeTab === 'preset'
+                      ? 'border-b-2 -mb-0.5'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  style={activeTab === 'preset' ? { borderColor: '#14b8a6', color: '#14b8a6' } : {}}
+                >
+                  {t.preset}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <LoadingAnimation />
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && filteredBowers.length === 0 && activeTab === 'my' && !searchQuery && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🪺</div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                  {language === 'ja' ? 'バウアーがまだありません' : 'No bowers yet'}
+                </h2>
+                <p className="text-gray-500 mb-6">
+                  {language === 'ja' 
+                    ? '最初のバウアーを作成して、AIにフィードを見つけてもらいましょう'
+                    : 'Create your first bower and let AI find feeds for you'
+                  }
+                </p>
+                <button 
+                  onClick={handleCreateBower}
+                  disabled={isCreating}
+                  className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50"
+                >
+                  {isCreating ? '🐣' : (language === 'ja' ? '新しいバウアーを作成' : 'Create New Bower')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Search No Results */}
+          {!loading && filteredBowers.length === 0 && searchQuery && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🔍</div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                  {language === 'ja' ? '検索結果が見つかりません' : 'No search results'}
+                </h2>
+                <p className="text-gray-500 mb-6">
+                  &quot;{searchQuery}&quot; {language === 'ja' ? 'に一致するバウアーはありません' : 'did not match any bowers'}
+                </p>
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors"
+                >
+                  {language === 'ja' ? '検索をクリア' : 'Clear Search'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bowers Grid */}
+          {!loading && paginatedBowers.length > 0 && (
+            <>
+              {/* Create Button for My Bowers */}
+              {activeTab === 'my' && (
+                <div className="mb-6 flex justify-center">
+                  <button 
+                    onClick={handleCreateBower}
+                    disabled={isCreating}
+                    className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isCreating ? '🐣' : '+'} {language === 'ja' ? 'バウアーを作成' : 'Create Bower'}
+                  </button>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedBowers.map((bower) => {
+                  const isOwnBower = !bower.creatorId || bower.creatorId === user?.id
+                  const isLiked = bower.likedBy?.includes(user?.id || '') || false
+                  
+                  return (
+                    <BowerCard
+                      key={bower.id}
+                      bower={bower}
+                      isOwnBower={isOwnBower}
+                      isLiked={isLiked}
+                      language={language}
+                      onEdit={() => handleEditBower(bower)}
+                      onDelete={() => handleDeleteBower(bower)}
+                      onLike={(e) => handleLikeBower(bower.id, e)}
+                    />
+                  )
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      {language === 'ja' ? '前' : 'Previous'}
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-4 py-2 rounded-lg border ${
+                          currentPage === page
+                            ? 'bg-teal-500 text-white border-teal-500'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      {language === 'ja' ? '次' : 'Next'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onConfirm={confirmDeleteBower}
+        onCancel={() => {
+          setDeleteModalOpen(false)
+          setBowerToDelete(null)
+        }}
+        bowerName={bowerToDelete?.name || ''}
+        language={language}
+      />
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </Layout>
   )
 }

@@ -32,6 +32,8 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Check if path should skip authentication
 			if shouldSkipAuth(r.URL.Path, config.SkipPaths) {
+				// Debug log
+				// fmt.Printf("Skipping auth for path: %s\n", r.URL.Path)
 				next.ServeHTTP(w, r)
 				return
 			}
