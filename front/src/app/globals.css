@@ -414,4 +414,88 @@
   100% {
     transform: rotate(360deg);
   }
+}/* Chick
+Icon animations */
+@keyframes jumpUpTwice {
+  0% {
+    transform: translateY(0);
+  }
+  15% {
+    transform: translateY(-30px);
+  }
+  25% {
+    transform: translateY(-40px);
+  }
+  35% {
+    transform: translateY(-30px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  65% {
+    transform: translateY(-30px);
+  }
+  75% {
+    transform: translateY(-40px);
+  }
+  85% {
+    transform: translateY(-30px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes levelUpAnimation {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.5) rotate(10deg);
+  }
+  40% {
+    transform: scale(1.3) rotate(-10deg);
+  }
+  60% {
+    transform: scale(1.5) rotate(10deg);
+  }
+  80% {
+    transform: scale(1.3) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.level-up-glow {
+  box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.8),
+              0 0 40px 10px rgba(255, 165, 0, 0.6),
+              0 0 60px 15px rgba(255, 140, 0, 0.4);
+}
+
+.animate-jump-up-twice {
+  animation: jumpUpTwice 1.2s ease-in-out;
+}
+
+.animate-level-up {
+  animation: levelUpAnimation 2s ease-in-out;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.animate-fade-out-delayed {
+  animation: fadeOut 0.5s ease-in 2.5s;
 }
