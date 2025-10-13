@@ -29,6 +29,7 @@ export interface Bower {
   creatorName?: string
   likes?: number
   likedBy?: string[]
+  eggColors?: string[]
 }
 
 export interface User {

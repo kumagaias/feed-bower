@@ -115,6 +115,13 @@ func setupRouter(config *Config) (*mux.Router, error) {
 			"https://feed-bower.com",
 			"https://www.feed-bower.com",
 		}
+	} else {
+		// In development, allow localhost origins
+		corsConfig.AllowedOrigins = []string{
+			"http://localhost:3000",
+			"http://127.0.0.1:3000",
+			"*", // Fallback for development
+		}
 	}
 
 	// Setup authentication middleware

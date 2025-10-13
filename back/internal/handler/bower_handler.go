@@ -291,6 +291,8 @@ func (h *BowerHandler) SearchBowers(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, bowerResponses)
 }
 
+
+
 // toBowerResponse converts a model.Bower to BowerResponse
 func (h *BowerHandler) toBowerResponse(bower *model.Bower) *BowerResponse {
 	feeds := make([]FeedResponse, len(bower.Feeds))

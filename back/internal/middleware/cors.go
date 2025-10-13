@@ -35,7 +35,16 @@ func CORS(config *CORSConfig) func(http.Handler) http.Handler {
 			
 			// Set CORS headers
 			if len(config.AllowedOrigins) > 0 {
-				if config.AllowedOrigins[0] == "*" {
+				// Check if any origin is "*" (wildcard)
+				hasWildcard := false
+				for _, allowedOrigin := range config.AllowedOrigins {
+					if allowedOrigin == "*" {
+						hasWildcard = true
+						break
+					}
+				}
+				
+				if hasWildcard {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 				} else {
 					// Check if origin is allowed
