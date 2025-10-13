@@ -16,14 +16,14 @@ export default function Home() {
             AI-powered RSS feed management system
           </p>
           
-          {/* Test Tailwind CSS styling */}
+          {/* Navigation buttons */}
           <div className="flex gap-4 justify-center">
-            <button className="bg-[var(--color-primary)] text-[var(--color-button-text)] px-6 py-3 rounded-lg hover:bg-[var(--color-secondary)] transition-colors animate-float">
+            <a href="/feeds" className="bg-[var(--color-primary)] text-[var(--color-button-text)] px-6 py-3 rounded-lg hover:bg-[var(--color-secondary)] transition-colors animate-float inline-block">
               Get Started
-            </button>
-            <button className="bg-[var(--color-accent)] text-[var(--color-button-text)] px-6 py-3 rounded-lg hover:opacity-90 transition-opacity">
-              Learn More
-            </button>
+            </a>
+            <a href="/bowers" className="bg-[var(--color-accent)] text-[var(--color-button-text)] px-6 py-3 rounded-lg hover:opacity-90 transition-opacity inline-block">
+              View Bowers
+            </a>
           </div>
         </div>
       </div>

@@ -188,7 +188,7 @@
 
 ### タスク 3.2: 共通コンポーネント移行
 
-- [ ] タスク 3.2: 共通コンポーネント移行
+- [x] タスク 3.2: 共通コンポーネント移行
   - prototype/ から共通コンポーネントをコピー（Layout.tsx、Sidebar.tsx、MobileHeader.tsx、Breadcrumb.tsx、ChickIcon.tsx）
   - API 連携部分を修正（localStorage → API）
   - 全コンポーネントがエラーなくビルドできるか
