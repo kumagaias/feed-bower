@@ -173,7 +173,7 @@
 
 ### タスク 3.1: Next.js プロジェクト初期化
 
-- [ ] タスク 3.1: Next.js プロジェクト初期化
+- [x] タスク 3.1: Next.js プロジェクト初期化
   - front/ プロジェクト作成
   - prototype/ から設定ファイルをコピー（globals.css、colors.ts、types/index.ts、tailwind.config.js、tsconfig.json）
   - 必要なパッケージインストール

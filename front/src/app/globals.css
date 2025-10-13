@@ -1,0 +1,417 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+@layer base {
+  :root {
+    --color-primary: #14b8a6;
+    --color-secondary: #0f766e;
+    --color-accent: #f59e0b;
+    --color-tertiary: #505050;
+    --color-tertiary-hover: #707070;
+    --color-text-muted: #666666;
+    --color-background-main: #f0fdf4;
+    --color-background-card: #ffffff;
+    --color-button-text: #ffffff;
+    --color-button-text-dark: #333333;
+  }
+
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .nest-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .keyword-float {
+    animation: float 2s ease-in-out infinite, fadeIn 0.5s ease-in;
+  }
+
+  .keyword-fadeout {
+    animation: fadeOut 0.5s ease-out forwards;
+  }
+
+  .egg-bounce {
+    animation: bounce 1s ease-in-out;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .cloud-drift {
+    animation: drift 30s linear infinite;
+  }
+  
+  .cloud-drift-slow {
+    animation: drift 40s linear infinite;
+  }
+
+  .butterfly-flutter {
+    animation: flutter 3s ease-in-out infinite;
+  }
+
+  .bird-fly {
+    animation: birdFly 20s linear infinite;
+  }
+
+  .balloon-float {
+    animation: balloonFloat 25s linear infinite;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .animate-menu-slide {
+    animation: menuSlide 0.2s ease-out;
+  }
+
+  .animate-tap {
+    animation: tap 0.3s ease-out;
+  }
+
+  .animate-bird-shake {
+    animation: birdShake 0.5s ease-in-out;
+  }
+
+  .animate-balloon-pop {
+    animation: balloonPop 0.4s ease-out forwards;
+  }
+
+  .animate-hatch {
+    animation: hatch 1.5s ease-in-out infinite;
+  }
+
+  .animate-gradient-text {
+    animation: gradientShift 2s linear infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  .animate-float-slow {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-spin-once {
+    animation: spinOnce 0.6s ease-in-out;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes menuSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hatch {
+  0%,
+  40% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes eggBounce {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  10%, 30% {
+    transform: translateY(-10px) scale(1);
+  }
+  20%, 40% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.1) rotate(-5deg);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.1) rotate(5deg);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  51%, 100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes chickAppear {
+  0%, 50% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  60%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40%,
+  43% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.6;
+  }
+  95% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px));
+    opacity: 0;
+  }
+}
+
+@keyframes driftSlow {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.7;
+  }
+  95% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px));
+    opacity: 0;
+  }
+}
+
+@keyframes flutter {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(5deg);
+  }
+  75% {
+    transform: translateY(5px) rotate(-5deg);
+  }
+}
+
+@keyframes birdFly {
+  0% {
+    transform: translateX(-100px) translateY(0px);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(50vw) translateY(-20px);
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px)) translateY(0px);
+    opacity: 0;
+  }
+}
+
+@keyframes balloonFloat {
+  0% {
+    transform: translateX(-100px) translateY(0px);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(50vw) translateY(-30px);
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px)) translateY(-10px);
+    opacity: 0;
+  }
+}
+
+@keyframes tap {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3) rotate(10deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes birdShake {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-15px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes balloonPop {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes spinOnce {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
