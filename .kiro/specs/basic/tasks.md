@@ -158,7 +158,7 @@
 
 ### タスク 2.7: Dockerfile 作成
 
-- [ ] タスク 2.7: Dockerfile 作成
+- [x] タスク 2.7: Dockerfile 作成
   - back/Dockerfile 作成
   - マルチステージビルド設定
   - 最小イメージサイズ最適化
