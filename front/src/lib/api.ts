@@ -17,6 +17,12 @@ class ApiError extends Error {
   }
 }
 
+// Get auth token from localStorage
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('feed-bower-token')
+}
+
 // Generic API request function
 async function apiRequest<T>(
   endpoint: string,
@@ -24,16 +30,40 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
   
+  // Get auth token and add to headers
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+  
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+  
+  // Merge with provided headers
+  if (options.headers) {
+    Object.assign(headers, options.headers)
+  }
+  
   const defaultOptions: RequestInit = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     credentials: 'include', // Include cookies for authentication
   }
 
   try {
     const response = await fetch(url, { ...defaultOptions, ...options })
+    
+    // Handle 401 Unauthorized - token expired or invalid
+    if (response.status === 401) {
+      // Clear auth data and redirect to login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('feed-bower-token')
+        localStorage.removeItem('feed-bower-user')
+        localStorage.removeItem('feed-bower-token-expiry')
+        window.location.href = '/'
+      }
+      throw new ApiError(401, 'Authentication required')
+    }
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
@@ -127,9 +157,25 @@ export const feedApi = {
     })
   },
 
-  // Get feed preview
-  async previewFeed(url: string) {
-    return apiRequest<any>(`/feeds/preview?url=${encodeURIComponent(url)}`)
+  // Get feed preview by URL (for new feeds)
+  async previewFeedByUrl(url: string) {
+    return apiRequest<any>(`/feeds/preview-url?url=${encodeURIComponent(url)}`)
+  },
+
+  // Get feed preview by ID (for existing feeds)
+  async previewFeed(feedId: string) {
+    return apiRequest<any>(`/feeds/${feedId}/preview`)
+  },
+
+  // Get feed recommendations based on keywords
+  async getFeedRecommendations(bowerID: string, keywords: string[]) {
+    return apiRequest<any[]>('/feeds/recommendations', {
+      method: 'POST',
+      body: JSON.stringify({
+        bower_id: bowerID,
+        keywords: keywords
+      }),
+    })
   },
 }
 
@@ -147,6 +193,8 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     })
   },
+
+
 
   // Logout
   async logout() {

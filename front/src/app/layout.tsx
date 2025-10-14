@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AppProvider } from '@/contexts/AppContext'
+import { AuthProvider } from '@/contexts/AuthContext'
+import AuthGuard from '@/components/AuthGuard'
 
 export const metadata: Metadata = {
   title: 'Feed Bower',
@@ -15,9 +17,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[var(--color-background-main)] min-h-screen">
-        <AppProvider>
-          {children}
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <AuthGuard>
+              {children}
+            </AuthGuard>
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   )

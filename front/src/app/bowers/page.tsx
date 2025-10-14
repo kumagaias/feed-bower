@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/i18n'
 import { useBowers } from '@/hooks/useBowers'
+import { bowerApi, feedApi } from '@/lib/api'
 import Layout from '@/components/Layout'
 import BowerCard from '@/components/BowerCard'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 import LoadingAnimation from '@/components/LoadingAnimation'
 import Toast from '@/components/Toast'
+import BowerCreatorModal from '@/components/BowerCreatorModal'
+import BowerEditModal from '@/components/BowerEditModal'
 import { colors } from '@/styles/colors'
 
 export default function BowersPage() {
@@ -26,6 +29,9 @@ export default function BowersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [showCreatorModal, setShowCreatorModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingBower, setEditingBower] = useState<any>(null)
 
   const itemsPerPage = 9 // 3x3 grid
 
@@ -81,18 +87,140 @@ export default function BowersPage() {
 
   // Handle create bower
   const handleCreateBower = async () => {
-    // For now, redirect to a simple creation flow
-    // In a full implementation, this would open a modal or navigate to a creation page
-    router.push('/bowers/new')
+    setShowCreatorModal(true)
+  }
+
+  // Handle save bower from modal
+  const handleSaveBower = async (bowerData: { name: string; keywords: string[]; color: string }) => {
+    setIsCreating(true)
+    try {
+      const newBower = await createBower({
+        name: bowerData.name,
+        keywords: bowerData.keywords,
+        is_public: false
+      })
+
+      // Auto-add feeds based on keywords
+      if (newBower && newBower.id && bowerData.keywords.length > 0) {
+        const addedFeeds = await autoAddFeedsForBower(newBower.id, bowerData.keywords)
+        
+        // Update bower object with added feeds
+        if (addedFeeds && addedFeeds.length > 0) {
+          newBower.feeds = addedFeeds
+        }
+      }
+
+      // Automatically open edit modal to show the newly created bower with feeds
+      if (newBower && bowerData.keywords.length > 0) {
+        setTimeout(() => {
+          setEditingBower(newBower)
+          setShowEditModal(true)
+        }, 500)
+      }
+
+      setToast({
+        message: language === 'ja' ? 'バウアーを作成しました' : 'Bower created successfully',
+        type: 'success'
+      })
+    } catch (error) {
+      console.error('Failed to create bower:', error)
+      setToast({
+        message: language === 'ja' ? 'バウアーの作成に失敗しました' : 'Failed to create bower',
+        type: 'error'
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  // Auto-add feeds for a bower based on keywords
+  const autoAddFeedsForBower = async (bowerId: string, keywords: string[]): Promise<any[]> => {
+    
+    const keywordFeedMap: Record<string, string[]> = {
+      // English keywords
+      'ai': ['https://feeds.feedburner.com/oreilly/radar', 'https://ai.googleblog.com/feeds/posts/default'],
+      'programming': ['https://dev.to/feed/tag/programming', 'https://stackoverflow.com/feeds'],
+      'technology': ['https://techcrunch.com/feed/', 'https://www.wired.com/feed/'],
+      'design': ['https://www.smashingmagazine.com/feed/', 'https://dribbble.com/shots/popular.rss'],
+      'javascript': ['https://javascript.plainenglish.io/feed', 'https://dev.to/feed/tag/javascript'],
+      'react': ['https://dev.to/feed/tag/react', 'https://reactjs.org/feed.xml'],
+      'python': ['https://realpython.com/atom.xml', 'https://dev.to/feed/tag/python'],
+      'webdev': ['https://css-tricks.com/feed/', 'https://dev.to/feed/tag/webdev'],
+      'startup': ['https://techcrunch.com/startups/feed/', 'https://www.producthunt.com/feed'],
+      'business': ['https://hbr.org/feed', 'https://www.entrepreneur.com/latest.rss'],
+      
+      // Japanese keywords
+      'プログラミング': ['https://qiita.com/tags/programming/feed', 'https://zenn.dev/feed'],
+      'テクノロジー': ['https://techcrunch.com/feed/', 'https://www.wired.com/feed/'],
+      'デザイン': ['https://www.smashingmagazine.com/feed/', 'https://dribbble.com/shots/popular.rss'],
+      'web開発': ['https://css-tricks.com/feed/', 'https://dev.to/feed/tag/webdev'],
+      'スタートアップ': ['https://techcrunch.com/startups/feed/', 'https://www.producthunt.com/feed'],
+      'ビジネス': ['https://hbr.org/feed', 'https://www.entrepreneur.com/latest.rss']
+    }
+
+    let successCount = 0
+    let totalAttempts = 0
+    const addedFeeds: any[] = []
+
+    for (const keyword of keywords) {
+      const keywordLower = keyword.toLowerCase()
+      const feedUrls = keywordFeedMap[keyword] || keywordFeedMap[keywordLower] || []
+      
+      for (const url of feedUrls) {
+        totalAttempts++
+        try {
+          const newFeed = await feedApi.addFeed({
+            bower_id: bowerId,
+            url: url,
+            title: '',
+            description: ''
+          })
+          addedFeeds.push(newFeed)
+          successCount++
+          
+          // Limit to avoid too many feeds
+          if (successCount >= 2) break
+        } catch (error) {
+          // Continue with other feeds even if one fails
+        }
+      }
+      
+      // Limit total auto-added feeds
+      if (successCount >= 2) break
+    }
+
+    return addedFeeds
   }
 
   // Handle edit bower
   const handleEditBower = (bower: any) => {
-    // For now, just show a toast. In a full implementation, this would open an edit modal
-    setToast({
-      message: language === 'ja' ? 'バウアー編集機能は開発中です' : 'Bower editing feature is under development',
-      type: 'warning'
-    })
+    setEditingBower(bower)
+    setShowEditModal(true)
+  }
+
+  // Handle save edited bower
+  const handleSaveEditedBower = async (bowerData: { name: string; keywords: string[]; feeds: any[] }) => {
+    if (!editingBower) return
+    
+    try {
+      // Update bower using the hook
+      await updateBower(editingBower.id, {
+        name: bowerData.name,
+        keywords: bowerData.keywords,
+        is_public: editingBower.is_public
+      })
+
+      setToast({
+        message: language === 'ja' ? 'バウアーを更新しました' : 'Bower updated successfully',
+        type: 'success'
+      })
+    } catch (error) {
+      console.error('Failed to update bower:', error)
+      setToast({
+        message: language === 'ja' ? 'バウアーの更新に失敗しました' : 'Failed to update bower',
+        type: 'error'
+      })
+    }
   }
 
   // Handle delete bower
@@ -184,7 +312,7 @@ export default function BowersPage() {
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         placeholder={t.searchBowers}
-        className="w-full pl-8 md:pl-10 pr-8 md:pr-4 py-1.5 md:py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors text-sm"
+        className="w-full pl-8 md:pl-10 pr-8 md:pr-4 py-2 md:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition-colors text-base"
         style={{ outline: 'none' }}
         onFocus={(e) => e.currentTarget.style.borderColor = '#14b8a6'}
         onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
@@ -427,6 +555,24 @@ export default function BowersPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Bower Creator Modal */}
+      <BowerCreatorModal
+        isOpen={showCreatorModal}
+        onClose={() => setShowCreatorModal(false)}
+        onSave={handleSaveBower}
+      />
+
+      {/* Bower Edit Modal */}
+      <BowerEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          setEditingBower(null)
+        }}
+        onSave={handleSaveEditedBower}
+        bower={editingBower}
+      />
     </Layout>
   )
 }

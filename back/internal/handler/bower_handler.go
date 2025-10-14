@@ -29,13 +29,13 @@ func NewBowerHandler(bowerService service.BowerService) *BowerHandler {
 func (h *BowerHandler) RegisterRoutes(router *mux.Router) {
 	bowerRouter := router.PathPrefix("/api/bowers").Subrouter()
 	
-	bowerRouter.HandleFunc("", h.ListBowers).Methods("GET")
-	bowerRouter.HandleFunc("", h.CreateBower).Methods("POST")
-	bowerRouter.HandleFunc("/{id}", h.GetBower).Methods("GET")
-	bowerRouter.HandleFunc("/{id}", h.UpdateBower).Methods("PUT")
-	bowerRouter.HandleFunc("/{id}", h.DeleteBower).Methods("DELETE")
-	bowerRouter.HandleFunc("/public", h.ListPublicBowers).Methods("GET")
-	bowerRouter.HandleFunc("/search", h.SearchBowers).Methods("GET")
+	bowerRouter.HandleFunc("", h.ListBowers).Methods("GET", "OPTIONS")
+	bowerRouter.HandleFunc("", h.CreateBower).Methods("POST", "OPTIONS")
+	bowerRouter.HandleFunc("/{id}", h.GetBower).Methods("GET", "OPTIONS")
+	bowerRouter.HandleFunc("/{id}", h.UpdateBower).Methods("PUT", "OPTIONS")
+	bowerRouter.HandleFunc("/{id}", h.DeleteBower).Methods("DELETE", "OPTIONS")
+	bowerRouter.HandleFunc("/public", h.ListPublicBowers).Methods("GET", "OPTIONS")
+	bowerRouter.HandleFunc("/search", h.SearchBowers).Methods("GET", "OPTIONS")
 }
 
 // CreateBowerRequest represents the request to create a bower

@@ -29,12 +29,12 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 	authRouter := router.PathPrefix("/api/auth").Subrouter()
 	
-	authRouter.HandleFunc("/guest", h.CreateGuestUser).Methods("POST")
-	authRouter.HandleFunc("/register", h.Register).Methods("POST")
-	authRouter.HandleFunc("/login", h.Login).Methods("POST")
-	authRouter.HandleFunc("/refresh", h.RefreshToken).Methods("POST")
-	authRouter.HandleFunc("/me", h.GetCurrentUser).Methods("GET")
-	authRouter.HandleFunc("/change-password", h.ChangePassword).Methods("PUT")
+	authRouter.HandleFunc("/guest", h.CreateGuestUser).Methods("POST", "OPTIONS")
+	authRouter.HandleFunc("/register", h.Register).Methods("POST", "OPTIONS")
+	authRouter.HandleFunc("/login", h.Login).Methods("POST", "OPTIONS")
+	authRouter.HandleFunc("/refresh", h.RefreshToken).Methods("POST", "OPTIONS")
+	authRouter.HandleFunc("/me", h.GetCurrentUser).Methods("GET", "OPTIONS")
+	authRouter.HandleFunc("/change-password", h.ChangePassword).Methods("PUT", "OPTIONS")
 }
 
 // CreateGuestUserRequest represents the request to create a guest user

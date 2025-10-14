@@ -1,22 +1,34 @@
 'use client'
 
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 import { useState, useEffect, useRef } from 'react'
 
 export default function Sidebar() {
-  const { user, setUser, language, setLanguage } = useApp()
+  const { user, language, setLanguage } = useApp()
+  const { logout } = useAuth()
   const t = useTranslation(language)
   const pathname = usePathname()
+  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const handleLogout = () => {
-    setUser(null)
-    window.location.href = '/'
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await logout()
+      router.push('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setIsLoggingOut(false)
+      setMenuOpen(false)
+    }
   }
 
   // Close menu when clicking outside
@@ -59,7 +71,7 @@ export default function Sidebar() {
                   <span>Feed Bower</span>
                 </p>
                 <p className="text-xs text-teal-700">
-                  {user.isGuest ? (language === 'ja' ? 'ゲスト' : 'Guest') : user.name}
+                  {user.name}
                 </p>
               </div>
               <span className="text-sm text-green-50">
@@ -98,9 +110,17 @@ export default function Sidebar() {
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-600 text-white hover:bg-teal-700"
+                  disabled={isLoggingOut}
+                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-600 text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {t.logout}
+                  {isLoggingOut ? (
+                    <span className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {t.loading}
+                    </span>
+                  ) : (
+                    t.logout
+                  )}
                 </button>
               </div>
             </div>

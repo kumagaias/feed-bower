@@ -25,6 +25,9 @@ type FeedService interface {
 	PreviewFeed(ctx context.Context, userID string, feedURL string) (*FeedPreview, error)
 	ValidateFeedURL(feedURL string) error
 	
+	// Feed recommendations
+	GetFeedRecommendations(ctx context.Context, userID string, bowerID string, keywords []string) ([]*model.Feed, error)
+	
 	// Feed management
 	GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*model.Feed, error)
 }
@@ -44,13 +47,18 @@ type UpdateFeedRequest struct {
 
 // FeedPreview represents a preview of a feed with sample articles
 type FeedPreview struct {
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	URL         string           `json:"url"`
-	Category    string           `json:"category"`
-	Articles    []ArticlePreview `json:"articles"`
-	IsValid     bool             `json:"is_valid"`
-	Error       string           `json:"error,omitempty"`
+	Feed     *FeedPreviewInfo `json:"feed"`
+	Articles []ArticlePreview `json:"articles"`
+	IsValid  bool             `json:"is_valid"`
+	Error    string           `json:"error,omitempty"`
+}
+
+// FeedPreviewInfo represents basic feed information for preview
+type FeedPreviewInfo struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+	Category    string `json:"category"`
 }
 
 // ArticlePreview represents a preview of an article
@@ -299,7 +307,9 @@ func (s *feedService) PreviewFeed(ctx context.Context, userID string, feedURL st
 	// Validate feed URL
 	if err := s.ValidateFeedURL(feedURL); err != nil {
 		return &FeedPreview{
-			URL:     feedURL,
+			Feed: &FeedPreviewInfo{
+				URL: feedURL,
+			},
 			IsValid: false,
 			Error:   err.Error(),
 		}, nil
@@ -309,7 +319,9 @@ func (s *feedService) PreviewFeed(ctx context.Context, userID string, feedURL st
 	feedData, err := s.rssService.FetchFeed(ctx, feedURL)
 	if err != nil {
 		return &FeedPreview{
-			URL:     feedURL,
+			Feed: &FeedPreviewInfo{
+				URL: feedURL,
+			},
 			IsValid: false,
 			Error:   fmt.Sprintf("Failed to fetch feed: %v", err),
 		}, nil
@@ -338,12 +350,14 @@ func (s *feedService) PreviewFeed(ctx context.Context, userID string, feedURL st
 	}
 
 	return &FeedPreview{
-		Title:       feedData.Title,
-		Description: feedData.Description,
-		URL:         feedURL,
-		Category:    feedData.Category,
-		Articles:    articles,
-		IsValid:     true,
+		Feed: &FeedPreviewInfo{
+			Title:       feedData.Title,
+			Description: feedData.Description,
+			URL:         feedURL,
+			Category:    feedData.Category,
+		},
+		Articles: articles,
+		IsValid:  true,
 	}, nil
 }
 
@@ -400,6 +414,143 @@ func (s *feedService) ValidateFeedURL(feedURL string) error {
 	}
 
 	return nil
+}
+
+// GetFeedRecommendations returns recommended feeds based on keywords
+func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string, bowerID string, keywords []string) ([]*model.Feed, error) {
+	if userID == "" {
+		return nil, errors.New("user ID is required")
+	}
+	if bowerID == "" {
+		return nil, errors.New("bower ID is required")
+	}
+	if len(keywords) == 0 {
+		return nil, errors.New("keywords are required")
+	}
+
+	// Check if user has access to bower
+	bower, err := s.bowerRepo.GetByID(ctx, bowerID)
+	if err != nil {
+		return nil, fmt.Errorf("bower not found: %w", err)
+	}
+
+	if bower.UserID != userID {
+		return nil, errors.New("access denied: not bower owner")
+	}
+
+	// Generate mock feed recommendations based on keywords
+	recommendations := make([]*model.Feed, 0)
+	
+	// Keyword to feed URL mapping (mock data)
+	keywordFeedMap := map[string][]struct {
+		URL         string
+		Title       string
+		Description string
+		Category    string
+	}{
+		// English keywords
+		"ai": {
+			{"https://feeds.feedburner.com/oreilly/radar", "O'Reilly Radar", "Technology insights and trends", "Technology"},
+			{"https://ai.googleblog.com/feeds/posts/default", "Google AI Blog", "Latest AI research and developments", "AI"},
+		},
+		"programming": {
+			{"https://dev.to/feed/tag/programming", "Dev.to Programming", "Programming articles and tutorials", "Programming"},
+			{"https://stackoverflow.com/feeds", "Stack Overflow", "Programming Q&A", "Programming"},
+		},
+		"technology": {
+			{"https://techcrunch.com/feed/", "TechCrunch", "Technology news and startup coverage", "Technology"},
+			{"https://www.wired.com/feed/", "Wired", "Technology, science, and culture", "Technology"},
+		},
+		"design": {
+			{"https://www.smashingmagazine.com/feed/", "Smashing Magazine", "Web design and development", "Design"},
+			{"https://dribbble.com/shots/popular.rss", "Dribbble Popular", "Design inspiration", "Design"},
+		},
+		"javascript": {
+			{"https://javascript.plainenglish.io/feed", "JavaScript in Plain English", "JavaScript tutorials and tips", "JavaScript"},
+			{"https://dev.to/feed/tag/javascript", "Dev.to JavaScript", "JavaScript community articles", "JavaScript"},
+		},
+		"react": {
+			{"https://dev.to/feed/tag/react", "Dev.to React", "React development articles", "React"},
+			{"https://reactjs.org/feed.xml", "React Blog", "Official React news", "React"},
+		},
+		"python": {
+			{"https://realpython.com/atom.xml", "Real Python", "Python tutorials and guides", "Python"},
+			{"https://dev.to/feed/tag/python", "Dev.to Python", "Python community articles", "Python"},
+		},
+		
+		// Japanese keywords
+		"プログラミング": {
+			{"https://qiita.com/tags/programming/feed", "Qiita プログラミング", "プログラミング記事", "プログラミング"},
+			{"https://zenn.dev/feed", "Zenn", "エンジニア向け記事", "プログラミング"},
+		},
+		"テクノロジー": {
+			{"https://techcrunch.com/feed/", "TechCrunch", "テクノロジーニュース", "テクノロジー"},
+			{"https://www.wired.com/feed/", "Wired", "テクノロジーと文化", "テクノロジー"},
+		},
+		"デザイン": {
+			{"https://www.smashingmagazine.com/feed/", "Smashing Magazine", "ウェブデザイン", "デザイン"},
+			{"https://dribbble.com/shots/popular.rss", "Dribbble Popular", "デザインインスピレーション", "デザイン"},
+		},
+		"web開発": {
+			{"https://css-tricks.com/feed/", "CSS-Tricks", "ウェブ開発のヒント", "Web開発"},
+			{"https://dev.to/feed/tag/webdev", "Dev.to Web Development", "ウェブ開発記事", "Web開発"},
+		},
+		"スタートアップ": {
+			{"https://techcrunch.com/startups/feed/", "TechCrunch Startups", "スタートアップニュース", "スタートアップ"},
+			{"https://www.producthunt.com/feed", "Product Hunt", "新しいプロダクト", "スタートアップ"},
+		},
+		"ビジネス": {
+			{"https://hbr.org/feed", "Harvard Business Review", "ビジネス戦略", "ビジネス"},
+			{"https://www.entrepreneur.com/latest.rss", "Entrepreneur", "起業家向け情報", "ビジネス"},
+		},
+	}
+
+	// Get existing feeds to avoid duplicates
+	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
+	}
+
+	existingURLs := make(map[string]bool)
+	for _, feed := range existingFeeds {
+		existingURLs[feed.URL] = true
+	}
+
+	// Generate recommendations based on keywords
+	for _, keyword := range keywords {
+		keywordLower := strings.ToLower(keyword)
+		
+		// Try both original and lowercase
+		feedOptions := keywordFeedMap[keyword]
+		if len(feedOptions) == 0 {
+			feedOptions = keywordFeedMap[keywordLower]
+		}
+
+		// Add up to 2 feeds per keyword
+		added := 0
+		for _, feedOption := range feedOptions {
+			if existingURLs[feedOption.URL] {
+				continue // Skip if already exists
+			}
+
+			// Create mock feed
+			feed := model.NewFeed(bowerID, feedOption.URL, feedOption.Title, feedOption.Description, feedOption.Category)
+			recommendations = append(recommendations, feed)
+			existingURLs[feedOption.URL] = true
+			
+			added++
+			if added >= 2 {
+				break // Limit to 2 feeds per keyword
+			}
+		}
+
+		// Limit total recommendations
+		if len(recommendations) >= 6 {
+			break
+		}
+	}
+
+	return recommendations, nil
 }
 
 // GetStaleFeeds retrieves feeds that haven't been updated recently

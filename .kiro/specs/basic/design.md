@@ -1967,10 +1967,6 @@ go test ./...         # バックエンド
 # ヘルスチェック
 curl http://localhost:8080/health
 
-# ゲストログイン
-curl -X POST http://localhost:8080/api/auth/guest \
-  -H "Content-Type: application/json"
-
 # バウアー作成
 curl -X POST http://localhost:8080/api/bowers \
   -H "Content-Type: application/json" \
