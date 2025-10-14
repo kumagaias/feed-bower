@@ -7,7 +7,12 @@ export const translations = {
     liked: 'お気に入り',
     login: 'ログイン',
     logout: 'ログアウト',
-    tryAsGuest: 'ゲストで試す',
+
+    email: 'メールアドレス',
+    password: 'パスワード',
+    loginSuccess: 'ログインしました',
+    logoutSuccess: 'ログアウトしました',
+    authRequired: '認証が必要です',
     
     // Landing Page
     title: 'Feed Bower',
@@ -93,7 +98,12 @@ export const translations = {
     liked: 'Liked',
     login: 'Login',
     logout: 'Logout',
-    tryAsGuest: 'Try as Guest',
+
+    email: 'Email',
+    password: 'Password',
+    loginSuccess: 'Logged in successfully',
+    logoutSuccess: 'Logged out successfully',
+    authRequired: 'Authentication required',
     
     // Landing Page
     title: 'Feed Bower',

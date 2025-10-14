@@ -29,11 +29,11 @@ func NewChickHandler(chickService service.ChickService) *ChickHandler {
 func (h *ChickHandler) RegisterRoutes(router *mux.Router) {
 	chickRouter := router.PathPrefix("/api/chick").Subrouter()
 	
-	chickRouter.HandleFunc("/stats", h.GetStats).Methods("GET")
-	chickRouter.HandleFunc("/stats", h.UpdateStats).Methods("PUT")
-	chickRouter.HandleFunc("/liked-articles", h.GetLikedArticles).Methods("GET")
-	chickRouter.HandleFunc("/check-date", h.CheckDate).Methods("POST")
-	chickRouter.HandleFunc("/uncheck-date", h.UncheckDate).Methods("POST")
+	chickRouter.HandleFunc("/stats", h.GetStats).Methods("GET", "OPTIONS")
+	chickRouter.HandleFunc("/stats", h.UpdateStats).Methods("PUT", "OPTIONS")
+	chickRouter.HandleFunc("/liked-articles", h.GetLikedArticles).Methods("GET", "OPTIONS")
+	chickRouter.HandleFunc("/check-date", h.CheckDate).Methods("POST", "OPTIONS")
+	chickRouter.HandleFunc("/uncheck-date", h.UncheckDate).Methods("POST", "OPTIONS")
 }
 
 // UpdateStatsRequest represents the request to update chick stats

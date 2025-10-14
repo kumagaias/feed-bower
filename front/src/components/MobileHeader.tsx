@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 
 interface MobileHeaderProps {
@@ -13,13 +14,24 @@ interface MobileHeaderProps {
 
 export default function MobileHeader({ searchBar }: MobileHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, setUser, language, setLanguage } = useApp()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const { user, language, setLanguage } = useApp()
+  const { logout } = useAuth()
   const t = useTranslation(language)
   const pathname = usePathname()
+  const router = useRouter()
 
-  const handleLogout = () => {
-    setUser(null)
-    window.location.href = '/'
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await logout()
+      router.push('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setIsLoggingOut(false)
+      setIsMenuOpen(false)
+    }
   }
 
   const navItems = [
@@ -114,20 +126,22 @@ export default function MobileHeader({ searchBar }: MobileHeaderProps) {
                     <p className="text-sm font-medium text-green-50">{user.name}</p>
                     <button 
                       onClick={handleLogout}
-                      className="text-xs py-1 pr-4 transition-colors text-green-200"
+                      disabled={isLoggingOut}
+                      className="text-xs py-1 pr-4 transition-colors text-green-200 disabled:opacity-50"
                     >
-                      {t.logout}
+                      {isLoggingOut ? t.loading : t.logout}
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <button className="w-full px-4 py-2 rounded-lg transition-colors bg-amber-500 text-white">
+                  <Link 
+                    href="/"
+                    className="w-full px-4 py-2 rounded-lg transition-colors bg-amber-500 text-white text-center block"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
                     {t.login}
-                  </button>
-                  <button className="w-full px-4 py-2 rounded-lg transition-colors bg-green-50 text-teal-800">
-                    {t.tryAsGuest}
-                  </button>
+                  </Link>
                 </div>
               )}
             </div>

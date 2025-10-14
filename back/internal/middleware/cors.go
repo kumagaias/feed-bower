@@ -44,7 +44,12 @@ func CORS(config *CORSConfig) func(http.Handler) http.Handler {
 					}
 				}
 				
-				if hasWildcard {
+				if hasWildcard && origin != "" {
+					// If wildcard is allowed and we have an origin, use the specific origin
+					// This is required when credentials are included
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+				} else if hasWildcard {
+					// If wildcard is allowed but no origin header, use wildcard
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 				} else {
 					// Check if origin is allowed

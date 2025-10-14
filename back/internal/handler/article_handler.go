@@ -29,14 +29,14 @@ func NewArticleHandler(articleService service.ArticleService) *ArticleHandler {
 func (h *ArticleHandler) RegisterRoutes(router *mux.Router) {
 	articleRouter := router.PathPrefix("/api/articles").Subrouter()
 	
-	articleRouter.HandleFunc("", h.ListArticles).Methods("GET")
-	articleRouter.HandleFunc("/{id}", h.GetArticle).Methods("GET")
-	articleRouter.HandleFunc("/{id}/like", h.LikeArticle).Methods("POST")
-	articleRouter.HandleFunc("/{id}/like", h.UnlikeArticle).Methods("DELETE")
-	articleRouter.HandleFunc("/{id}/read", h.MarkAsRead).Methods("POST")
-	articleRouter.HandleFunc("/{id}/unread", h.MarkAsUnread).Methods("POST")
-	articleRouter.HandleFunc("/liked", h.ListLikedArticles).Methods("GET")
-	articleRouter.HandleFunc("/search", h.SearchArticles).Methods("GET")
+	articleRouter.HandleFunc("", h.ListArticles).Methods("GET", "OPTIONS")
+	articleRouter.HandleFunc("/{id}", h.GetArticle).Methods("GET", "OPTIONS")
+	articleRouter.HandleFunc("/{id}/like", h.LikeArticle).Methods("POST", "OPTIONS")
+	articleRouter.HandleFunc("/{id}/like", h.UnlikeArticle).Methods("DELETE", "OPTIONS")
+	articleRouter.HandleFunc("/{id}/read", h.MarkAsRead).Methods("POST", "OPTIONS")
+	articleRouter.HandleFunc("/{id}/unread", h.MarkAsUnread).Methods("POST", "OPTIONS")
+	articleRouter.HandleFunc("/liked", h.ListLikedArticles).Methods("GET", "OPTIONS")
+	articleRouter.HandleFunc("/search", h.SearchArticles).Methods("GET", "OPTIONS")
 }
 
 // ArticleListResponse represents the response for article listing

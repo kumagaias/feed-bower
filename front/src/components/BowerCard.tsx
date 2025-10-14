@@ -99,7 +99,7 @@ export default function BowerCard({
       <div className="p-6 relative flex flex-col" style={{ minHeight: '380px' }}>
         <div className="text-center mb-4">
           <div className="flex justify-center mb-3 transform group-hover:scale-110 transition-transform">
-            <BowerIcon eggColors={bower.eggColors || bower.keywords?.map((_: string, i: number) => eggColors[i % eggColors.length]) || []} size={60} />
+            <BowerIcon bower={bower} size="lg" />
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-1 line-clamp-2" style={{ minHeight: '3.5rem' }}>
             {bower.name.length > 40 ? bower.name.substring(0, 40) + '...' : bower.name}

@@ -69,6 +69,45 @@
   html {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
       Roboto, sans-serif;
+    font-size: 18px; /* Base font size increased from default 16px */
+  }
+
+  body {
+    font-size: 1rem; /* 18px */
+    line-height: 1.6;
+  }
+
+  /* Increase font sizes for common text elements */
+  p {
+    font-size: 1rem; /* 18px */
+  }
+
+  .text-xs {
+    font-size: 0.8rem !important; /* 14.4px instead of 12px */
+  }
+
+  .text-sm {
+    font-size: 0.9rem !important; /* 16.2px instead of 14px */
+  }
+
+  .text-base {
+    font-size: 1rem !important; /* 18px instead of 16px */
+  }
+
+  .text-lg {
+    font-size: 1.2rem !important; /* 21.6px instead of 18px */
+  }
+
+  .text-xl {
+    font-size: 1.35rem !important; /* 24.3px instead of 20px */
+  }
+
+  .text-2xl {
+    font-size: 1.6rem !important; /* 28.8px instead of 24px */
+  }
+
+  .text-3xl {
+    font-size: 2rem !important; /* 36px instead of 30px */
   }
 }
 
@@ -498,4 +537,106 @@ Icon animations */
 
 .animate-fade-out-delayed {
   animation: fadeOut 0.5s ease-in 2.5s;
+}/* 
+Keyword floating animation */
+@keyframes keyword-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-1deg);
+  }
+  75% {
+    transform: translateY(-15px) rotate(0.5deg);
+  }
+}
+
+.keyword-float {
+  animation: keyword-float 4s ease-in-out infinite;
+}
+
+/* Cloud drift animation */
+@keyframes cloud-drift {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100px));
+    opacity: 0;
+  }
+}
+
+.cloud-drift {
+  animation: cloud-drift linear infinite;
+}
+
+/* Egg bounce animation */
+@keyframes egg-bounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.egg-bounce {
+  animation: egg-bounce 2s ease-in-out infinite;
+}
+
+/* Bird fly animation */
+@keyframes bird-fly {
+  0% {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100vw + 50px));
+    opacity: 0;
+  }
+}
+
+.bird-fly {
+  animation: bird-fly linear infinite;
+}
+
+/* Balloon float animation */
+@keyframes balloon-float {
+  0% {
+    transform: translateX(-50px) translateY(0px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(50vw) translateY(-20px);
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(calc(100vw + 50px)) translateY(0px);
+    opacity: 0;
+  }
+}
+
+.balloon-float {
+  animation: balloon-float linear infinite;
 }

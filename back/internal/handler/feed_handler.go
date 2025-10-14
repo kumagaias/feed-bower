@@ -29,12 +29,14 @@ func NewFeedHandler(feedService service.FeedService) *FeedHandler {
 func (h *FeedHandler) RegisterRoutes(router *mux.Router) {
 	feedRouter := router.PathPrefix("/api/feeds").Subrouter()
 	
-	feedRouter.HandleFunc("", h.ListFeeds).Methods("GET")
-	feedRouter.HandleFunc("", h.AddFeed).Methods("POST")
-	feedRouter.HandleFunc("/{id}", h.GetFeed).Methods("GET")
-	feedRouter.HandleFunc("/{id}", h.DeleteFeed).Methods("DELETE")
-	feedRouter.HandleFunc("/{id}/preview", h.PreviewFeed).Methods("GET")
-	feedRouter.HandleFunc("/validate", h.ValidateFeedURL).Methods("POST")
+	feedRouter.HandleFunc("", h.ListFeeds).Methods("GET", "OPTIONS")
+	feedRouter.HandleFunc("", h.AddFeed).Methods("POST", "OPTIONS")
+	feedRouter.HandleFunc("/{id}", h.GetFeed).Methods("GET", "OPTIONS")
+	feedRouter.HandleFunc("/{id}", h.DeleteFeed).Methods("DELETE", "OPTIONS")
+	feedRouter.HandleFunc("/{id}/preview", h.PreviewFeed).Methods("GET", "OPTIONS")
+	feedRouter.HandleFunc("/preview-url", h.PreviewFeedByURL).Methods("GET", "OPTIONS")
+	feedRouter.HandleFunc("/validate", h.ValidateFeedURL).Methods("POST", "OPTIONS")
+	feedRouter.HandleFunc("/recommendations", h.GetFeedRecommendations).Methods("POST", "OPTIONS")
 }
 
 // AddFeedRequest represents the request to add a feed
@@ -46,6 +48,12 @@ type AddFeedRequest struct {
 // ValidateFeedURLRequest represents the request to validate a feed URL
 type ValidateFeedURLRequest struct {
 	URL string `json:"url" validate:"required,url"`
+}
+
+// FeedRecommendationsRequest represents the request to get feed recommendations
+type FeedRecommendationsRequest struct {
+	Keywords []string `json:"keywords" validate:"required,min=1"`
+	BowerID  string   `json:"bower_id" validate:"required"`
 }
 
 // FeedPreviewResponse represents a feed preview
@@ -252,6 +260,86 @@ func (h *FeedHandler) PreviewFeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Success(w, previewResp)
+}
+
+// PreviewFeedByURL previews a feed by URL (for new feeds)
+func (h *FeedHandler) PreviewFeedByURL(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
+		return
+	}
+
+	url := GetQueryParam(r, "url", "")
+	if url == "" {
+		response.BadRequest(w, "url query parameter is required")
+		return
+	}
+
+	// Preview the feed URL
+	preview, err := h.feedService.PreviewFeed(r.Context(), user.UserID, url)
+	if err != nil {
+		response.InternalServerError(w, "Failed to preview feed: "+err.Error())
+		return
+	}
+
+	articleResponses := make([]ArticleResponse, len(preview.Articles))
+	for i, article := range preview.Articles {
+		articleResponses[i] = ArticleResponse{
+			Title:       article.Title,
+			Content:     article.Content,
+			URL:         article.URL,
+			ImageURL:    article.ImageURL,
+			PublishedAt: article.PublishedAt,
+		}
+	}
+
+	previewResp := &FeedPreviewResponse{
+		Feed: &FeedResponse{
+			URL:         preview.Feed.URL,
+			Title:       preview.Feed.Title,
+			Description: preview.Feed.Description,
+			Category:    preview.Feed.Category,
+		},
+		Articles: articleResponses,
+	}
+
+	response.Success(w, previewResp)
+}
+
+// GetFeedRecommendations returns recommended feeds based on keywords
+func (h *FeedHandler) GetFeedRecommendations(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
+		return
+	}
+
+	var req FeedRecommendationsRequest
+	if !ParseJSONBodySecure(w, r, &req) {
+		return
+	}
+
+	if err := h.validator.Validate(&req); err != nil {
+		response.ValidationError(w, err.Error())
+		return
+	}
+
+	// Get recommended feeds based on keywords
+	recommendations, err := h.feedService.GetFeedRecommendations(r.Context(), user.UserID, req.BowerID, req.Keywords)
+	if err != nil {
+		if err.Error() == "access denied: not bower owner" {
+			response.Forbidden(w, err.Error())
+			return
+		}
+		response.InternalServerError(w, "Failed to get feed recommendations: "+err.Error())
+		return
+	}
+
+	feedResponses := make([]*FeedResponse, len(recommendations))
+	for i, feed := range recommendations {
+		feedResponses[i] = h.toFeedResponse(feed)
+	}
+
+	response.Success(w, feedResponses)
 }
 
 // ValidateFeedURL validates if a URL is a valid RSS/Atom feed

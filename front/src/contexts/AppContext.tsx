@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User, Bower, ChickStats } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface LikedArticle {
   id: string
@@ -13,7 +14,6 @@ export interface LikedArticle {
 
 interface AppContextType {
   user: User | null
-  setUser: (user: User | null) => void
   bowers: Bower[]
   setBowers: (bowers: Bower[]) => void
   currentBower: Bower | null
@@ -33,13 +33,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // デモ用にデフォルトユーザーを設定
-  const [user, setUser] = useState<User | null>({
-    id: 'demo-user',
-    email: 'demo@example.com',
-    name: 'Demo User',
-    isGuest: false
-  })
+  const { user: authUser } = useAuth()
   const [bowers, setBowers] = useState<Bower[]>([])
   const [currentBower, setCurrentBower] = useState<Bower | null>(null)
   const [chickStats, setChickStats] = useState<ChickStats>({
@@ -53,6 +47,80 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isMobile, setIsMobile] = useState(false)
   const [likedArticles, setLikedArticles] = useState<LikedArticle[]>([])
 
+  // Load user settings from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('feed-bower-language') as 'en' | 'ja'
+      if (savedLanguage) {
+        setLanguage(savedLanguage)
+      }
+
+      // Load user-specific data when user changes
+      if (authUser) {
+        const userKey = `feed-bower-${authUser.id}`
+        
+        // Load chick stats
+        const savedChickStats = localStorage.getItem(`${userKey}-chick-stats`)
+        if (savedChickStats) {
+          setChickStats(JSON.parse(savedChickStats))
+        }
+
+        // Load liked articles
+        const savedLikedArticles = localStorage.getItem(`${userKey}-liked-articles`)
+        if (savedLikedArticles) {
+          setLikedArticles(JSON.parse(savedLikedArticles))
+        }
+
+        // Load bowers
+        const savedBowers = localStorage.getItem(`${userKey}-bowers`)
+        if (savedBowers) {
+          setBowers(JSON.parse(savedBowers))
+        }
+      } else {
+        // Clear user-specific data when logged out
+        setChickStats({
+          totalLikes: 0,
+          level: 1,
+          experience: 0,
+          nextLevelExp: 10,
+          checkedDays: 0
+        })
+        setLikedArticles([])
+        setBowers([])
+        setCurrentBower(null)
+      }
+    }
+  }, [authUser])
+
+  // Save language preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('feed-bower-language', language)
+    }
+  }, [language])
+
+  // Save user-specific data
+  useEffect(() => {
+    if (typeof window !== 'undefined' && authUser) {
+      const userKey = `feed-bower-${authUser.id}`
+      localStorage.setItem(`${userKey}-chick-stats`, JSON.stringify(chickStats))
+    }
+  }, [chickStats, authUser])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && authUser) {
+      const userKey = `feed-bower-${authUser.id}`
+      localStorage.setItem(`${userKey}-liked-articles`, JSON.stringify(likedArticles))
+    }
+  }, [likedArticles, authUser])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && authUser) {
+      const userKey = `feed-bower-${authUser.id}`
+      localStorage.setItem(`${userKey}-bowers`, JSON.stringify(bowers))
+    }
+  }, [bowers, authUser])
+
   const addLikedArticle = (article: LikedArticle) => {
     setLikedArticles(prev => [article, ...prev])
   }
@@ -63,7 +131,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, setUser,
+      user: authUser,
       bowers, setBowers,
       currentBower, setCurrentBower,
       chickStats, setChickStats,
