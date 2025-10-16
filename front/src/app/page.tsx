@@ -20,22 +20,23 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, router])
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, #F5F5DC 0%, #FFFFFF 50%, #CCCC99 100%)' }}>
-        <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🪺</div>
-          <p className="text-lg text-gray-600">{t.loading}</p>
-        </div>
-      </div>
-    )
-  }
+  // Show loading overlay while checking auth, but keep the header
+  const showLoadingOverlay = isLoading;
 
   // Show landing page for unauthenticated users
   return (
     <div className="min-h-screen">
       <LandingHeader />
+      
+      {/* Loading overlay */}
+      {showLoadingOverlay && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-bounce">🪺</div>
+            <p className="text-lg text-white">{t.loading}</p>
+          </div>
+        </div>
+      )}
       
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16">

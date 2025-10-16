@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 
 	"feed-bower-api/internal/handler"
 	"feed-bower-api/internal/middleware"
@@ -26,7 +27,11 @@ type Config struct {
 	TablePrefix      string
 	
 	// Authentication
-	JWTSecret string
+	JWTSecret        string
+	CognitoUserPoolID string
+	CognitoRegion     string
+	CognitoClientID   string
+	UseCognito        bool
 	
 	// Server
 	Port        string
@@ -39,12 +44,16 @@ type Config struct {
 // loadConfig loads configuration from environment variables
 func loadConfig() *Config {
 	config := &Config{
-		DynamoDBEndpoint: getEnv("DYNAMODB_ENDPOINT", ""),
-		TablePrefix:      getEnv("DYNAMODB_TABLE_PREFIX", ""),
-		JWTSecret:        getEnv("JWT_SECRET", "default-secret-change-in-production"),
-		Port:             getEnv("PORT", "8080"),
-		Environment:      getEnv("ENVIRONMENT", "development"),
-		LogLevel:         getEnv("LOG_LEVEL", "info"),
+		DynamoDBEndpoint:  getEnv("DYNAMODB_ENDPOINT", ""),
+		TablePrefix:       getEnv("DYNAMODB_TABLE_PREFIX", ""),
+		JWTSecret:         getEnv("JWT_SECRET", "default-secret-change-in-production"),
+		CognitoUserPoolID: getEnv("COGNITO_USER_POOL_ID", ""),
+		CognitoRegion:     getEnv("COGNITO_REGION", "us-east-1"),
+		CognitoClientID:   getEnv("COGNITO_CLIENT_ID", ""),
+		UseCognito:        getEnv("USE_COGNITO", "false") == "true",
+		Port:              getEnv("PORT", "8080"),
+		Environment:       getEnv("ENVIRONMENT", "development"),
+		LogLevel:          getEnv("LOG_LEVEL", "info"),
 	}
 	
 	// Validate required configuration
@@ -84,12 +93,21 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	chickRepo := repository.NewChickRepository(dbClient)
 
 	// Initialize services
-	authService := service.NewAuthService(userRepo, config.JWTSecret)
+	var authService service.AuthService
+	if config.UseCognito {
+		log.Println("Using Cognito authentication")
+		authService = service.NewCognitoAuthService(userRepo, config.CognitoUserPoolID, config.CognitoRegion, config.CognitoClientID)
+	} else {
+		log.Println("Using custom JWT authentication")
+		authService = service.NewAuthService(userRepo, config.JWTSecret)
+	}
 	rssService := service.NewRSSService()
 	bowerService := service.NewBowerService(bowerRepo, feedRepo)
 	feedService := service.NewFeedService(feedRepo, bowerRepo, rssService)
 	articleService := service.NewArticleService(articleRepo, feedRepo, bowerRepo, chickRepo)
 	chickService := service.NewChickService(chickRepo, articleRepo, feedRepo, bowerRepo)
+
+	// Development user should be created using scripts/create-dev-user.sh
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -175,6 +193,15 @@ func isLambdaEnvironment() bool {
 }
 
 func main() {
+	// Load .env file if not in Lambda environment
+	if !isLambdaEnvironment() {
+		if err := godotenv.Load(); err != nil {
+			log.Printf("Warning: Could not load .env file: %v", err)
+		} else {
+			log.Println("Loaded .env file")
+		}
+	}
+
 	// Load configuration
 	config := loadConfig()
 	

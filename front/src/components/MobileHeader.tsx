@@ -25,7 +25,7 @@ export default function MobileHeader({ searchBar }: MobileHeaderProps) {
     try {
       setIsLoggingOut(true)
       await logout()
-      router.push('/')
+      // Redirect is handled in AuthContext
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

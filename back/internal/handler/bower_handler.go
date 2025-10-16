@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -40,18 +41,20 @@ func (h *BowerHandler) RegisterRoutes(router *mux.Router) {
 
 // CreateBowerRequest represents the request to create a bower
 type CreateBowerRequest struct {
-	Name     string   `json:"name" validate:"omitempty,min=1,max=50"`
-	Keywords []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
-	Color    string   `json:"color" validate:"omitempty,hexcolor"`
-	IsPublic bool     `json:"is_public"`
+	Name      string   `json:"name" validate:"omitempty,min=1,max=50"`
+	Keywords  []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	EggColors []string `json:"egg_colors"`
+	Color     string   `json:"color" validate:"omitempty,hexcolor"`
+	IsPublic  bool     `json:"is_public"`
 }
 
 // UpdateBowerRequest represents the request to update a bower
 type UpdateBowerRequest struct {
-	Name     *string   `json:"name,omitempty" validate:"omitempty,min=1,max=50"`
-	Keywords *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=8,dive,min=1,max=20"`
-	Color    *string   `json:"color,omitempty" validate:"omitempty,hexcolor"`
-	IsPublic *bool     `json:"is_public,omitempty"`
+	Name      *string   `json:"name,omitempty" validate:"omitempty,min=1,max=50"`
+	Keywords  *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=8,dive,min=1,max=20"`
+	EggColors *[]string `json:"egg_colors,omitempty"`
+	Color     *string   `json:"color,omitempty" validate:"omitempty,hexcolor"`
+	IsPublic  *bool     `json:"is_public,omitempty"`
 }
 
 // BowerResponse represents a bower in API responses
@@ -60,6 +63,7 @@ type BowerResponse struct {
 	UserID    string         `json:"user_id"`
 	Name      string         `json:"name"`
 	Keywords  []string       `json:"keywords"`
+	EggColors []string       `json:"egg_colors"`
 	Color     string         `json:"color"`
 	IsPublic  bool           `json:"is_public"`
 	CreatedAt int64          `json:"created_at"`
@@ -81,35 +85,47 @@ type FeedResponse struct {
 
 // CreateBower creates a new bower
 func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
+	log.Printf("CreateBower: Request received from %s", r.RemoteAddr)
+	
 	user, ok := GetRequiredUserFromContext(w, r)
 	if !ok {
+		log.Printf("CreateBower: Failed to get user from context")
 		return
 	}
+	
+	log.Printf("CreateBower: User authenticated: %s", user.UserID)
 
 	var req CreateBowerRequest
 	if !ParseJSONBodySecure(w, r, &req) {
+		log.Printf("CreateBower: Failed to parse JSON body")
 		return
 	}
+	
+	log.Printf("CreateBower: Request data: %+v", req)
 
 	if err := h.validator.Validate(&req); err != nil {
+		log.Printf("CreateBower: Validation error: %v", err)
 		response.ValidationError(w, err.Error())
 		return
 	}
 
 	// Convert to service request
 	serviceReq := &service.CreateBowerRequest{
-		Name:     req.Name,
-		Keywords: req.Keywords,
-		Color:    req.Color,
-		IsPublic: req.IsPublic,
+		Name:      req.Name,
+		Keywords:  req.Keywords,
+		EggColors: req.EggColors,
+		Color:     req.Color,
+		IsPublic:  req.IsPublic,
 	}
 
 	bower, err := h.bowerService.CreateBower(r.Context(), user.UserID, serviceReq)
 	if err != nil {
+		log.Printf("CreateBower: Service error: %v", err)
 		response.InternalServerError(w, "Failed to create bower: "+err.Error())
 		return
 	}
 
+	log.Printf("CreateBower: Successfully created bower: %s", bower.BowerID)
 	response.Created(w, h.toBowerResponse(bower))
 }
 
@@ -192,10 +208,11 @@ func (h *BowerHandler) UpdateBower(w http.ResponseWriter, r *http.Request) {
 
 	// Convert to service request
 	serviceReq := &service.UpdateBowerRequest{
-		Name:     req.Name,
-		Keywords: req.Keywords,
-		Color:    req.Color,
-		IsPublic: req.IsPublic,
+		Name:      req.Name,
+		Keywords:  req.Keywords,
+		EggColors: req.EggColors,
+		Color:     req.Color,
+		IsPublic:  req.IsPublic,
 	}
 
 	bower, err := h.bowerService.UpdateBower(r.Context(), user.UserID, bowerID, serviceReq)
@@ -213,20 +230,29 @@ func (h *BowerHandler) UpdateBower(w http.ResponseWriter, r *http.Request) {
 
 // DeleteBower deletes a bower
 func (h *BowerHandler) DeleteBower(w http.ResponseWriter, r *http.Request) {
+	log.Printf("DeleteBower: Request received from %s", r.RemoteAddr)
+	
 	user, ok := GetRequiredUserFromContext(w, r)
 	if !ok {
+		log.Printf("DeleteBower: Failed to get user from context")
 		return
 	}
+	
+	log.Printf("DeleteBower: User authenticated: %s", user.UserID)
 
 	vars := mux.Vars(r)
 	bowerID := vars["id"]
 	if bowerID == "" {
+		log.Printf("DeleteBower: Missing bower ID")
 		response.BadRequest(w, "Bower ID is required")
 		return
 	}
+	
+	log.Printf("DeleteBower: Attempting to delete bower: %s", bowerID)
 
 	err := h.bowerService.DeleteBower(r.Context(), user.UserID, bowerID)
 	if err != nil {
+		log.Printf("DeleteBower: Service error: %v", err)
 		if err.Error() == "access denied: not bower owner" {
 			response.Forbidden(w, err.Error())
 			return
@@ -235,6 +261,7 @@ func (h *BowerHandler) DeleteBower(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("DeleteBower: Successfully deleted bower: %s", bowerID)
 	response.NoContent(w)
 }
 
@@ -314,6 +341,7 @@ func (h *BowerHandler) toBowerResponse(bower *model.Bower) *BowerResponse {
 		UserID:    bower.UserID,
 		Name:      bower.Name,
 		Keywords:  bower.Keywords,
+		EggColors: bower.EggColors,
 		Color:     bower.Color,
 		IsPublic:  bower.IsPublic,
 		CreatedAt: bower.CreatedAt,

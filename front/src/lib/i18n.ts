@@ -12,7 +12,10 @@ export const translations = {
     password: 'パスワード',
     loginSuccess: 'ログインしました',
     logoutSuccess: 'ログアウトしました',
-    authRequired: '認証が必要です',
+    authRequired: '正しいメールアドレスまたはパスワードを入力してください',
+    authFailed: '認証に失敗しました。メールアドレスとパスワードを確認してください。',
+    invalidResponse: 'サーバーからの応答が無効です',
+    tokenVerificationFailed: 'トークンの検証に失敗しました',
     
     // Landing Page
     title: 'Feed Bower',
@@ -103,7 +106,10 @@ export const translations = {
     password: 'Password',
     loginSuccess: 'Logged in successfully',
     logoutSuccess: 'Logged out successfully',
-    authRequired: 'Authentication required',
+    authRequired: 'Please enter a valid email address or password',
+    authFailed: 'Authentication failed. Please check your email and password.',
+    invalidResponse: 'Invalid response from server',
+    tokenVerificationFailed: 'Token verification failed',
     
     // Landing Page
     title: 'Feed Bower',

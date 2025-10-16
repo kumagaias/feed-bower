@@ -33,18 +33,20 @@ type BowerService interface {
 
 // CreateBowerRequest represents the request to create a bower
 type CreateBowerRequest struct {
-	Name     string   `json:"name" validate:"required,min=1,max=50"`
-	Keywords []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
-	Color    string   `json:"color" validate:"omitempty,hexcolor"`
-	IsPublic bool     `json:"is_public"`
+	Name      string   `json:"name" validate:"required,min=1,max=50"`
+	Keywords  []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	EggColors []string `json:"egg_colors"`
+	Color     string   `json:"color" validate:"omitempty,hexcolor"`
+	IsPublic  bool     `json:"is_public"`
 }
 
 // UpdateBowerRequest represents the request to update a bower
 type UpdateBowerRequest struct {
-	Name     *string   `json:"name,omitempty" validate:"omitempty,min=1,max=50"`
-	Keywords *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=8,dive,min=1,max=20"`
-	Color    *string   `json:"color,omitempty" validate:"omitempty,hexcolor"`
-	IsPublic *bool     `json:"is_public,omitempty"`
+	Name      *string   `json:"name,omitempty" validate:"omitempty,min=1,max=50"`
+	Keywords  *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=8,dive,min=1,max=20"`
+	EggColors *[]string `json:"egg_colors,omitempty"`
+	Color     *string   `json:"color,omitempty" validate:"omitempty,hexcolor"`
+	IsPublic  *bool     `json:"is_public,omitempty"`
 }
 
 // bowerService implements BowerService interface
@@ -102,7 +104,7 @@ func (s *bowerService) CreateBower(ctx context.Context, userID string, req *Crea
 	}
 
 	// Create bower
-	bower := model.NewBower(userID, name, req.Keywords, color, req.IsPublic)
+	bower := model.NewBower(userID, name, req.Keywords, req.EggColors, color, req.IsPublic)
 
 	err := s.bowerRepo.Create(ctx, bower)
 	if err != nil {
@@ -214,6 +216,10 @@ func (s *bowerService) UpdateBower(ctx context.Context, userID string, bowerID s
 			return nil, errors.New("bower cannot have more than 8 keywords")
 		}
 		bower.Keywords = *req.Keywords
+	}
+
+	if req.EggColors != nil {
+		bower.EggColors = *req.EggColors
 	}
 
 	if req.Color != nil {
@@ -397,7 +403,7 @@ func (s *bowerService) validateCreateBowerRequest(req *CreateBowerRequest) error
 		if keyword == "" {
 			return fmt.Errorf("keyword %d cannot be empty", i+1)
 		}
-		if len(keyword) > 20 {
+		if len([]rune(keyword)) > 20 {
 			return fmt.Errorf("keyword %d is too long (max 20 characters)", i+1)
 		}
 	}

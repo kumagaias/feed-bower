@@ -8,6 +8,7 @@ import Sidebar from './Sidebar'
 import MobileHeader from './MobileHeader'
 import ChickIcon from './ChickIcon'
 import Breadcrumb from './Breadcrumb'
+import AuthErrorMessage from './AuthErrorMessage'
 
 
 interface LayoutProps {
@@ -70,6 +71,7 @@ export default function Layout({ children, searchBar }: LayoutProps) {
         </>
       )}
       <ChickIcon />
+      <AuthErrorMessage />
     </div>
   )
 }

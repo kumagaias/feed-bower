@@ -1,209 +1,242 @@
-'use client'
+"use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { User } from '@/types'
-import { authApi, ApiError } from '@/lib/api'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { User } from "@/types";
+import { signIn, signOut, getCurrentUser, fetchAuthSession, AuthError } from 'aws-amplify/auth';
+import '@/lib/amplify'; // Ensure Amplify is configured
+
+// Error message translations
+const translateAuthError = (error: string): string => {
+  const errorTranslations: Record<string, string> = {
+    'Incorrect username or password.': 'ユーザー名またはパスワードが正しくありません。',
+    'User does not exist.': 'ユーザーが存在しません。',
+    'Password attempts exceeded': 'パスワードの試行回数が上限を超えました。',
+    'User is not confirmed.': 'ユーザーが確認されていません。',
+    'Invalid verification code provided, please try again.': '無効な確認コードです。もう一度お試しください。',
+    'An account with the given email already exists.': 'このメールアドレスは既に使用されています。',
+    'Password did not conform with policy': 'パスワードがポリシーに準拠していません。',
+    'Username cannot be empty': 'ユーザー名を入力してください。',
+    'Password cannot be empty': 'パスワードを入力してください。',
+    'Sign in not completed': 'サインインが完了しませんでした。',
+    'Login failed': 'ログインに失敗しました。',
+    'Failed to initialize authentication': '認証の初期化に失敗しました。',
+    'Cognito configuration missing': 'Cognito設定が見つかりません。',
+    'Failed to configure Amplify': 'Amplifyの設定に失敗しました。',
+  };
+
+  return errorTranslations[error] || error;
+};
 
 interface AuthContextType {
-  user: User | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-  checkAuth: () => Promise<void>
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-// Storage keys
-const STORAGE_KEYS = {
-  TOKEN: 'feed-bower-token',
-  USER: 'feed-bower-user',
-  TOKEN_EXPIRY: 'feed-bower-token-expiry',
-}
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const isAuthenticated = !!user
+  const isAuthenticated = !!user;
 
-  // Check if token is expired
-  const isTokenExpired = (): boolean => {
-    const expiry = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY)
-    if (!expiry) return true
-    return Date.now() > parseInt(expiry)
-  }
+  // Ensure Amplify is configured on mount
+  useEffect(() => {
+    try {
+      const { Amplify } = require('aws-amplify');
+      
+      // Check if environment variables are available
+      if (!process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || 
+          !process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID || 
+          !process.env.NEXT_PUBLIC_AWS_REGION) {
+        console.error('Missing Cognito environment variables');
+        setError(translateAuthError('Cognito configuration missing'));
+        setIsLoading(false);
+        return;
+      }
+      
+      const config = {
+        Auth: {
+          Cognito: {
+            userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID,
+            userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID,
+            region: process.env.NEXT_PUBLIC_AWS_REGION,
+            signUpVerificationMethod: 'code' as const,
+            loginWith: {
+              email: true,
+            },
+          },
+        },
+      };
 
-  // Save token and user data
-  const saveAuthData = (token: string, userData: User, expiresIn: number = 7 * 24 * 60 * 60 * 1000) => {
-    const expiryTime = Date.now() + expiresIn
-    localStorage.setItem(STORAGE_KEYS.TOKEN, token)
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData))
-    localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, expiryTime.toString())
-    setUser(userData)
-  }
 
-  // Clear auth data
-  const clearAuthData = () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.USER)
-    localStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY)
-    setUser(null)
-  }
 
-  // Get stored token
-  const getStoredToken = (): string | null => {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem(STORAGE_KEYS.TOKEN)
-  }
+      Amplify.configure(config);
+      
+      // Initialize auth check after configuration
+      setTimeout(() => {
+        checkAuth();
+      }, 100);
+    } catch (error) {
+      console.error('Failed to configure Amplify:', error);
+      setError(translateAuthError('Failed to initialize authentication'));
+      setIsLoading(false);
+    }
+  }, []);
 
-  // Login function
+  // Login function using Cognito
   const login = async (email: string, password: string): Promise<void> => {
     try {
-      setIsLoading(true)
-      
-      // Development environment mock login
-      if (process.env.NODE_ENV === 'development' && email === 'guest@example.com' && password === 'guest123abc') {
-        const devUser: User = {
-          id: 'dev-user-001',
-          email: 'guest@example.com',
-          name: 'Development User',
-          isGuest: false
-        }
-        
-        const mockToken = `dev-token-${Date.now()}`
-        saveAuthData(mockToken, devUser)
-        return
-      }
-      
-      // Production API call
-      const response = await authApi.login(email, password)
-      
-      if (response.token && response.user) {
-        saveAuthData(response.token, response.user)
+      setIsLoading(true);
+      setError(null);
+
+      // Sign in with Cognito
+      const signInResult = await signIn({
+        username: email,
+        password: password,
+      });
+
+      if (signInResult.isSignedIn) {
+        // Get current user info from Cognito
+        const cognitoUser = await getCurrentUser();
+
+        // Convert Cognito user to our User type
+        const userData: User = {
+          id: cognitoUser.userId,
+          email: cognitoUser.signInDetails?.loginId || email,
+          name: cognitoUser.signInDetails?.loginId || email, // Will be updated from user attributes
+          isGuest: false,
+        };
+
+        setUser(userData);
       } else {
-        throw new Error('Invalid response from server')
+        throw new Error("Sign in not completed");
       }
     } catch (error) {
-      clearAuthData()
-      throw error
+      setUser(null);
+      
+      let errorMessage = "Login failed";
+      if (error instanceof AuthError) {
+        errorMessage = error.message;
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Translate error message to Japanese
+      const translatedError = translateAuthError(errorMessage);
+      setError(translatedError);
+      
+      throw error;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-
-
-  // Logout function
+  // Logout function using Cognito
   const logout = async (): Promise<void> => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       
-      // Try to call logout API if we have a token
-      const token = getStoredToken()
-      if (token && user?.id !== 'dev-user-001') {
-        try {
-          await authApi.logout()
-        } catch (error) {
-          // Continue with logout even if API call fails
-          console.warn('Logout API call failed:', error)
-        }
+      // Sign out from Cognito
+      await signOut();
+      setUser(null);
+      setError(null);
+      
+      // Force redirect to home page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
       }
+    } catch (error) {
+      // Clear user state even if logout fails
+      setUser(null);
+      setError(null);
       
-      clearAuthData()
+      // Force redirect to home page even on error
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Check authentication status
+  // Check authentication status using Cognito
   const checkAuth = async (): Promise<void> => {
     try {
-      setIsLoading(true)
-      
-      const token = getStoredToken()
-      const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
-      
-      if (!token || !storedUser || isTokenExpired()) {
-        clearAuthData()
-        return
-      }
+      setIsLoading(true);
 
-      // Parse stored user data
-      const userData = JSON.parse(storedUser) as User
-      
-      // For development user, just restore from localStorage
-      if (userData.id === 'dev-user-001') {
-        setUser(userData)
-        return
-      }
+      // Get current user from Cognito
+      const cognitoUser = await getCurrentUser();
 
-      // For regular users, verify with server
-      try {
-        const response = await authApi.getMe()
-        if (response.user) {
-          setUser(response.user)
-        } else {
-          clearAuthData()
-        }
-      } catch (error) {
-        // If API call fails, clear auth data
-        clearAuthData()
-      }
-      
+      // Convert Cognito user to our User type
+      const userData: User = {
+        id: cognitoUser.userId,
+        email: cognitoUser.signInDetails?.loginId || cognitoUser.username,
+        name: cognitoUser.signInDetails?.loginId || cognitoUser.username,
+        isGuest: false,
+      };
+
+      setUser(userData);
     } catch (error) {
-      clearAuthData()
+      setUser(null);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  // Check auth on mount
-  useEffect(() => {
-    checkAuth()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Note: checkAuth is now called from the Amplify configuration useEffect
 
-  // Set up token expiry check
-  useEffect(() => {
-    if (!user) return
-
-    const checkTokenExpiry = () => {
-      if (isTokenExpired()) {
-        logout()
-      }
-    }
-
-    // Check every minute
-    const interval = setInterval(checkTokenExpiry, 60 * 1000)
-    
-    return () => clearInterval(interval)
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Clear error function
+  const clearError = () => {
+    setError(null);
+  };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      isAuthenticated,
-      login,
-      logout,
-      checkAuth,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated,
+        error,
+        login,
+        logout,
+        checkAuth,
+        clearError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }
 
 // Helper function to get auth token for API requests
-export function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(STORAGE_KEYS.TOKEN)
+export async function getAuthToken(): Promise<string | null> {
+  try {
+    const session = await fetchAuthSession();
+    return session.tokens?.idToken?.toString() || null;
+  } catch (error) {
+    console.log('Failed to get auth token:', error);
+    return null;
+  }
 }
