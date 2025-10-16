@@ -21,7 +21,7 @@ export default function FeedsPage() {
                 バウアーを作成して、AIにフィードを見つけてもらいましょう
               </p>
               <button className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors">
-                バウアーを作成
+                + バウアーを作成
               </button>
             </div>
           </div>

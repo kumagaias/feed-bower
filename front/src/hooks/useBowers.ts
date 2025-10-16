@@ -159,12 +159,7 @@ export function useBowers(): UseBowersReturn {
 
   // Load bowers on mount
   useEffect(() => {
-    // Temporarily disable API call to avoid CORS issues
-    // loadBowers()
-    
-    // Use mock data for now
-    setLoading(false)
-    setBowers([])
+    loadBowers()
   }, [])
 
   return {

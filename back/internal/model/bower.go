@@ -10,6 +10,7 @@ type Bower struct {
 	UserID    string   `json:"user_id" dynamodbav:"user_id" validate:"required"`
 	Name      string   `json:"name" dynamodbav:"name" validate:"required,min=1,max=50"`
 	Keywords  []string `json:"keywords" dynamodbav:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	EggColors []string `json:"egg_colors" dynamodbav:"egg_colors"`
 	Color     string   `json:"color" dynamodbav:"color" validate:"required,hexcolor"`
 	IsPublic  bool     `json:"is_public" dynamodbav:"is_public"`
 	CreatedAt int64    `json:"created_at" dynamodbav:"created_at"`
@@ -26,12 +27,13 @@ type Bower struct {
 }
 
 // NewBower creates a new Bower instance with current timestamps
-func NewBower(userID, name string, keywords []string, color string, isPublic bool) *Bower {
+func NewBower(userID, name string, keywords []string, eggColors []string, color string, isPublic bool) *Bower {
 	now := time.Now().Unix()
 	return &Bower{
 		UserID:    userID,
 		Name:      name,
 		Keywords:  keywords,
+		EggColors: eggColors,
 		Color:     color,
 		IsPublic:  isPublic,
 		CreatedAt: now,

@@ -11,14 +11,16 @@ interface AuthGuardProps {
 }
 
 // Pages that don't require authentication
-const PUBLIC_ROUTES = ['/']
+const PUBLIC_ROUTES = ['/', '/debug']
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, error } = useAuth()
   const { language } = useApp()
   const t = useTranslation(language)
+
+
 
   useEffect(() => {
     // Don't redirect if still loading or on public routes
@@ -32,17 +34,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     }
   }, [isAuthenticated, isLoading, pathname, router])
 
-  // Show loading screen while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-main)]">
-        <div className="text-center">
-          <div className="animate-bounce text-4xl mb-4">🐣</div>
-          <p className="text-[var(--color-text-muted)]">{t.loading}</p>
-        </div>
-      </div>
-    )
-  }
+  // Show loading overlay while checking authentication, but keep children
+  const showGlobalLoading = isLoading && !PUBLIC_ROUTES.includes(pathname);
 
   // Show login redirect message for protected routes
   if (!isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
@@ -62,5 +55,19 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      
+      {/* Global loading overlay for protected routes */}
+      {showGlobalLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-bounce text-4xl mb-4">🐣</div>
+            <p className="text-white">{t.loading}</p>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }

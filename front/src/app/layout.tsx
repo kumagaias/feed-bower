@@ -3,6 +3,8 @@ import './globals.css'
 import { AppProvider } from '@/contexts/AppContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AuthGuard from '@/components/AuthGuard'
+import NestBackground from '@/components/NestBackground'
+import '@/lib/amplify' // Initialize Amplify
 
 export const metadata: Metadata = {
   title: 'Feed Bower',
@@ -16,11 +18,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-[var(--color-background-main)] min-h-screen">
+      <body className="bg-[var(--color-background-main)] min-h-screen relative">
         <AuthProvider>
           <AppProvider>
             <AuthGuard>
-              {children}
+              <NestBackground />
+              <div className="relative z-10">
+                {children}
+              </div>
             </AuthGuard>
           </AppProvider>
         </AuthProvider>

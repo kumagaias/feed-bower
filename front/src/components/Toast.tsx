@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { colors } from '@/styles/colors'
 
 interface ToastProps {
   message: string
@@ -17,19 +18,44 @@ export default function Toast({ message, type, onClose }: ToastProps) {
     return () => clearTimeout(timer)
   }, [onClose])
 
-  const bgColor = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    warning: 'bg-yellow-500'
-  }[type]
+  const getToastStyle = () => {
+    switch (type) {
+      case 'success':
+        return {
+          backgroundColor: colors.primary,
+          color: 'white'
+        }
+      case 'error':
+        return {
+          backgroundColor: '#ef4444', // red-500
+          color: 'white'
+        }
+      case 'warning':
+        return {
+          backgroundColor: '#f59e0b', // yellow-500
+          color: 'white'
+        }
+      default:
+        return {
+          backgroundColor: colors.primary,
+          color: 'white'
+        }
+    }
+  }
+
+  const toastStyle = getToastStyle()
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className={`${bgColor} text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2`}>
-        <span>{message}</span>
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+      <div 
+        className="px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-[300px] justify-center"
+        style={toastStyle}
+      >
+        <span className="font-medium">{message}</span>
         <button
           onClick={onClose}
-          className="text-white hover:text-gray-200 ml-2"
+          className="hover:opacity-75 ml-2 text-lg"
+          style={{ color: toastStyle.color }}
         >
           ✕
         </button>

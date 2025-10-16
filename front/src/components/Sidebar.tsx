@@ -22,7 +22,7 @@ export default function Sidebar() {
     try {
       setIsLoggingOut(true)
       await logout()
-      router.push('/')
+      // Redirect is handled in AuthContext
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

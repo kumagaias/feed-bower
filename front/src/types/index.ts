@@ -5,6 +5,8 @@ export interface Feed {
   description: string
   category: string
   lastUpdated: Date
+  isCustom?: boolean // 手動追加されたフィードかどうか
+  customLabel?: string // カスタムラベル
 }
 
 export interface Article {

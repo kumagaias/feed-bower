@@ -17,21 +17,28 @@ class ApiError extends Error {
   }
 }
 
-// Get auth token from localStorage
-function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('feed-bower-token')
+// Get auth token from Cognito
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { fetchAuthSession } = await import('aws-amplify/auth');
+    const session = await fetchAuthSession();
+    return session.tokens?.idToken?.toString() || null;
+  } catch (error) {
+    console.log("Failed to get auth token:", error);
+    return null;
+  }
 }
 
 // Generic API request function
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit & { skipAutoRedirect?: boolean } = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
+  const { skipAutoRedirect, ...fetchOptions } = options
   
   // Get auth token and add to headers
-  const token = getAuthToken()
+  const token = await getAuthToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
@@ -41,8 +48,8 @@ async function apiRequest<T>(
   }
   
   // Merge with provided headers
-  if (options.headers) {
-    Object.assign(headers, options.headers)
+  if (fetchOptions.headers) {
+    Object.assign(headers, fetchOptions.headers)
   }
   
   const defaultOptions: RequestInit = {
@@ -51,15 +58,19 @@ async function apiRequest<T>(
   }
 
   try {
-    const response = await fetch(url, { ...defaultOptions, ...options })
+    const response = await fetch(url, { ...defaultOptions, ...fetchOptions })
     
     // Handle 401 Unauthorized - token expired or invalid
     if (response.status === 401) {
-      // Clear auth data and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('feed-bower-token')
-        localStorage.removeItem('feed-bower-user')
-        localStorage.removeItem('feed-bower-token-expiry')
+      // Only auto-redirect if not explicitly skipped (e.g., during login)
+      if (!skipAutoRedirect && typeof window !== 'undefined') {
+        // Sign out from Cognito and redirect
+        try {
+          const { signOut } = await import('aws-amplify/auth');
+          await signOut();
+        } catch (error) {
+          console.log("Failed to sign out:", error);
+        }
         window.location.href = '/'
       }
       throw new ApiError(401, 'Authentication required')
@@ -73,8 +84,20 @@ async function apiRequest<T>(
       )
     }
 
-    const data = await response.json()
-    return data
+    // Handle 204 No Content responses (no JSON body)
+    if (response.status === 204) {
+      return null
+    }
+    
+    const responseData = await response.json()
+    
+    // Handle backend API response format: { success: true, data: ... }
+    if (responseData.success && responseData.data !== undefined) {
+      return responseData.data
+    }
+    
+    // Fallback for other response formats
+    return responseData
   } catch (error) {
     if (error instanceof ApiError) {
       throw error
@@ -177,6 +200,11 @@ export const feedApi = {
       }),
     })
   },
+
+  // Get articles for a specific bower
+  async getBowerArticles(bowerId: string, limit: number = 50) {
+    return apiRequest<any[]>(`/articles?bower_id=${bowerId}&limit=${limit}`)
+  },
 }
 
 // Auth API functions
@@ -191,10 +219,17 @@ export const authApi = {
     return apiRequest<any>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+      skipAutoRedirect: true, // Don't auto-redirect on 401 during login
     })
   },
 
-
+  // Create guest user
+  async createGuestUser(language: string = 'ja') {
+    return apiRequest<any>('/auth/guest', {
+      method: 'POST',
+      body: JSON.stringify({ language }),
+    })
+  },
 
   // Logout
   async logout() {
