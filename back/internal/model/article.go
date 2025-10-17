@@ -14,7 +14,7 @@ type Article struct {
 	ImageURL    *string `json:"image_url,omitempty" dynamodbav:"image_url,omitempty" validate:"omitempty,url"`
 	PublishedAt int64   `json:"published_at" dynamodbav:"published_at" validate:"required"`
 	CreatedAt   int64   `json:"created_at" dynamodbav:"created_at"`
-	
+
 	// These fields are computed/joined from other tables and not stored in Articles table
 	Liked bool   `json:"liked" dynamodbav:"-"`
 	Bower string `json:"bower" dynamodbav:"-"`

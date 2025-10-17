@@ -32,7 +32,7 @@ func CORS(config *CORSConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
-			
+
 			// Set CORS headers
 			if len(config.AllowedOrigins) > 0 {
 				// Check if any origin is "*" (wildcard)
@@ -43,7 +43,7 @@ func CORS(config *CORSConfig) func(http.Handler) http.Handler {
 						break
 					}
 				}
-				
+
 				if hasWildcard && origin != "" {
 					// If wildcard is allowed and we have an origin, use the specific origin
 					// This is required when credentials are included

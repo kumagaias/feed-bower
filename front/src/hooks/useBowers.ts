@@ -24,10 +24,15 @@ export function useBowers(): UseBowersReturn {
     try {
       setLoading(true)
       setError(null)
+      console.log('🔍 Loading bowers from API...')
       const data = await bowerApi.getBowers()
+      console.log('📦 Received bowers data:', data)
+      console.log('📦 Data type:', typeof data)
+      console.log('📦 Is array:', Array.isArray(data))
+      console.log('📦 Data length:', data?.length)
       
       // Transform API data to match our Bower interface
-      const transformedBowers: Bower[] = data.map((bower: any) => ({
+      const transformedBowers: Bower[] = data ? data.map((bower: any) => ({
         id: bower.bower_id || bower.id,
         name: bower.name,
         keywords: bower.keywords || [],
@@ -43,7 +48,10 @@ export function useBowers(): UseBowersReturn {
           const colors = ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460']
           return colors[i % colors.length]
         }) || []
-      }))
+      })) : []
+      
+      console.log('✨ Transformed bowers:', transformedBowers)
+      console.log('✨ Transformed bowers length:', transformedBowers.length)
       
       setBowers(transformedBowers)
     } catch (err) {

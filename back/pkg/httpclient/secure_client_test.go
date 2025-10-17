@@ -23,7 +23,7 @@ func TestNewSecureHTTPClient(t *testing.T) {
 
 func TestValidateURL_ValidURL(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
-	
+
 	// Use URLs that don't require DNS resolution for testing
 	validURLs := []string{
 		"https://google.com/feed.xml",
@@ -41,7 +41,7 @@ func TestValidateURL_ValidURL(t *testing.T) {
 
 func TestValidateURL_InvalidScheme(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
-	
+
 	invalidURLs := []string{
 		"ftp://example.com/feed.xml",
 		"file:///etc/passwd",
@@ -59,7 +59,7 @@ func TestValidateURL_InvalidScheme(t *testing.T) {
 
 func TestValidateURL_BlockedHost(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
-	
+
 	blockedURLs := []string{
 		"http://localhost/feed.xml",
 		"https://127.0.0.1/rss",
@@ -76,11 +76,11 @@ func TestValidateURL_BlockedHost(t *testing.T) {
 
 func TestValidateURL_InvalidPort(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
-	
+
 	invalidPortURLs := []string{
-		"http://example.com:22/feed.xml",  // SSH port (low port, should be blocked)
-		"http://example.com:23/rss",       // Telnet port (low port, should be blocked)
-		"http://example.com:21/atom.xml",  // FTP port (low port, should be blocked)
+		"http://example.com:22/feed.xml", // SSH port (low port, should be blocked)
+		"http://example.com:23/rss",      // Telnet port (low port, should be blocked)
+		"http://example.com:21/atom.xml", // FTP port (low port, should be blocked)
 	}
 
 	for _, url := range invalidPortURLs {
@@ -93,7 +93,7 @@ func TestValidateURL_InvalidPort(t *testing.T) {
 
 func TestValidateURL_SuspiciousPatterns(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
-	
+
 	suspiciousURLs := []string{
 		"http://user:pass@example.com/feed.xml", // Contains credentials
 		"javascript:alert('xss')",
@@ -122,7 +122,7 @@ func TestSecureHTTPClient_Get(t *testing.T) {
 	// Allow localhost and private networks for testing
 	config.BlockedHosts = []string{}
 	config.BlockedNetworks = []string{}
-	
+
 	client, err := NewSecureHTTPClient(config)
 	if err != nil {
 		t.Fatalf("Failed to create secure client: %v", err)
@@ -169,7 +169,7 @@ func TestSecureHTTPClient_Timeout(t *testing.T) {
 	config.Timeout = 100 * time.Millisecond
 	config.BlockedHosts = []string{} // Allow localhost for testing
 	config.BlockedNetworks = []string{}
-	
+
 	client, err := NewSecureHTTPClient(config)
 	if err != nil {
 		t.Fatalf("Failed to create secure client: %v", err)
@@ -253,7 +253,7 @@ func TestSanitizeURLString(t *testing.T) {
 		_, err := sanitizeURLString(tc.input)
 		hasError := err != nil
 		if hasError != tc.expectError {
-			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)", 
+			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)",
 				tc.description, tc.expectError, hasError, err)
 		}
 	}
@@ -285,7 +285,7 @@ func TestValidateHeaderValue(t *testing.T) {
 		err := validateHeaderValue(tc.key, tc.value)
 		hasError := err != nil
 		if hasError != tc.expectError {
-			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)", 
+			t.Errorf("Test '%s': expected error=%v, got error=%v (err: %v)",
 				tc.description, tc.expectError, hasError, err)
 		}
 	}
@@ -297,9 +297,9 @@ func TestIsValidEmailInURL(t *testing.T) {
 		expected bool
 	}{
 		{"https://example.com/feed.xml", true},
-		{"https://user:pass@example.com/feed.xml", false}, // credential injection
+		{"https://user:pass@example.com/feed.xml", false},            // credential injection
 		{"https://example.com/contact?email=test@example.com", true}, // email in query
-		{"mailto:test@example.com", true}, // valid email URL
+		{"mailto:test@example.com", true},                            // valid email URL
 	}
 
 	for _, tc := range testCases {
@@ -314,7 +314,7 @@ func TestSecureHTTPClient_DoWithDangerousHeaders(t *testing.T) {
 	config := DefaultSecureHTTPConfig()
 	config.BlockedHosts = []string{} // Allow localhost for testing
 	config.BlockedNetworks = []string{}
-	
+
 	client, err := NewSecureHTTPClient(config)
 	if err != nil {
 		t.Fatalf("Failed to create secure client: %v", err)

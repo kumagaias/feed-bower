@@ -24,59 +24,53 @@ echo "🎯 Target branch: $BRANCH_NAME"
 echo ""
 echo "🧪 Running unit tests..."
 
-# Prototype tests (if exists)
-if [ -d "prototype" ] && [ -f "prototype/package.json" ]; then
-    echo "  📦 Running prototype tests..."
-    cd prototype
+# Check if Makefile exists and use make commands
+if [ -f "Makefile" ]; then
+    echo "  📋 Using Makefile for testing..."
     
-    # Lint check
-    echo "    🔍 Running lint check..."
-    npm run lint || echo "    ⚠️  Lint warnings found but continuing..."
+    # Install dependencies first
+    echo "    📦 Installing dependencies..."
+    make install || echo "    ⚠️  Dependency installation issues but continuing..."
     
-    # Build test
-    echo "    🏗️  Running build test..."
-    npm run build || echo "    ⚠️  Build errors found but continuing (prototype environment)..."
+    # Run tests
+    echo "    🧪 Running all tests..."
+    make test || echo "    ⚠️  Test errors found but continuing..."
     
-    cd ..
-    echo "  ✅ Prototype tests completed"
-fi
-
-# Frontend tests (if exists)
-if [ -d "front" ] && [ -f "front/package.json" ]; then
-    echo "  🎨 Running frontend tests..."
-    cd front
+    echo "  ✅ Makefile tests completed"
+else
+    # Fallback to individual commands
+    echo "  📋 Using individual commands..."
     
-    if npm list --depth=0 > /dev/null 2>&1; then
-        npm run lint || echo "    ⚠️  Lint warnings found but continuing..."
-        npm run build || echo "    ⚠️  Build errors found but continuing..."
-        
-        # Run tests if test script exists
-        if npm run | grep -q "test"; then
-            npm test || echo "    ⚠️  Test errors found but continuing..."
-        fi
-    else
-        echo "    📦 Installing dependencies..."
-        npm install
+    # Prototype tests (if exists)
+    if [ -d "prototype" ] && [ -f "prototype/package.json" ]; then
+        echo "    📦 Running prototype tests..."
+        cd prototype
+        npm run lint || echo "      ⚠️  Lint warnings found but continuing..."
+        npm run build || echo "      ⚠️  Build errors found but continuing..."
+        cd ..
     fi
-    
-    cd ..
-    echo "  ✅ Frontend tests completed"
-fi
 
-# Backend tests (if exists)
-if [ -d "back" ] && [ -f "back/.mod" ]; then
-    echo "  🔧 Running backend tests..."
-    cd back
-    
-    # Check Go modules
-    if [ -f "go.mod" ]; then
+    # Frontend tests (if exists)
+    if [ -d "front" ] && [ -f "front/package.json" ]; then
+        echo "    🎨 Running frontend tests..."
+        cd front
+        npm run lint || echo "      ⚠️  Lint warnings found but continuing..."
+        npm run build || echo "      ⚠️  Build errors found but continuing..."
+        npm test -- --watchAll=false || echo "      ⚠️  Test errors found but continuing..."
+        cd ..
+    fi
+
+    # Backend tests (if exists)
+    if [ -d "back" ] && [ -f "back/go.mod" ]; then
+        echo "    🔧 Running backend tests..."
+        cd back
         go mod tidy
-        go test ./... || echo "    ⚠️  Test errors found but continuing..."
-        go build ./... || echo "    ⚠️  Build errors found but continuing..."
+        go test ./internal/service ./internal/handler ./internal/middleware ./pkg/... || echo "      ⚠️  Test errors found but continuing..."
+        go build ./... || echo "      ⚠️  Build errors found but continuing..."
+        cd ..
     fi
     
-    cd ..
-    echo "  ✅ Backend tests completed"
+    echo "  ✅ Individual tests completed"
 fi
 
 echo "✅ All tests completed"

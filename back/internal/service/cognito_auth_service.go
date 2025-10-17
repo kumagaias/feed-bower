@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"strings"
@@ -24,17 +25,19 @@ type CognitoAuthService struct {
 	userPoolID   string
 	region       string
 	clientID     string
+	endpoint     string
 	jwksCache    map[string]*rsa.PublicKey
 	jwksCacheExp time.Time
 }
 
 // NewCognitoAuthService creates a new Cognito auth service
-func NewCognitoAuthService(userRepo repository.UserRepository, userPoolID, region, clientID string) AuthService {
+func NewCognitoAuthService(userRepo repository.UserRepository, userPoolID, region, clientID, endpoint string) AuthService {
 	return &CognitoAuthService{
 		userRepo:   userRepo,
 		userPoolID: userPoolID,
 		region:     region,
 		clientID:   clientID,
+		endpoint:   endpoint,
 		jwksCache:  make(map[string]*rsa.PublicKey),
 	}
 }
@@ -78,7 +81,10 @@ func (s *CognitoAuthService) Login(ctx context.Context, email, password string) 
 
 // ValidateToken validates a Cognito JWT token and returns the user
 func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString string) (*model.User, error) {
+	log.Printf("🔍 CognitoAuthService: Starting token validation (token length: %d)", len(tokenString))
+	
 	if tokenString == "" {
+		log.Printf("❌ CognitoAuthService: Empty token provided")
 		return nil, errors.New("token is required")
 	}
 
@@ -87,35 +93,48 @@ func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString stri
 		jwt.WithValidMethods([]string{"RS256"}),
 		jwt.WithoutClaimsValidation(),
 	)
-	
+
+	log.Printf("🔍 CognitoAuthService: Parsing JWT token...")
+
 	// Parse token with proper keyfunc
 	token, err := parser.ParseWithClaims(tokenString, &CognitoJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		log.Printf("🔍 CognitoAuthService: Token parsing - checking signing method")
+		
 		// Ensure the signing method is what we expect
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			log.Printf("❌ CognitoAuthService: Unexpected signing method: %v", token.Method)
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Method)
 		}
 
 		// Get the kid from token header
 		kid, ok := token.Header["kid"].(string)
 		if !ok {
+			log.Printf("❌ CognitoAuthService: kid not found in token header")
 			return nil, errors.New("kid not found in token header")
 		}
+
+		log.Printf("🔍 CognitoAuthService: Getting public key for kid: %s", kid)
 
 		// Get the public key for this kid
 		publicKey, err := s.getPublicKey(kid)
 		if err != nil {
+			log.Printf("❌ CognitoAuthService: Failed to get public key for kid %s: %v", kid, err)
 			return nil, fmt.Errorf("failed to get public key: %w", err)
 		}
 
+		log.Printf("✅ CognitoAuthService: Public key retrieved successfully for kid: %s", kid)
 		return publicKey, nil
 	})
 
 	if err != nil {
+		log.Printf("❌ CognitoAuthService: Token parsing failed: %v", err)
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
 	claims, ok := token.Claims.(*CognitoJWTClaims)
 	if !ok || !token.Valid {
+		log.Printf("❌ CognitoAuthService: Invalid token claims or token not valid")
+		log.Printf("🔍 CognitoAuthService: Claims ok: %v, Token valid: %v", ok, token.Valid)
 		return nil, errors.New("invalid token claims")
 	}
 
@@ -130,9 +149,17 @@ func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString stri
 	}
 
 	// Verify issuer
-	expectedIssuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", s.region, s.userPoolID)
+	var expectedIssuer string
+	if s.endpoint != "" {
+		// Use local Cognito endpoint
+		expectedIssuer = fmt.Sprintf("%s/%s", s.endpoint, s.userPoolID)
+	} else {
+		// Use AWS Cognito endpoint
+		expectedIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", s.region, s.userPoolID)
+	}
+	
 	if claims.Issuer != expectedIssuer {
-		return nil, errors.New("invalid token issuer")
+		return nil, fmt.Errorf("invalid token issuer: expected %s, got %s", expectedIssuer, claims.Issuer)
 	}
 
 	// Get or create user in our database
@@ -192,9 +219,16 @@ func (s *CognitoAuthService) getPublicKey(kid string) (*rsa.PublicKey, error) {
 		return publicKey, nil
 	}
 
-	// Fetch JWKS from Cognito
-	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", s.region, s.userPoolID)
-	
+	// Fetch JWKS from Cognito (local or AWS)
+	var jwksURL string
+	if s.endpoint != "" {
+		// Use local Cognito endpoint
+		jwksURL = fmt.Sprintf("%s/%s/.well-known/jwks.json", s.endpoint, s.userPoolID)
+	} else {
+		// Use AWS Cognito endpoint
+		jwksURL = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", s.region, s.userPoolID)
+	}
+
 	resp, err := http.Get(jwksURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
@@ -277,12 +311,12 @@ func (s *CognitoAuthService) getOrCreateUser(ctx context.Context, cognitoUserID,
 
 	// Create new user
 	user = &model.User{
-		UserID:      cognitoUserID,
-		Email:       email,
-		Name:        strings.Split(email, "@")[0], // Use email prefix as default name
-		Language:    "ja",                        // Default to Japanese
-		CreatedAt:   time.Now().Unix(),
-		UpdatedAt:   time.Now().Unix(),
+		UserID:    cognitoUserID,
+		Email:     email,
+		Name:      strings.Split(email, "@")[0], // Use email prefix as default name
+		Language:  "ja",                         // Default to Japanese
+		CreatedAt: time.Now().Unix(),
+		UpdatedAt: time.Now().Unix(),
 	}
 
 	err = s.userRepo.Create(ctx, user)

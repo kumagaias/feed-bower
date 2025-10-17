@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { feedApi, ApiError } from '@/lib/api'
 import { Bower, Article, Feed } from '@/types'
@@ -24,23 +24,7 @@ export default function BowerPreviewModal({ isOpen, onClose, bower }: BowerPrevi
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch articles when modal opens
-  useEffect(() => {
-    if (isOpen && bower?.id) {
-      fetchBowerArticles()
-    }
-  }, [isOpen, bower?.id]) // fetchBowerArticles is defined inside the component, so it's safe to omit
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setArticles([])
-      setError(null)
-      setIsLoading(false)
-    }
-  }, [isOpen])
-
-  const fetchBowerArticles = async () => {
+  const fetchBowerArticles = useCallback(async () => {
     if (!bower?.id) return
 
     setIsLoading(true)
@@ -59,7 +43,23 @@ export default function BowerPreviewModal({ isOpen, onClose, bower }: BowerPrevi
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [bower?.id, language])
+
+  // Fetch articles when modal opens
+  useEffect(() => {
+    if (isOpen && bower?.id) {
+      fetchBowerArticles()
+    }
+  }, [isOpen, bower?.id, fetchBowerArticles])
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setArticles([])
+      setError(null)
+      setIsLoading(false)
+    }
+  }, [isOpen])
 
   const handleRetry = () => {
     fetchBowerArticles()

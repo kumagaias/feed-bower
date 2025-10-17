@@ -17,29 +17,29 @@ type ArticleService interface {
 	// Article retrieval
 	GetArticles(ctx context.Context, userID string, req *GetArticlesRequest) (*ArticleListResponse, error)
 	GetArticleByID(ctx context.Context, articleID string, userID string) (*model.Article, error)
-	
+
 	// Like management
 	LikeArticle(ctx context.Context, userID string, articleID string) error
 	UnlikeArticle(ctx context.Context, userID string, articleID string) error
-	
+
 	// Read management
 	MarkArticleAsRead(ctx context.Context, userID string, articleID string) error
-	
+
 	// Search
 	SearchArticles(ctx context.Context, userID string, req *SearchArticlesRequest) ([]*model.Article, error)
-	
+
 	// Batch operations for RSS updates
 	CreateArticles(ctx context.Context, articles []*model.Article) error
 }
 
 // GetArticlesRequest represents the request to get articles
 type GetArticlesRequest struct {
-	BowerID    *string                       `json:"bower_id,omitempty"`
-	Tab        string                        `json:"tab" validate:"oneof=all important liked"`
-	Limit      int32                         `json:"limit" validate:"min=1,max=100"`
-	LastKey    map[string]types.AttributeValue `json:"last_key,omitempty"`
-	SortBy     string                        `json:"sort_by" validate:"oneof=published_at created_at"`
-	SortOrder  string                        `json:"sort_order" validate:"oneof=asc desc"`
+	BowerID   *string                         `json:"bower_id,omitempty"`
+	Tab       string                          `json:"tab" validate:"oneof=all important liked"`
+	Limit     int32                           `json:"limit" validate:"min=1,max=100"`
+	LastKey   map[string]types.AttributeValue `json:"last_key,omitempty"`
+	SortBy    string                          `json:"sort_by" validate:"oneof=published_at created_at"`
+	SortOrder string                          `json:"sort_order" validate:"oneof=asc desc"`
 }
 
 // SearchArticlesRequest represents the request to search articles

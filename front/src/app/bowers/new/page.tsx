@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import { useBowers } from '@/hooks/useBowers'
 import Layout from '@/components/Layout'
@@ -11,13 +12,42 @@ import BowerEditModal from '@/components/BowerEditModal'
 import { colors } from '@/styles/colors'
 
 export default function NewBowerPage() {
-  const { language, user } = useApp()
+  const { language } = useApp()
+  const { isAuthenticated, isLoading } = useAuth()
   const t = useTranslation(language)
   const router = useRouter()
   const { createBower } = useBowers()
 
   const [showEditModal, setShowEditModal] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
+
+  // Redirect to home if not logged in
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
+      router.push('/')
+    }
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4 animate-bounce">🪺</div>
+              <p className="text-lg">{language === 'ja' ? '読み込み中...' : 'Loading...'}</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  // Don't render if not logged in
+  if (!isAuthenticated) {
+    return null
+  }
 
   // Handle modal close
   const handleModalClose = () => {

@@ -15,8 +15,8 @@ interface MobileHeaderProps {
 export default function MobileHeader({ searchBar }: MobileHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const { user, language, setLanguage } = useApp()
-  const { logout } = useAuth()
+  const { language, setLanguage } = useApp()
+  const { user, logout } = useAuth()
   const t = useTranslation(language)
   const pathname = usePathname()
   const router = useRouter()

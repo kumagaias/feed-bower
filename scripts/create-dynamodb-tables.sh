@@ -7,7 +7,7 @@ set -e
 
 # DynamoDB Local エンドポイント
 ENDPOINT="http://localhost:8000"
-REGION="us-east-1"
+REGION="ap-northeast-1"
 
 echo "🐣 Feed Bower - DynamoDB Local テーブル作成開始"
 echo "エンドポイント: $ENDPOINT"
@@ -183,11 +183,11 @@ echo ""
 echo "🎉 全てのテーブル作成が完了しました！"
 echo ""
 echo "📊 作成されたテーブル一覧:"
-aws dynamodb list-tables --endpoint-url $ENDPOINT --region us-east-1 --query 'TableNames' --output table
+aws dynamodb list-tables --endpoint-url $ENDPOINT --region ap-northeast-1 --query 'TableNames' --output table
 
 echo ""
 echo "🔍 テーブル詳細確認:"
 echo "   DynamoDB Admin: http://localhost:8001"
-echo "   AWS CLI: aws dynamodb describe-table --table-name [TABLE_NAME] --endpoint-url $ENDPOINT --region us-east-1"
+echo "   AWS CLI: aws dynamodb describe-table --table-name [TABLE_NAME] --endpoint-url $ENDPOINT --region ap-northeast-1"
 echo ""
 echo "✨ セットアップ完了！"

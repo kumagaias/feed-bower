@@ -28,7 +28,7 @@ func NewFeedHandler(feedService service.FeedService) *FeedHandler {
 // RegisterRoutes registers feed routes
 func (h *FeedHandler) RegisterRoutes(router *mux.Router) {
 	feedRouter := router.PathPrefix("/api/feeds").Subrouter()
-	
+
 	feedRouter.HandleFunc("", h.ListFeeds).Methods("GET", "OPTIONS")
 	feedRouter.HandleFunc("", h.AddFeed).Methods("POST", "OPTIONS")
 	feedRouter.HandleFunc("/{id}", h.GetFeed).Methods("GET", "OPTIONS")

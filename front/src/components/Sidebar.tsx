@@ -9,8 +9,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
 export default function Sidebar() {
-  const { user, language, setLanguage } = useApp()
-  const { logout } = useAuth()
+  const { language, setLanguage } = useApp()
+  const { user, logout } = useAuth()
   const t = useTranslation(language)
   const pathname = usePathname()
   const router = useRouter()

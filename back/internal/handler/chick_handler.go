@@ -28,7 +28,7 @@ func NewChickHandler(chickService service.ChickService) *ChickHandler {
 // RegisterRoutes registers chick routes
 func (h *ChickHandler) RegisterRoutes(router *mux.Router) {
 	chickRouter := router.PathPrefix("/api/chick").Subrouter()
-	
+
 	chickRouter.HandleFunc("/stats", h.GetStats).Methods("GET", "OPTIONS")
 	chickRouter.HandleFunc("/stats", h.UpdateStats).Methods("PUT", "OPTIONS")
 	chickRouter.HandleFunc("/liked-articles", h.GetLikedArticles).Methods("GET", "OPTIONS")
@@ -217,7 +217,7 @@ func (h *ChickHandler) GetLikedArticles(w http.ResponseWriter, r *http.Request) 
 		if article.Bower != nil {
 			bower = *article.Bower
 		}
-		
+
 		articleResponses[i] = LikedArticleResponse{
 			ArticleID: article.ArticleID,
 			Title:     article.Title,

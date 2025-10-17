@@ -28,15 +28,17 @@ func NewArticleHandler(articleService service.ArticleService) *ArticleHandler {
 // RegisterRoutes registers article routes
 func (h *ArticleHandler) RegisterRoutes(router *mux.Router) {
 	articleRouter := router.PathPrefix("/api/articles").Subrouter()
-	
+
 	articleRouter.HandleFunc("", h.ListArticles).Methods("GET", "OPTIONS")
+	// Register specific paths before parameterized paths to avoid conflicts
+	articleRouter.HandleFunc("/liked", h.ListLikedArticles).Methods("GET", "OPTIONS")
+	articleRouter.HandleFunc("/search", h.SearchArticles).Methods("GET", "OPTIONS")
+	// Parameterized paths should come after specific paths
 	articleRouter.HandleFunc("/{id}", h.GetArticle).Methods("GET", "OPTIONS")
 	articleRouter.HandleFunc("/{id}/like", h.LikeArticle).Methods("POST", "OPTIONS")
 	articleRouter.HandleFunc("/{id}/like", h.UnlikeArticle).Methods("DELETE", "OPTIONS")
 	articleRouter.HandleFunc("/{id}/read", h.MarkAsRead).Methods("POST", "OPTIONS")
 	articleRouter.HandleFunc("/{id}/unread", h.MarkAsUnread).Methods("POST", "OPTIONS")
-	articleRouter.HandleFunc("/liked", h.ListLikedArticles).Methods("GET", "OPTIONS")
-	articleRouter.HandleFunc("/search", h.SearchArticles).Methods("GET", "OPTIONS")
 }
 
 // ArticleListResponse represents the response for article listing

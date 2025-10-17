@@ -36,7 +36,7 @@ export default function LandingHeader() {
       // Redirect will be handled by the auth context
     } catch (error) {
       console.log("Login failed, keeping modal open:", error);
-      let errorMessage = t.error;
+      let errorMessage: string = t.error;
 
       if (error instanceof ApiError) {
         if (error.status === 401) {

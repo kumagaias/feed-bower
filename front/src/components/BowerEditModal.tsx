@@ -43,12 +43,15 @@ export default function BowerEditModal({
   const [showPreview, setShowPreview] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempBowerName, setTempBowerName] = useState("");
+  const [hasUserEditedName, setHasUserEditedName] = useState(false);
 
   // Initialize with bower data and load feeds
   useEffect(() => {
     if (isOpen && bower) {
       setBowerName(bower.name || "");
       setKeywords(bower.keywords || []);
+      // 既存のバウアーの場合、名前が存在すればユーザーが設定したものとみなす
+      setHasUserEditedName(!!bower.name);
 
       // Use feeds from bower object if available, otherwise load from API
       if (bower.feeds && bower.feeds.length > 0) {
@@ -96,6 +99,7 @@ export default function BowerEditModal({
       setShowPreview(false);
       setIsEditingName(false);
       setTempBowerName("");
+      setHasUserEditedName(false);
     }
   }, [isOpen]);
 
@@ -225,8 +229,8 @@ export default function BowerEditModal({
   const handleKeywordSave = async (newKeywords: string[]) => {
     setKeywords(newKeywords);
 
-    // Auto-generate bower name only if current name is empty
-    if (!bowerName) {
+    // Auto-generate bower name only if user hasn't manually edited it AND name is empty
+    if (!hasUserEditedName && !bowerName.trim()) {
       const generatedName = generateBowerName(newKeywords, language);
       setBowerName(generatedName);
     }
@@ -393,57 +397,56 @@ export default function BowerEditModal({
     };
 
     const existingUrls = feeds.map((feed) => feed.url);
-    const newFeeds: any[] = [];
-    let totalAttempts = 0;
-    let successCount = 0;
-    let errorCount = 0;
-
+    // 並列処理用: 全てのフィードURLを収集
+    const allFeedUrls: string[] = [];
+    
     for (const keyword of keywords) {
-      // Try both original case and lowercase
       const keywordLower = keyword.toLowerCase();
-      const feedUrls =
-        keywordFeedMap[keyword] || keywordFeedMap[keywordLower] || [];
-
-      console.log(
-        `Checking keyword "${keyword}" (${keywordLower}):`,
-        feedUrls.length,
-        "feeds found"
-      );
-
+      const feedUrls = keywordFeedMap[keyword] || keywordFeedMap[keywordLower] || [];
+      
+      console.log(`Checking keyword "${keyword}" (${keywordLower}):`, feedUrls.length, "feeds found");
+      
       for (const url of feedUrls) {
-        // Skip if feed already exists
-        if (existingUrls.includes(url) || newFeeds.some((f) => f.url === url)) {
-          console.log(`Skipping duplicate feed: ${url}`);
-          continue;
-        }
-
-        totalAttempts++;
-        console.log(`Attempting to add feed ${totalAttempts}: ${url}`);
-
-        try {
-          const newFeed = await feedApi.addFeed({
-            bower_id: bower.id,
-            url: url,
-            title: "",
-            description: "",
-          });
-          newFeeds.push(newFeed);
-          existingUrls.push(url);
-          successCount++;
-          console.log(`Successfully added feed: ${url}`, newFeed);
-
-          // Limit to avoid too many feeds
-          if (newFeeds.length >= 2) break;
-        } catch (error) {
-          errorCount++;
-          console.error(`Failed to auto-add feed ${url}:`, error);
-          // Continue with other feeds even if one fails
+        if (!existingUrls.includes(url) && !allFeedUrls.includes(url)) {
+          allFeedUrls.push(url);
         }
       }
-
-      // Limit total auto-added feeds
-      if (newFeeds.length >= 2) break;
     }
+
+    // 最大2つのフィードに制限
+    const feedsToAdd = allFeedUrls.slice(0, 2);
+    console.log(`🚀 Adding ${feedsToAdd.length} feeds in parallel:`, feedsToAdd);
+
+    // Promise.allで並列実行
+    const startTime = Date.now();
+    const feedPromises = feedsToAdd.map(async (url) => {
+      try {
+        console.log(`📡 Adding feed: ${url}`);
+        const newFeed = await feedApi.addFeed({
+          bower_id: bower.id,
+          url: url,
+          title: "",
+          description: "",
+        });
+        console.log(`✅ Successfully added: ${url}`);
+        return { success: true, feed: newFeed, url };
+      } catch (error) {
+        console.error(`❌ Failed to add ${url}:`, error);
+        return { success: false, error, url };
+      }
+    });
+
+    const results = await Promise.all(feedPromises);
+    const endTime = Date.now();
+    
+    // 結果の集計
+    const newFeeds = results.filter(r => r.success).map(r => r.feed);
+    const successCount = results.filter(r => r.success).length;
+    const errorCount = results.filter(r => !r.success).length;
+    const totalAttempts = results.length;
+    
+    console.log(`⏱️ Parallel feed addition completed in ${endTime - startTime}ms`);
+    console.log(`📊 Results: ${successCount} success, ${errorCount} failed out of ${totalAttempts} attempts`);
 
     console.log(
       `Auto-add feeds summary: ${successCount} success, ${errorCount} errors, ${totalAttempts} total attempts`
@@ -476,8 +479,11 @@ export default function BowerEditModal({
   };
 
   const handleNameSave = () => {
-    setBowerName(tempBowerName.trim() || generateBowerName(keywords, language));
+    const newName = tempBowerName.trim() || generateBowerName(keywords, language);
+    setBowerName(newName);
     setIsEditingName(false);
+    // ユーザーが手動で名前を編集したことを記録（空でない場合のみ）
+    setHasUserEditedName(true);
   };
 
   const handleNameCancel = () => {

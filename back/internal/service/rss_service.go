@@ -20,11 +20,11 @@ type RSSService interface {
 	// Feed fetching
 	FetchFeed(ctx context.Context, feedURL string) (*FeedData, error)
 	FetchFeedInfo(ctx context.Context, feedURL string) (*FeedInfo, error)
-	
+
 	// Article parsing
 	ParseRSSFeed(data []byte) (*FeedData, error)
 	ParseAtomFeed(data []byte) (*FeedData, error)
-	
+
 	// Utility functions
 	ExtractImageURL(content string) string
 	CleanContent(content string) string
@@ -32,10 +32,10 @@ type RSSService interface {
 
 // FeedData represents parsed feed data with articles
 type FeedData struct {
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	URL         string    `json:"url"`
-	Category    string    `json:"category"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	URL         string        `json:"url"`
+	Category    string        `json:"category"`
 	Articles    []ArticleData `json:"articles"`
 }
 
@@ -48,11 +48,11 @@ type FeedInfo struct {
 
 // ArticleData represents parsed article data
 type ArticleData struct {
-	Title       string     `json:"title"`
-	Content     string     `json:"content"`
-	URL         string     `json:"url"`
-	PublishedAt time.Time  `json:"published_at"`
-	ImageURL    *string    `json:"image_url,omitempty"`
+	Title       string    `json:"title"`
+	Content     string    `json:"content"`
+	URL         string    `json:"url"`
+	PublishedAt time.Time `json:"published_at"`
+	ImageURL    *string   `json:"image_url,omitempty"`
 }
 
 // RSS 2.0 structures
@@ -82,11 +82,11 @@ type Item struct {
 
 // Atom structures
 type AtomFeed struct {
-	XMLName xml.Name    `xml:"feed"`
-	Title   string      `xml:"title"`
-	Subtitle string     `xml:"subtitle"`
-	Link    []AtomLink  `xml:"link"`
-	Entries []AtomEntry `xml:"entry"`
+	XMLName  xml.Name    `xml:"feed"`
+	Title    string      `xml:"title"`
+	Subtitle string      `xml:"subtitle"`
+	Link     []AtomLink  `xml:"link"`
+	Entries  []AtomEntry `xml:"entry"`
 }
 
 type AtomLink struct {
@@ -96,13 +96,13 @@ type AtomLink struct {
 }
 
 type AtomEntry struct {
-	Title     string     `xml:"title"`
-	Summary   string     `xml:"summary"`
+	Title     string      `xml:"title"`
+	Summary   string      `xml:"summary"`
 	Content   AtomContent `xml:"content"`
-	Link      []AtomLink `xml:"link"`
-	Published string     `xml:"published"`
-	Updated   string     `xml:"updated"`
-	ID        string     `xml:"id"`
+	Link      []AtomLink  `xml:"link"`
+	Published string      `xml:"published"`
+	Updated   string      `xml:"updated"`
+	ID        string      `xml:"id"`
 }
 
 type AtomContent struct {
@@ -119,7 +119,7 @@ type rssService struct {
 func NewRSSService() RSSService {
 	config := httpclient.DefaultSecureHTTPConfig()
 	config.UserAgent = "Feed-Bower/1.0 (RSS Reader)"
-	
+
 	secureClient, err := httpclient.NewSecureHTTPClient(config)
 	if err != nil {
 		// Fallback to default config if there's an error
@@ -199,7 +199,7 @@ func (s *rssService) FetchFeedInfo(ctx context.Context, feedURL string) (*FeedIn
 func (s *rssService) parseFeed(data []byte, feedURL string) (*FeedData, error) {
 	// Try to determine feed type by looking at the XML
 	dataStr := string(data)
-	
+
 	if strings.Contains(dataStr, "<rss") || strings.Contains(dataStr, "<RSS") {
 		return s.ParseRSSFeed(data)
 	} else if strings.Contains(dataStr, "<feed") && (strings.Contains(dataStr, "atom") || strings.Contains(dataStr, "Atom")) {
@@ -399,16 +399,16 @@ func (s *rssService) ExtractImageURL(content string) string {
 	// Regular expression to find img tags with src attribute
 	imgRegex := regexp.MustCompile(`<img[^>]+src=["']([^"']+)["'][^>]*>`)
 	matches := imgRegex.FindStringSubmatch(content)
-	
+
 	if len(matches) > 1 {
 		imageURL := matches[1]
 		// Basic validation - check if it looks like a valid image URL
-		if strings.HasPrefix(imageURL, "http") && 
-		   (strings.Contains(imageURL, ".jpg") || 
-		    strings.Contains(imageURL, ".jpeg") || 
-		    strings.Contains(imageURL, ".png") || 
-		    strings.Contains(imageURL, ".gif") || 
-		    strings.Contains(imageURL, ".webp")) {
+		if strings.HasPrefix(imageURL, "http") &&
+			(strings.Contains(imageURL, ".jpg") ||
+				strings.Contains(imageURL, ".jpeg") ||
+				strings.Contains(imageURL, ".png") ||
+				strings.Contains(imageURL, ".gif") ||
+				strings.Contains(imageURL, ".webp")) {
 			return imageURL
 		}
 	}

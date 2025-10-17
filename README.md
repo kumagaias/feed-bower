@@ -130,6 +130,41 @@ LOG_LEVEL=debug
 
 ## 開発
 
+### テスト実行
+
+プロジェクト全体のテストを実行するには：
+
+```bash
+# 全てのテストを実行
+make test
+
+# フロントエンドテストのみ
+make test-frontend
+
+# バックエンドテストのみ
+make test-backend
+
+# カバレッジ付きテスト実行
+make test-coverage
+```
+
+個別にテストを実行する場合：
+
+```bash
+# フロントエンドテスト
+cd front
+npm test                    # 単発実行
+npm run test:watch         # ウォッチモード
+npm run test:coverage      # カバレッジ付き
+
+# バックエンドテスト
+cd back
+go test ./...              # 全テスト実行
+go test -v ./...           # 詳細出力
+go test -race ./...        # レース条件検出
+go test -cover ./...       # カバレッジ付き
+```
+
 ### プロトタイプ開発（現在）
 
 ```bash
@@ -181,6 +216,34 @@ We provide an automated system for post-task completion workflows:
 
 For details, see [Task Automation Guide](docs/task-automation.md).
 
+### 🚀 Quick Development Start
+
+**Start all services at once** (Frontend + Backend + Docker):
+
+```bash
+# Start all development services
+make dev-all
+
+# Stop all services (or use Ctrl+C)
+make dev-stop
+```
+
+This command will start:
+- **Frontend**: http://localhost:3000 (Next.js dev server)
+- **Backend API**: http://localhost:8080 (Go server)
+- **DynamoDB Local**: http://localhost:8000
+- **DynamoDB Admin**: http://localhost:8001
+
+**Individual service commands**:
+
+```bash
+# Start only frontend
+make dev-frontend
+
+# Start only backend  
+make dev-backend
+```
+
 ### Full Development (Future Implementation)
 
 #### Frontend
@@ -214,6 +277,10 @@ go run cmd/lambda/main.go
 
 # Run tests
 go test ./...
+
+# Run tests with coverage
+go test -v -race -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
 
 # Integration tests (using DynamoDB Local)
 go test ./... -tags=integration

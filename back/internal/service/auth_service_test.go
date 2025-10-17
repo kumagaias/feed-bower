@@ -138,7 +138,7 @@ func TestAuthService_ValidateToken(t *testing.T) {
 	authService := NewAuthService(mockRepo, "test-secret")
 
 	ctx := context.Background()
-	
+
 	// First create a user and get a token
 	user, token, err := authService.CreateGuestUser(ctx, "ja")
 	if err != nil {

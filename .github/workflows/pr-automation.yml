@@ -56,20 +56,20 @@ jobs:
           else
             npm install
           fi
+          npm run type-check || echo "Type check errors found but continuing..."
           npm run lint || echo "Lint warnings found but continuing..."
+          npm run test || echo "Test errors found but continuing..."
           npm run build || echo "Build errors found but continuing..."
-          if npm run | grep -q "test"; then
-            npm test || echo "Test errors found but continuing..."
-          fi
           echo "✅ Frontend tests completed" >> $GITHUB_STEP_SUMMARY
 
       # バックエンドテスト
       - name: Test Backend
-        if: hashFiles('back/.mod') != ''
+        if: hashFiles('back/go.mod') != ''
         working-directory: back
         run: |
           go mod tidy
-          go test ./... || echo "Test errors found but continuing..."
+          go vet ./... || echo "Go vet errors found but continuing..."
+          go test -v ./... || echo "Test errors found but continuing..."
           go build ./... || echo "Build errors found but continuing..."
           echo "✅ Backend tests completed" >> $GITHUB_STEP_SUMMARY
 

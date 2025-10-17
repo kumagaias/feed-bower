@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useApp } from '@/contexts/AppContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import { useBowers } from '@/hooks/useBowers'
 import { bowerApi, feedApi } from '@/lib/api'
@@ -16,7 +17,8 @@ import BowerEditModal from '@/components/BowerEditModal'
 import { colors } from '@/styles/colors'
 
 export default function BowersPage() {
-  const { language, user } = useApp()
+  const { language } = useApp()
+  const { user, isAuthenticated, isLoading } = useAuth()
   const t = useTranslation(language)
   const router = useRouter()
   const { bowers, loading, error, createBower, updateBower, deleteBower } = useBowers()
@@ -108,14 +110,6 @@ export default function BowersPage() {
         if (addedFeeds && addedFeeds.length > 0) {
           newBower.feeds = addedFeeds
         }
-      }
-
-      // Automatically open edit modal to show the newly created bower with feeds
-      if (newBower && bowerData.keywords.length > 0) {
-        setTimeout(() => {
-          setEditingBower(newBower)
-          setShowEditModal(true)
-        }, 500)
       }
 
       setToast({
@@ -262,13 +256,26 @@ export default function BowersPage() {
 
   // Redirect to home if not logged in
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated && !isLoading) {
       router.push('/')
     }
-  }, [user, router])
+  }, [isAuthenticated, isLoading, router])
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="p-6">
+          <div className="max-w-4xl mx-auto">
+            <LoadingAnimation />
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   // Don't render if not logged in
-  if (!user) {
+  if (!isAuthenticated) {
     return null
   }
 
@@ -332,9 +339,17 @@ export default function BowersPage() {
   let filteredBowers = bowers
   const mockBowers = getMockPublicBowers()
   
+  console.log('🔍 Filtering bowers:', {
+    totalBowers: bowers.length,
+    activeTab,
+    userId: user?.id,
+    bowerCreatorIds: bowers.map(b => b.creatorId)
+  })
+  
   // Tab filtering
   if (activeTab === 'my') {
     filteredBowers = bowers.filter(b => !b.creatorId || b.creatorId === user?.id)
+    console.log('🔍 After "my" filter:', filteredBowers.length)
   } else if (activeTab === 'preset') {
     filteredBowers = mockBowers
   }
@@ -461,19 +476,6 @@ export default function BowersPage() {
           {/* Bowers Grid */}
           {!loading && paginatedBowers.length > 0 && (
             <>
-              {/* Create Button for My Bowers */}
-              {activeTab === 'my' && (
-                <div className="mb-6 flex justify-center">
-                  <button 
-                    onClick={handleCreateBower}
-                    disabled={isCreating}
-                    className="bg-teal-500 text-white px-6 py-3 rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isCreating ? '🐣' : '+'} {language === 'ja' ? 'バウアーを作成' : 'Create Bower'}
-                  </button>
-                </div>
-              )}
-
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paginatedBowers.map((bower) => {
                   const isOwnBower = !bower.creatorId || bower.creatorId === user?.id
@@ -492,6 +494,31 @@ export default function BowersPage() {
                     />
                   )
                 })}
+
+                {/* Create Button Card for My Bowers - at the end */}
+                {activeTab === 'my' && (
+                  <div
+                    onClick={handleCreateBower}
+                    className="rounded-xl shadow-md hover:shadow-2xl transition-all cursor-pointer group overflow-hidden flex flex-col items-center justify-center min-h-[200px] border-2 border-dashed"
+                    style={{
+                      backgroundColor: 'transparent',
+                      borderColor: '#f59e0b'
+                    }}
+                  >
+                    <div 
+                      className="text-6xl mb-3 group-hover:scale-110 transition-transform"
+                      style={{ color: '#f59e0b' }}
+                    >
+                      {isCreating ? '🐣' : '+'}
+                    </div>
+                    <p 
+                      className="text-lg font-semibold"
+                      style={{ color: '#f59e0b' }}
+                    >
+                      {language === 'ja' ? '作成' : 'Create'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Pagination */}

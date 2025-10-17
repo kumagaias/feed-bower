@@ -67,7 +67,7 @@ func TestChickStats_AddLike(t *testing.T) {
 
 func TestChickStats_RemoveLike(t *testing.T) {
 	stats := NewChickStats("user-123")
-	
+
 	// Add some likes first
 	for i := 0; i < 5; i++ {
 		stats.AddLike()

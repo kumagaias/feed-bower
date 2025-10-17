@@ -158,7 +158,7 @@ func TestSecureBodyReader_ReadBody(t *testing.T) {
 	// Test normal body reading
 	body := "test body content"
 	req := httptest.NewRequest("POST", "/test", strings.NewReader(body))
-	
+
 	result, err := reader.ReadBody(req)
 	if err != nil {
 		t.Fatalf("Failed to read body: %v", err)
@@ -178,7 +178,7 @@ func TestSecureBodyReader_TooLarge(t *testing.T) {
 	// Create body larger than limit
 	largeBody := strings.Repeat("a", 20)
 	req := httptest.NewRequest("POST", "/test", strings.NewReader(largeBody))
-	
+
 	_, err := reader.ReadBody(req)
 	if err == nil {
 		t.Error("Expected error for large body")
@@ -198,7 +198,7 @@ func TestSecureBodyReader_Timeout(t *testing.T) {
 	// Create a slow reader
 	slowReader := &slowReader{data: "test", delay: 100 * time.Millisecond}
 	req := httptest.NewRequest("POST", "/test", slowReader)
-	
+
 	_, err := reader.ReadBody(req)
 	if err == nil {
 		t.Error("Expected timeout error")

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -51,7 +52,7 @@ func (m *MockBowerRepository) GetByID(ctx context.Context, bowerID string) (*mod
 	if bower, exists := m.bowers[bowerID]; exists {
 		return bower, nil
 	}
-	return nil, nil
+	return nil, errors.New("bower not found")
 }
 
 func (m *MockBowerRepository) GetByUserID(ctx context.Context, userID string, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error) {
@@ -218,7 +219,7 @@ func (m *MockArticleRepository) BatchCreate(ctx context.Context, articles []*mod
 
 // MockChickRepository
 type MockChickRepository struct {
-	stats        map[string]*model.ChickStats
+	stats         map[string]*model.ChickStats
 	likedArticles map[string]map[string]*model.LikedArticle // userID -> articleID -> LikedArticle
 }
 
@@ -336,7 +337,7 @@ func (m *MockRSSService) CleanContent(content string) string {
 func TestServiceIntegration(t *testing.T) {
 	ctx := context.Background()
 	repos := NewMockRepositories()
-	
+
 	// Create services
 	authService := NewAuthService(repos.UserRepo, "test-secret")
 	bowerService := NewBowerService(repos.BowerRepo, repos.FeedRepo)
@@ -345,7 +346,7 @@ func TestServiceIntegration(t *testing.T) {
 	chickService := NewChickService(repos.ChickRepo, repos.ArticleRepo, repos.FeedRepo, repos.BowerRepo)
 
 	// Test flow: Create user -> Create bower -> Add feed -> Check chick stats
-	
+
 	// 1. Create a guest user
 	user, token, err := authService.CreateGuestUser(ctx, "ja")
 	if err != nil {
