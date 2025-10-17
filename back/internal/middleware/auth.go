@@ -32,7 +32,7 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("🔐 Auth middleware: Processing request to %s", r.URL.Path)
-			
+
 			// Check if path should skip authentication
 			if shouldSkipAuth(r.URL.Path, config.SkipPaths) {
 				log.Printf("✅ Auth middleware: Skipping authentication for path %s", r.URL.Path)

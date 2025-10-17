@@ -174,7 +174,7 @@ func (h *BowerHandler) ListBowers(w http.ResponseWriter, r *http.Request) {
 		response.InternalServerErrorWithErr(w, "Failed to list bowers", err)
 		return
 	}
-	
+
 	log.Printf("✅ ListBowers success for user %s: found %d bowers", user.UserID, len(bowers))
 
 	bowerResponses := make([]*BowerResponse, len(bowers))

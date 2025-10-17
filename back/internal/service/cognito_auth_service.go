@@ -82,7 +82,7 @@ func (s *CognitoAuthService) Login(ctx context.Context, email, password string) 
 // ValidateToken validates a Cognito JWT token and returns the user
 func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString string) (*model.User, error) {
 	log.Printf("🔍 CognitoAuthService: Starting token validation (token length: %d)", len(tokenString))
-	
+
 	if tokenString == "" {
 		log.Printf("❌ CognitoAuthService: Empty token provided")
 		return nil, errors.New("token is required")
@@ -99,7 +99,7 @@ func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString stri
 	// Parse token with proper keyfunc
 	token, err := parser.ParseWithClaims(tokenString, &CognitoJWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		log.Printf("🔍 CognitoAuthService: Token parsing - checking signing method")
-		
+
 		// Ensure the signing method is what we expect
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			log.Printf("❌ CognitoAuthService: Unexpected signing method: %v", token.Method)
@@ -157,7 +157,7 @@ func (s *CognitoAuthService) ValidateToken(ctx context.Context, tokenString stri
 		// Use AWS Cognito endpoint
 		expectedIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", s.region, s.userPoolID)
 	}
-	
+
 	if claims.Issuer != expectedIssuer {
 		return nil, fmt.Errorf("invalid token issuer: expected %s, got %s", expectedIssuer, claims.Issuer)
 	}

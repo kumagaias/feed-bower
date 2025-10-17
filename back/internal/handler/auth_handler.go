@@ -265,6 +265,7 @@ func (h *AuthHandler) toUserResponse(user *model.User) *UserResponse {
 		CreatedAt: user.CreatedAt,
 	}
 }
+
 // GetDevUser returns the development user information (development only)
 func (h *AuthHandler) GetDevUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -276,7 +277,7 @@ func (h *AuthHandler) GetDevUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusNotFound, "Development user not found", err.Error())
 		return
 	}
-	
+
 	// Return user information in a simple format for mock auth
 	userInfo := map[string]interface{}{
 		"user_id": user.UserID,

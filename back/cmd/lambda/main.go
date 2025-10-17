@@ -177,7 +177,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 // healthHandler handles health check requests
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("💓 Health check requested from %s", r.RemoteAddr)
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 

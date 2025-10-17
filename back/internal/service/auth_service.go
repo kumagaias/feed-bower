@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -176,7 +177,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (*model
 func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*model.User, error) {
 	// Do not log token value to avoid exposure of sensitive information
 	fmt.Println("🔍 ValidateToken called")
-	
+
 	if tokenString == "" {
 		fmt.Println("❌ Token is empty")
 		return nil, errors.New("token is required")
@@ -191,14 +192,15 @@ func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*m
 			fmt.Printf("❌ Development user not found: %v\n", err)
 			return nil, fmt.Errorf("development user not found: %w", err)
 		}
-		
+
 		fmt.Println("✅ Mock token validated successfully")
 		// Return the actual dev user from database
 		return user, nil
 	}
 
 	// Handle Cognito tokens for development (they start with "eyJ")
-	if strings.HasPrefix(tokenString, "eyJ") {
+	// Only use this path if explicitly enabled via environment variable
+	if os.Getenv("USE_COGNITO_DEV_MODE") == "true" && strings.HasPrefix(tokenString, "eyJ") {
 		fmt.Println("🔧 Processing Cognito token for development")
 		// In development, accept Cognito tokens without validation
 		// This is a simplified approach for local development
@@ -207,7 +209,7 @@ func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*m
 			fmt.Printf("❌ Development user not found: %v\n", err)
 			return nil, fmt.Errorf("development user not found: %w", err)
 		}
-		
+
 		fmt.Printf("✅ Cognito token validated successfully for user: %s\n", user.Email)
 		// Return the actual dev user from database
 		return user, nil
