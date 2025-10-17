@@ -32,7 +32,7 @@ export default function BowerCard({
   return (
     <div
       onClick={() => {
-        router.push(`/feeds?bower=${encodeURIComponent(bower.name)}`)
+        router.push(`/feeds?bowerId=${bower.id}`)
       }}
       className="rounded-xl shadow-md hover:shadow-2xl transition-all relative cursor-pointer group overflow-hidden"
       style={{ 
@@ -139,11 +139,7 @@ export default function BowerCard({
         </div>
         
         <div className="mt-auto">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100">
-            <div className="flex items-center gap-1">
-              <span>❤️</span>
-              <span className="font-medium">{Math.max(1, bower.likes || 0)}</span>
-            </div>
+          <div className="flex items-center justify-end text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100">
             <div className="text-xs">
               {bower.createdAt ? new Date(bower.createdAt).toLocaleDateString(language === 'ja' ? 'ja-JP' : 'en-US', { month: 'short', day: 'numeric' }) : ''}
             </div>
@@ -166,12 +162,7 @@ export default function BowerCard({
             </button>
           )}
 
-          {isOwnBower && (
-            <div className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-600">
-              <span>⭐</span>
-              <span>{bower.likes || 0} {t.likes}</span>
-            </div>
-          )}
+
         </div>
       </div>
     </div>

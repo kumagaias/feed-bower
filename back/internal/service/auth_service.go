@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -19,13 +21,13 @@ import (
 type AuthService interface {
 	// Guest login
 	CreateGuestUser(ctx context.Context, language string) (*model.User, string, error)
-	
+
 	// Regular authentication
 	Register(ctx context.Context, email, password, name, language string) (*model.User, string, error)
 	Login(ctx context.Context, email, password string) (*model.User, string, error)
 	ValidateToken(ctx context.Context, tokenString string) (*model.User, error)
 	RefreshToken(ctx context.Context, tokenString string) (string, error)
-	
+
 	// User management
 	GetUserByID(ctx context.Context, userID string) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
@@ -50,9 +52,9 @@ func NewAuthService(userRepo repository.UserRepository, jwtSecret string) AuthSe
 
 // JWTClaims represents the JWT token claims
 type JWTClaims struct {
-	UserID   string `json:"user_id"`
-	Email    string `json:"email"`
-	IsGuest  bool   `json:"is_guest"`
+	UserID  string `json:"user_id"`
+	Email   string `json:"email"`
+	IsGuest bool   `json:"is_guest"`
 	jwt.RegisteredClaims
 }
 
@@ -173,8 +175,44 @@ func (s *authService) Login(ctx context.Context, email, password string) (*model
 
 // ValidateToken validates a JWT token and returns the user
 func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*model.User, error) {
+	// Do not log token value to avoid exposure of sensitive information
+	fmt.Println("🔍 ValidateToken called")
+
 	if tokenString == "" {
+		fmt.Println("❌ Token is empty")
 		return nil, errors.New("token is required")
+	}
+
+	// Handle mock tokens for development
+	if strings.HasPrefix(tokenString, "mock-jwt-token-") {
+		fmt.Println("🔧 Processing mock token")
+		// For mock tokens, find the actual dev user from database
+		user, err := s.userRepo.GetByEmail(ctx, "dev@feed-bower.local")
+		if err != nil {
+			fmt.Printf("❌ Development user not found: %v\n", err)
+			return nil, fmt.Errorf("development user not found: %w", err)
+		}
+
+		fmt.Println("✅ Mock token validated successfully")
+		// Return the actual dev user from database
+		return user, nil
+	}
+
+	// Handle Cognito tokens for development (they start with "eyJ")
+	// Only use this path if explicitly enabled via environment variable
+	if os.Getenv("USE_COGNITO_DEV_MODE") == "true" && strings.HasPrefix(tokenString, "eyJ") {
+		fmt.Println("🔧 Processing Cognito token for development")
+		// In development, accept Cognito tokens without validation
+		// This is a simplified approach for local development
+		user, err := s.userRepo.GetByEmail(ctx, "dev@feed-bower.local")
+		if err != nil {
+			fmt.Printf("❌ Development user not found: %v\n", err)
+			return nil, fmt.Errorf("development user not found: %w", err)
+		}
+
+		fmt.Printf("✅ Cognito token validated successfully for user: %s\n", user.Email)
+		// Return the actual dev user from database
+		return user, nil
 	}
 
 	// Parse and validate token

@@ -17,17 +17,17 @@ type ChickService interface {
 	// Stats management
 	GetStats(ctx context.Context, userID string) (*model.ChickStats, error)
 	UpdateStats(ctx context.Context, userID string, req *UpdateStatsRequest) (*ChickStatsResponse, error)
-	
+
 	// Like management (integrated with stats)
 	AddLike(ctx context.Context, userID string, articleID string) (*ChickStatsResponse, error)
 	RemoveLike(ctx context.Context, userID string, articleID string) (*ChickStatsResponse, error)
-	
+
 	// Date checking
 	CheckDate(ctx context.Context, userID string, date string) (*ChickStatsResponse, error)
-	
+
 	// Liked articles
 	GetLikedArticles(ctx context.Context, userID string, limit int32, lastKey map[string]types.AttributeValue) (*LikedArticlesResponse, error)
-	
+
 	// Reset (for debugging)
 	ResetStats(ctx context.Context, userID string) error
 }

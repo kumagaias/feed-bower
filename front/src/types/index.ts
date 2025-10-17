@@ -17,6 +17,9 @@ export interface Article {
   url: string
   publishedAt: Date
   liked: boolean
+  bower: string
+  read: boolean
+  image?: string
 }
 
 export interface Bower {

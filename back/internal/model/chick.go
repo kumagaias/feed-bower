@@ -13,7 +13,7 @@ type ChickStats struct {
 	CheckedDays  int      `json:"checked_days" dynamodbav:"checked_days" validate:"min=0"`
 	CheckedDates []string `json:"checked_dates" dynamodbav:"checked_dates"`
 	UpdatedAt    int64    `json:"updated_at" dynamodbav:"updated_at"`
-	
+
 	// Computed field not stored in DB
 	NextLevelExp int `json:"next_level_exp" dynamodbav:"-"`
 }
@@ -23,7 +23,7 @@ type LikedArticle struct {
 	UserID    string `json:"user_id" dynamodbav:"user_id" validate:"required"`
 	ArticleID string `json:"article_id" dynamodbav:"article_id" validate:"required"`
 	LikedAt   int64  `json:"liked_at" dynamodbav:"liked_at"`
-	
+
 	// These fields are joined from Articles table
 	Title string  `json:"title,omitempty" dynamodbav:"-"`
 	URL   string  `json:"url,omitempty" dynamodbav:"-"`
@@ -60,7 +60,7 @@ func (cs *ChickStats) AddLike() bool {
 	oldLevel := cs.Level
 	cs.addExperience(1)
 	cs.UpdatedAt = time.Now().Unix()
-	
+
 	// Return true if level up occurred
 	return cs.Level > oldLevel
 }
@@ -85,13 +85,13 @@ func (cs *ChickStats) AddCheckedDate(date string) bool {
 			return false // Already checked
 		}
 	}
-	
+
 	cs.CheckedDates = append(cs.CheckedDates, date)
 	cs.CheckedDays = len(cs.CheckedDates)
 	oldLevel := cs.Level
 	cs.addExperience(1)
 	cs.UpdatedAt = time.Now().Unix()
-	
+
 	// Return true if level up occurred
 	return cs.Level > oldLevel
 }
@@ -123,13 +123,13 @@ func (cs *ChickStats) GetChickEmoji() string {
 // addExperience adds experience points and handles level up
 func (cs *ChickStats) addExperience(points int) {
 	cs.Experience += points
-	
+
 	// Check for level up (every 10 experience points)
 	newLevel := (cs.Experience / 10) + 1
 	if newLevel > cs.Level {
 		cs.Level = newLevel
 	}
-	
+
 	cs.calculateNextLevelExp()
 }
 

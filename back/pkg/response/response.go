@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -61,6 +62,15 @@ func NoContent(w http.ResponseWriter) {
 
 // Error writes an error JSON response
 func Error(w http.ResponseWriter, statusCode int, code, message string) {
+	// Log all 4xx and 5xx errors
+	if statusCode >= 500 {
+		// 5xx errors: log with more details and stack trace hint
+		log.Printf("🚨 HTTP %d Error [%s]: %s (Check handler for detailed error)", statusCode, code, message)
+	} else if statusCode >= 400 {
+		// 4xx errors: log normally
+		log.Printf("⚠️  HTTP %d Error [%s]: %s", statusCode, code, message)
+	}
+
 	WriteJSON(w, statusCode, &APIResponse{
 		Success: false,
 		Error: &APIError{
@@ -72,6 +82,15 @@ func Error(w http.ResponseWriter, statusCode int, code, message string) {
 
 // ErrorWithDetails writes an error JSON response with details
 func ErrorWithDetails(w http.ResponseWriter, statusCode int, code, message, details string) {
+	// Log all 4xx and 5xx errors with details
+	if statusCode >= 500 {
+		// 5xx errors: log with full details
+		log.Printf("🚨 HTTP %d Error [%s]: %s\n  Details: %s", statusCode, code, message, details)
+	} else if statusCode >= 400 {
+		// 4xx errors: log with details
+		log.Printf("⚠️  HTTP %d Error [%s]: %s - Details: %s", statusCode, code, message, details)
+	}
+
 	WriteJSON(w, statusCode, &APIResponse{
 		Success: false,
 		Error: &APIError{
@@ -112,6 +131,16 @@ func InternalServerError(w http.ResponseWriter, message string) {
 	Error(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", message)
 }
 
+// InternalServerErrorWithErr writes a 500 Internal Server Error response with error details
+func InternalServerErrorWithErr(w http.ResponseWriter, message string, err error) {
+	if err != nil {
+		log.Printf("💥 Internal Server Error: %s\n  Error: %v", message, err)
+		ErrorWithDetails(w, http.StatusInternalServerError, "INTERNAL_SERVER_ERROR", message, err.Error())
+	} else {
+		InternalServerError(w, message)
+	}
+}
+
 // ValidationError writes a 422 Unprocessable Entity response for validation errors
 func ValidationError(w http.ResponseWriter, message string) {
 	Error(w, http.StatusUnprocessableEntity, "VALIDATION_ERROR", message)
@@ -121,8 +150,9 @@ func ValidationError(w http.ResponseWriter, message string) {
 func WriteJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("🚨 HTTP 500 Error [ENCODING_ERROR]: Failed to encode JSON response: %v", err)
 		// If encoding fails, write a simple error response
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"success":false,"error":{"code":"ENCODING_ERROR","message":"Failed to encode response"}}`))

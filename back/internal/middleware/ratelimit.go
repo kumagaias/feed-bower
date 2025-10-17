@@ -11,11 +11,11 @@ import (
 
 // RateLimiter implements a simple token bucket rate limiter
 type RateLimiter struct {
-	mu       sync.Mutex
-	buckets  map[string]*bucket
-	rate     int           // requests per window
-	window   time.Duration // time window
-	cleanup  time.Duration // cleanup interval
+	mu      sync.Mutex
+	buckets map[string]*bucket
+	rate    int           // requests per window
+	window  time.Duration // time window
+	cleanup time.Duration // cleanup interval
 }
 
 type bucket struct {
@@ -112,7 +112,7 @@ func IPBasedKeyFunc(r *http.Request) string {
 	if ip := r.Header.Get("X-Real-IP"); ip != "" {
 		return ip
 	}
-	
+
 	// Extract IP from RemoteAddr (remove port)
 	addr := r.RemoteAddr
 	if idx := strings.LastIndex(addr, ":"); idx != -1 {

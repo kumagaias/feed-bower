@@ -33,8 +33,8 @@ type SecureHTTPConfig struct {
 // DefaultSecureHTTPConfig returns default secure HTTP configuration
 func DefaultSecureHTTPConfig() *SecureHTTPConfig {
 	return &SecureHTTPConfig{
-		Timeout:      30 * time.Second,
-		MaxRedirects: 5,
+		Timeout:        30 * time.Second,
+		MaxRedirects:   5,
 		AllowedSchemes: []string{"http", "https"},
 		BlockedHosts: []string{
 			"localhost",
@@ -210,7 +210,7 @@ func isBlockedIP(ip net.IP, blockedNetworks []*net.IPNet) bool {
 func checkForSuspiciousURL(parsedURL *url.URL) error {
 	// Check for suspicious patterns in the URL
 	fullURL := parsedURL.String()
-	
+
 	suspiciousPatterns := []string{
 		"@", // Potential credential injection
 		"javascript:",
@@ -238,14 +238,14 @@ func checkForSuspiciousURL(parsedURL *url.URL) error {
 				break
 			}
 		}
-		
+
 		// Allow high ports (> 1024) for testing and development
 		if !allowed {
 			if portNum := parsePort(port); portNum > 1024 && portNum < 65536 {
 				allowed = true
 			}
 		}
-		
+
 		if !allowed {
 			return fmt.Errorf("port %s is not allowed", port)
 		}
@@ -289,7 +289,7 @@ func parsePort(portStr string) int {
 	if portStr == "" {
 		return 0
 	}
-	
+
 	port := 0
 	for _, r := range portStr {
 		if r < '0' || r > '9' {
@@ -373,12 +373,12 @@ func isValidEmailInURL(urlStr string) bool {
 	if err != nil {
 		return false
 	}
-	
+
 	// If there's user info (credentials), it's not valid for our use case
 	if parsedURL.User != nil {
 		return false
 	}
-	
+
 	return true
 }
 

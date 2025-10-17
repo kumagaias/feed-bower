@@ -29,7 +29,7 @@ func NewBowerHandler(bowerService service.BowerService) *BowerHandler {
 // RegisterRoutes registers bower routes
 func (h *BowerHandler) RegisterRoutes(router *mux.Router) {
 	bowerRouter := router.PathPrefix("/api/bowers").Subrouter()
-	
+
 	bowerRouter.HandleFunc("", h.ListBowers).Methods("GET", "OPTIONS")
 	bowerRouter.HandleFunc("", h.CreateBower).Methods("POST", "OPTIONS")
 	bowerRouter.HandleFunc("/{id}", h.GetBower).Methods("GET", "OPTIONS")
@@ -86,13 +86,13 @@ type FeedResponse struct {
 // CreateBower creates a new bower
 func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
 	log.Printf("CreateBower: Request received from %s", r.RemoteAddr)
-	
+
 	user, ok := GetRequiredUserFromContext(w, r)
 	if !ok {
 		log.Printf("CreateBower: Failed to get user from context")
 		return
 	}
-	
+
 	log.Printf("CreateBower: User authenticated: %s", user.UserID)
 
 	var req CreateBowerRequest
@@ -100,7 +100,7 @@ func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
 		log.Printf("CreateBower: Failed to parse JSON body")
 		return
 	}
-	
+
 	log.Printf("CreateBower: Request data: %+v", req)
 
 	if err := h.validator.Validate(&req); err != nil {
@@ -121,7 +121,7 @@ func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
 	bower, err := h.bowerService.CreateBower(r.Context(), user.UserID, serviceReq)
 	if err != nil {
 		log.Printf("CreateBower: Service error: %v", err)
-		response.InternalServerError(w, "Failed to create bower: "+err.Error())
+		response.InternalServerErrorWithErr(w, "Failed to create bower", err)
 		return
 	}
 
@@ -170,9 +170,12 @@ func (h *BowerHandler) ListBowers(w http.ResponseWriter, r *http.Request) {
 
 	bowers, _, err := h.bowerService.GetBowersByUserID(r.Context(), user.UserID, limit, nil)
 	if err != nil {
-		response.InternalServerError(w, "Failed to list bowers")
+		log.Printf("❌ ListBowers error for user %s: %v", user.UserID, err)
+		response.InternalServerErrorWithErr(w, "Failed to list bowers", err)
 		return
 	}
+
+	log.Printf("✅ ListBowers success for user %s: found %d bowers", user.UserID, len(bowers))
 
 	bowerResponses := make([]*BowerResponse, len(bowers))
 	for i, bower := range bowers {
@@ -231,13 +234,13 @@ func (h *BowerHandler) UpdateBower(w http.ResponseWriter, r *http.Request) {
 // DeleteBower deletes a bower
 func (h *BowerHandler) DeleteBower(w http.ResponseWriter, r *http.Request) {
 	log.Printf("DeleteBower: Request received from %s", r.RemoteAddr)
-	
+
 	user, ok := GetRequiredUserFromContext(w, r)
 	if !ok {
 		log.Printf("DeleteBower: Failed to get user from context")
 		return
 	}
-	
+
 	log.Printf("DeleteBower: User authenticated: %s", user.UserID)
 
 	vars := mux.Vars(r)
@@ -247,7 +250,7 @@ func (h *BowerHandler) DeleteBower(w http.ResponseWriter, r *http.Request) {
 		response.BadRequest(w, "Bower ID is required")
 		return
 	}
-	
+
 	log.Printf("DeleteBower: Attempting to delete bower: %s", bowerID)
 
 	err := h.bowerService.DeleteBower(r.Context(), user.UserID, bowerID)
@@ -317,8 +320,6 @@ func (h *BowerHandler) SearchBowers(w http.ResponseWriter, r *http.Request) {
 
 	response.Success(w, bowerResponses)
 }
-
-
 
 // toBowerResponse converts a model.Bower to BowerResponse
 func (h *BowerHandler) toBowerResponse(bower *model.Bower) *BowerResponse {

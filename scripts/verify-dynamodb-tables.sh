@@ -6,7 +6,7 @@
 set -e
 
 ENDPOINT="http://localhost:8000"
-REGION="us-east-1"
+REGION="ap-northeast-1"
 
 echo "🔍 DynamoDB Local テーブル検証開始"
 echo ""

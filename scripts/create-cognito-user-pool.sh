@@ -5,7 +5,7 @@
 
 set -e
 
-REGION="us-east-1"
+REGION="ap-northeast-1"
 USER_POOL_NAME="feed-bower-user-pool"
 CLIENT_NAME="feed-bower-client"
 

@@ -15,13 +15,13 @@ type Bower struct {
 	IsPublic  bool     `json:"is_public" dynamodbav:"is_public"`
 	CreatedAt int64    `json:"created_at" dynamodbav:"created_at"`
 	UpdatedAt int64    `json:"updated_at" dynamodbav:"updated_at"`
-	
+
 	// Optional fields for public bowers
 	CreatorID   *string  `json:"creator_id,omitempty" dynamodbav:"creator_id,omitempty"`
 	CreatorName *string  `json:"creator_name,omitempty" dynamodbav:"creator_name,omitempty"`
 	Likes       *int     `json:"likes,omitempty" dynamodbav:"likes,omitempty"`
 	LikedBy     []string `json:"liked_by,omitempty" dynamodbav:"liked_by,omitempty"`
-	
+
 	// Feeds are not stored in the bower table but retrieved via relationship
 	Feeds []Feed `json:"feeds,omitempty" dynamodbav:"-"`
 }
@@ -52,13 +52,13 @@ func (b *Bower) AddKeyword(keyword string) bool {
 	if len(b.Keywords) >= 8 {
 		return false
 	}
-	
+
 	for _, k := range b.Keywords {
 		if k == keyword {
 			return false // Already exists
 		}
 	}
-	
+
 	b.Keywords = append(b.Keywords, keyword)
 	b.UpdateTimestamp()
 	return true

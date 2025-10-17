@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -30,8 +31,11 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("🔐 Auth middleware: Processing request to %s", r.URL.Path)
+
 			// Check if path should skip authentication
 			if shouldSkipAuth(r.URL.Path, config.SkipPaths) {
+				log.Printf("✅ Auth middleware: Skipping authentication for path %s", r.URL.Path)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -39,6 +43,7 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 			// Extract token from Authorization header
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
+				log.Printf("❌ Auth middleware: No Authorization header found for %s", r.URL.Path)
 				writeErrorResponse(w, http.StatusUnauthorized, "Authorization header is required")
 				return
 			}
@@ -46,22 +51,30 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 			// Check Bearer token format
 			parts := strings.SplitN(authHeader, " ", 2)
 			if len(parts) != 2 || parts[0] != "Bearer" {
+				log.Printf("❌ Auth middleware: Invalid authorization header format for %s", r.URL.Path)
 				writeErrorResponse(w, http.StatusUnauthorized, "Invalid authorization header format")
 				return
 			}
 
 			token := parts[1]
 			if token == "" {
+				log.Printf("❌ Auth middleware: Empty token for %s", r.URL.Path)
 				writeErrorResponse(w, http.StatusUnauthorized, "Token is required")
 				return
 			}
 
+			// NEVER log the token or its preview. For debug, log only the token length.
+			log.Printf("🔍 Auth middleware: Token received for %s (length: %d)", r.URL.Path, len(token))
+
 			// Validate token
 			user, err := config.AuthService.ValidateToken(r.Context(), token)
 			if err != nil {
+				log.Printf("❌ Auth middleware: Token validation failed for %s: %v", r.URL.Path, err)
 				writeErrorResponse(w, http.StatusUnauthorized, "Invalid or expired token")
 				return
 			}
+
+			log.Printf("✅ Auth middleware: Token validated successfully for %s, user: %s", r.URL.Path, user.UserID)
 
 			// Add user to request context
 			ctx := context.WithValue(r.Context(), UserKey, user)
@@ -116,13 +129,18 @@ func shouldSkipAuth(path string, skipPaths []string) bool {
 
 // writeErrorResponse writes a JSON error response
 func writeErrorResponse(w http.ResponseWriter, statusCode int, message string) {
+	// Log all 4xx and 5xx errors
+	if statusCode >= 400 {
+		log.Printf("🚨 HTTP %d Error: %s", statusCode, message)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	response := map[string]interface{}{
 		"error":   true,
 		"message": message,
 	}
-	
+
 	json.NewEncoder(w).Encode(response)
 }

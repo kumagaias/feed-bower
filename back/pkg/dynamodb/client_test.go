@@ -19,7 +19,7 @@ func TestNewClient(t *testing.T) {
 
 	// Test with custom config
 	cfg := &Config{
-		Region:      "us-east-1",
+		Region:      "ap-northeast-1",
 		EndpointURL: "http://localhost:8000",
 		TablePrefix: "test_",
 	}

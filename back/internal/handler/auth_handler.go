@@ -28,13 +28,14 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 // RegisterRoutes registers auth routes
 func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 	authRouter := router.PathPrefix("/api/auth").Subrouter()
-	
+
 	authRouter.HandleFunc("/guest", h.CreateGuestUser).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/register", h.Register).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/login", h.Login).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/refresh", h.RefreshToken).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/me", h.GetCurrentUser).Methods("GET", "OPTIONS")
 	authRouter.HandleFunc("/change-password", h.ChangePassword).Methods("PUT", "OPTIONS")
+	authRouter.HandleFunc("/dev-user", h.GetDevUser).Methods("GET", "OPTIONS")
 }
 
 // CreateGuestUserRequest represents the request to create a guest user
@@ -263,4 +264,26 @@ func (h *AuthHandler) toUserResponse(user *model.User) *UserResponse {
 		Language:  user.Language,
 		CreatedAt: user.CreatedAt,
 	}
+}
+
+// GetDevUser returns the development user information (development only)
+func (h *AuthHandler) GetDevUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get development user by email using auth service
+	// We'll use a mock token to trigger the dev user lookup
+	user, err := h.authService.ValidateToken(ctx, "mock-jwt-token-dev")
+	if err != nil {
+		response.Error(w, http.StatusNotFound, "Development user not found", err.Error())
+		return
+	}
+
+	// Return user information in a simple format for mock auth
+	userInfo := map[string]interface{}{
+		"user_id": user.UserID,
+		"email":   user.Email,
+		"name":    user.Name,
+	}
+
+	response.Success(w, userInfo)
 }

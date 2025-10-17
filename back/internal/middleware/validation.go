@@ -18,8 +18,8 @@ type ValidationConfig struct {
 // DefaultValidationConfig returns default validation configuration
 func DefaultValidationConfig() *ValidationConfig {
 	return &ValidationConfig{
-		MaxHeaderSize:  8192,  // 8KB
-		MaxURILength:   2048,  // 2KB
+		MaxHeaderSize:  8192, // 8KB
+		MaxURILength:   2048, // 2KB
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 		BlockedUserAgent: []string{
 			"(?i)bot",

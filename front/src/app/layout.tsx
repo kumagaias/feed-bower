@@ -4,7 +4,6 @@ import { AppProvider } from '@/contexts/AppContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import AuthGuard from '@/components/AuthGuard'
 import NestBackground from '@/components/NestBackground'
-import '@/lib/amplify' // Initialize Amplify
 
 export const metadata: Metadata = {
   title: 'Feed Bower',

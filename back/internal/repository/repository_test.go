@@ -35,7 +35,7 @@ func TestModelCreation(t *testing.T) {
 	}
 
 	// Test Bower creation
-	bower := model.NewBower("user123", "Tech News", []string{"AI", "Programming"}, "#14b8a6", false)
+	bower := model.NewBower("user123", "Tech News", []string{"AI", "Programming"}, []string{}, "#14b8a6", false)
 	if bower.Name != "Tech News" {
 		t.Errorf("Expected name 'Tech News', got '%s'", bower.Name)
 	}

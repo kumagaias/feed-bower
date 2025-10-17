@@ -1,0 +1,61 @@
+{
+  "region": "ap-northeast-1",
+  "userPools": [
+    {
+      "Id": "local_xSR9dPrp8",
+      "Name": "feed-bower-local-pool",
+      "Policies": {
+        "PasswordPolicy": {
+          "MinimumLength": 8,
+          "RequireUppercase": false,
+          "RequireLowercase": false,
+          "RequireNumbers": false,
+          "RequireSymbols": false
+        }
+      },
+      "UsernameAttributes": ["email"],
+      "AutoVerifiedAttributes": ["email"],
+      "Schema": [
+        {
+          "Name": "sub",
+          "AttributeDataType": "String",
+          "Required": true,
+          "Mutable": false
+        },
+        {
+          "Name": "email",
+          "AttributeDataType": "String",
+          "Required": true,
+          "Mutable": true
+        },
+        {
+          "Name": "email_verified",
+          "AttributeDataType": "Boolean",
+          "Required": false,
+          "Mutable": true
+        },
+        {
+          "Name": "name",
+          "AttributeDataType": "String",
+          "Required": false,
+          "Mutable": true
+        }
+      ],
+      "Clients": [
+        {
+          "ClientId": "73ev8tq1pmg6bum65mnj6vu3nm",
+          "ClientName": "feed-bower-local-client",
+          "GenerateSecret": false,
+          "RefreshTokenValidity": 30,
+          "AccessTokenValidity": 60,
+          "IdTokenValidity": 60,
+          "ExplicitAuthFlows": [
+            "ALLOW_USER_PASSWORD_AUTH",
+            "ALLOW_REFRESH_TOKEN_AUTH",
+            "ALLOW_USER_SRP_AUTH"
+          ]
+        }
+      ]
+    }
+  ]
+}

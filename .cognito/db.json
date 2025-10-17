@@ -1,0 +1,65 @@
+{
+  "UserPools": {
+    "ap-northeast-1_xSR9dPrp8": {
+      "Id": "ap-northeast-1_xSR9dPrp8",
+      "Name": "feed-bower-local-pool",
+      "CreationDate": "2024-01-01T00:00:00.000Z",
+      "LastModifiedDate": "2024-01-01T00:00:00.000Z",
+      "Policies": {
+        "PasswordPolicy": {
+          "MinimumLength": 8,
+          "RequireUppercase": false,
+          "RequireLowercase": false,
+          "RequireNumbers": false,
+          "RequireSymbols": false
+        }
+      },
+      "UsernameAttributes": ["email"],
+      "AutoVerifiedAttributes": ["email"],
+      "EmailVerificationMessage": "Feed Bowerへようこそ！確認コード: {####}",
+      "EmailVerificationSubject": "Feed Bower - メールアドレスの確認",
+      "Schema": [
+        {
+          "Name": "sub",
+          "AttributeDataType": "String",
+          "Required": true,
+          "Mutable": false
+        },
+        {
+          "Name": "email",
+          "AttributeDataType": "String",
+          "Required": true,
+          "Mutable": true
+        },
+        {
+          "Name": "email_verified",
+          "AttributeDataType": "Boolean",
+          "Required": false,
+          "Mutable": true
+        },
+        {
+          "Name": "name",
+          "AttributeDataType": "String",
+          "Required": false,
+          "Mutable": true
+        }
+      ]
+    }
+  },
+  "UserPoolClients": {
+    "73ev8tq1pmg6bum65mnj6vu3nm": {
+      "UserPoolId": "ap-northeast-1_xSR9dPrp8",
+      "ClientName": "feed-bower-local-client",
+      "ClientId": "73ev8tq1pmg6bum65mnj6vu3nm",
+      "GenerateSecret": false,
+      "RefreshTokenValidity": 30,
+      "AccessTokenValidity": 60,
+      "IdTokenValidity": 60,
+      "ExplicitAuthFlows": [
+        "ALLOW_USER_PASSWORD_AUTH",
+        "ALLOW_REFRESH_TOKEN_AUTH",
+        "ALLOW_USER_SRP_AUTH"
+      ]
+    }
+  }
+}

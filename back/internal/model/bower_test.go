@@ -11,7 +11,7 @@ func TestNewBower(t *testing.T) {
 	color := "#14b8a6"
 	isPublic := false
 
-	bower := NewBower(userID, name, keywords, color, isPublic)
+	bower := NewBower(userID, name, keywords, []string{}, color, isPublic)
 
 	if bower.UserID != userID {
 		t.Errorf("Expected UserID %s, got %s", userID, bower.UserID)
@@ -40,7 +40,7 @@ func TestNewBower(t *testing.T) {
 }
 
 func TestBower_AddKeyword(t *testing.T) {
-	bower := NewBower("user-123", "Test", []string{"AI"}, "#14b8a6", false)
+	bower := NewBower("user-123", "Test", []string{"AI"}, []string{}, "#14b8a6", false)
 
 	// Test adding new keyword
 	result := bower.AddKeyword("Programming")
@@ -76,7 +76,7 @@ func TestBower_AddKeyword(t *testing.T) {
 }
 
 func TestBower_RemoveKeyword(t *testing.T) {
-	bower := NewBower("user-123", "Test", []string{"AI", "Programming", "ML"}, "#14b8a6", false)
+	bower := NewBower("user-123", "Test", []string{"AI", "Programming", "ML"}, []string{}, "#14b8a6", false)
 
 	// Test removing existing keyword
 	result := bower.RemoveKeyword("Programming")
@@ -98,7 +98,7 @@ func TestBower_RemoveKeyword(t *testing.T) {
 }
 
 func TestBower_HasKeyword(t *testing.T) {
-	bower := NewBower("user-123", "Test", []string{"AI", "Programming"}, "#14b8a6", false)
+	bower := NewBower("user-123", "Test", []string{"AI", "Programming"}, []string{}, "#14b8a6", false)
 
 	if !bower.HasKeyword("AI") {
 		t.Error("Should have keyword 'AI'")

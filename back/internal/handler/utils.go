@@ -40,7 +40,7 @@ func ParseJSONBody(w http.ResponseWriter, r *http.Request, dest interface{}) boo
 
 	// Limit request body size to prevent DoS attacks (1MB limit)
 	const maxBodySize = 1 << 20 // 1MB
-	
+
 	// Create a limited reader to prevent reading too much data
 	limitedReader := io.LimitReader(r.Body, maxBodySize+1) // +1 to detect if size exceeded
 	defer r.Body.Close()
@@ -264,7 +264,7 @@ type SecureBodyReader struct {
 // DefaultSecureBodyReader returns a secure body reader with default settings
 func DefaultSecureBodyReader() *SecureBodyReader {
 	return &SecureBodyReader{
-		MaxSize:     1 << 20,        // 1MB
+		MaxSize:     1 << 20,          // 1MB
 		MaxReadTime: 10 * time.Second, // 10 seconds max read time
 	}
 }
@@ -290,13 +290,13 @@ func (sbr *SecureBodyReader) ReadBody(r *http.Request) ([]byte, error) {
 	// Perform the read operation in a goroutine
 	go func() {
 		defer r.Body.Close()
-		
+
 		// Create limited reader
 		limitedReader := io.LimitReader(r.Body, sbr.MaxSize+1)
-		
+
 		// Read the body
 		data, err := io.ReadAll(limitedReader)
-		
+
 		resultChan <- readResult{data: data, err: err}
 	}()
 
@@ -306,14 +306,14 @@ func (sbr *SecureBodyReader) ReadBody(r *http.Request) ([]byte, error) {
 		if result.err != nil {
 			return nil, fmt.Errorf("failed to read body: %w", result.err)
 		}
-		
+
 		// Check size limit
 		if int64(len(result.data)) > sbr.MaxSize {
 			return nil, fmt.Errorf("request body exceeds maximum size of %d bytes", sbr.MaxSize)
 		}
-		
+
 		return result.data, nil
-		
+
 	case <-ctx.Done():
 		return nil, fmt.Errorf("request body read timeout exceeded")
 	}

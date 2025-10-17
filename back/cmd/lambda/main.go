@@ -25,18 +25,19 @@ type Config struct {
 	// Database
 	DynamoDBEndpoint string
 	TablePrefix      string
-	
+
 	// Authentication
-	JWTSecret        string
+	JWTSecret         string
 	CognitoUserPoolID string
 	CognitoRegion     string
 	CognitoClientID   string
+	CognitoEndpoint   string
 	UseCognito        bool
-	
+
 	// Server
 	Port        string
 	Environment string
-	
+
 	// Logging
 	LogLevel string
 }
@@ -48,19 +49,20 @@ func loadConfig() *Config {
 		TablePrefix:       getEnv("DYNAMODB_TABLE_PREFIX", ""),
 		JWTSecret:         getEnv("JWT_SECRET", "default-secret-change-in-production"),
 		CognitoUserPoolID: getEnv("COGNITO_USER_POOL_ID", ""),
-		CognitoRegion:     getEnv("COGNITO_REGION", "us-east-1"),
+		CognitoRegion:     getEnv("COGNITO_REGION", "ap-northeast-1"),
 		CognitoClientID:   getEnv("COGNITO_CLIENT_ID", ""),
+		CognitoEndpoint:   getEnv("COGNITO_ENDPOINT", ""),
 		UseCognito:        getEnv("USE_COGNITO", "false") == "true",
 		Port:              getEnv("PORT", "8080"),
 		Environment:       getEnv("ENVIRONMENT", "development"),
 		LogLevel:          getEnv("LOG_LEVEL", "info"),
 	}
-	
+
 	// Validate required configuration
 	if config.JWTSecret == "default-secret-change-in-production" && config.Environment == "production" {
 		log.Fatal("JWT_SECRET must be set in production environment")
 	}
-	
+
 	return config
 }
 
@@ -79,7 +81,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		EndpointURL: config.DynamoDBEndpoint,
 		TablePrefix: config.TablePrefix,
 	}
-	
+
 	dbClient, err := dynamodbpkg.NewClient(context.Background(), dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DynamoDB client: %w", err)
@@ -96,7 +98,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	var authService service.AuthService
 	if config.UseCognito {
 		log.Println("Using Cognito authentication")
-		authService = service.NewCognitoAuthService(userRepo, config.CognitoUserPoolID, config.CognitoRegion, config.CognitoClientID)
+		authService = service.NewCognitoAuthService(userRepo, config.CognitoUserPoolID, config.CognitoRegion, config.CognitoClientID, config.CognitoEndpoint)
 	} else {
 		log.Println("Using custom JWT authentication")
 		authService = service.NewAuthService(userRepo, config.JWTSecret)
@@ -126,7 +128,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		AllowedHeaders: []string{"Content-Type", "Authorization", "X-Requested-With"},
 		MaxAge:         86400,
 	}
-	
+
 	if config.Environment == "production" {
 		// In production, restrict origins
 		corsConfig.AllowedOrigins = []string{
@@ -148,7 +150,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		SkipPaths: []string{
 			"/health",
 			"/api/auth/guest",
-			"/api/auth/register", 
+			"/api/auth/register",
 			"/api/auth/login",
 			"/api/feeds/validate", // Public endpoint for feed validation
 		},
@@ -156,6 +158,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 
 	// Apply middleware in order
 	router.Use(middleware.CORS(corsConfig))
+	router.Use(middleware.Logger(nil)) // Add request logging
 	router.Use(middleware.Auth(authConfig))
 
 	// Health check endpoint (no auth required)
@@ -173,16 +176,18 @@ func setupRouter(config *Config) (*mux.Router, error) {
 
 // healthHandler handles health check requests
 func healthHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("💓 Health check requested from %s", r.RemoteAddr)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	
+
 	response := map[string]interface{}{
 		"status":    "healthy",
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 		"service":   "feed-bower-api",
 		"version":   "1.0.0",
 	}
-	
+
 	fmt.Fprintf(w, `{"status":"%s","timestamp":"%s","service":"%s","version":"%s"}`,
 		response["status"], response["timestamp"], response["service"], response["version"])
 }
@@ -204,7 +209,7 @@ func main() {
 
 	// Load configuration
 	config := loadConfig()
-	
+
 	// Setup logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Printf("Starting Feed Bower API - Environment: %s", config.Environment)
@@ -218,17 +223,22 @@ func main() {
 	// Check if running in Lambda environment
 	if isLambdaEnvironment() {
 		log.Println("Running in AWS Lambda environment")
-		
+
 		// Create Lambda adapter
 		adapter := httpadapter.New(router)
-		
+
 		// Start Lambda handler
 		lambda.Start(adapter.ProxyWithContext)
 	} else {
 		// Running locally
-		log.Printf("Running locally on port %s", config.Port)
-		log.Printf("Health check: http://localhost:%s/health", config.Port)
-		
+		log.Printf("🚀 Running locally on port %s", config.Port)
+		log.Printf("📊 Health check: http://localhost:%s/health", config.Port)
+		log.Printf("🔧 Environment: %s", config.Environment)
+		log.Printf("🗄️  DynamoDB endpoint: %s", config.DynamoDBEndpoint)
+		log.Printf("🔐 Using Cognito: %v", config.UseCognito)
+		log.Println("📝 Request logging enabled")
+		log.Println("✅ Server ready to accept connections")
+
 		// Create HTTP server
 		server := &http.Server{
 			Addr:         ":" + config.Port,
@@ -237,7 +247,7 @@ func main() {
 			WriteTimeout: 15 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		}
-		
+
 		// Start server
 		log.Fatal(server.ListenAndServe())
 	}

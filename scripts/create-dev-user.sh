@@ -7,7 +7,7 @@ set -e
 
 # DynamoDB Local エンドポイント
 ENDPOINT="http://localhost:8000"
-REGION="us-east-1"
+REGION="ap-northeast-1"
 
 echo "🐣 Feed Bower - 開発用ユーザー作成開始"
 echo "エンドポイント: $ENDPOINT"

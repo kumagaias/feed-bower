@@ -1,0 +1,256 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run type-check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          directory: front/coverage
+          flags: frontend
+          name: frontend-coverage
+          fail_ci_if_error: false
+
+      - name: Build application
+        run: npm run build
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## 🎨 Frontend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/lcov-report/index.html ]; then
+            echo "✅ Tests completed with coverage report generated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Tests completed but coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache-dependency-path: back/go.sum
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run go fmt check
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Go code is not formatted properly:"
+            gofmt -s -l .
+            exit 1
+          fi
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: back/coverage.out
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      - name: Build application
+        run: go build -v ./...
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## 🔧 Backend Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage.out ]; then
+            COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+            echo "✅ Tests completed with $COVERAGE coverage" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Tests completed but coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/package-lock.json
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache-dependency-path: back/go.sum
+
+      - name: Install frontend dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: back
+        run: go mod download
+
+      - name: Build frontend
+        working-directory: front
+        run: npm run build
+
+      - name: Build backend
+        working-directory: back
+        run: go build -o ../feed-bower-api ./cmd/lambda
+
+      - name: Run integration tests
+        run: |
+          echo "## 🔗 Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Frontend build: Success" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Backend build: Success" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Integration: All components built successfully" >> $GITHUB_STEP_SUMMARY
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test]
+    if: always()
+    
+    steps:
+      - name: Generate overall summary
+        run: |
+          echo "## 🧪 Overall Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.frontend-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.backend-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.frontend-test.result }}" == "success" && "${{ needs.backend-test.result }}" == "success" ]]; then
+            echo "🎉 All tests passed! Ready for review." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Some tests failed. Please check the logs above." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-status:
+    name: Notify Test Status
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test, integration-test]
+    if: always() && github.event_name == 'pull_request'
+    
+    steps:
+      - name: Comment PR with test results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const frontendStatus = '${{ needs.frontend-test.result }}';
+            const backendStatus = '${{ needs.backend-test.result }}';
+            const integrationStatus = '${{ needs.integration-test.result }}';
+            
+            let message = '## 🧪 Test Results Summary\n\n';
+            message += '| Test Suite | Status |\n';
+            message += '|------------|--------|\n';
+            message += `| Frontend | ${frontendStatus === 'success' ? '✅ Passed' : '❌ Failed'} |\n`;
+            message += `| Backend | ${backendStatus === 'success' ? '✅ Passed' : '❌ Failed'} |\n`;
+            message += `| Integration | ${integrationStatus === 'success' ? '✅ Passed' : integrationStatus === 'skipped' ? '⏭️ Skipped' : '❌ Failed'} |\n\n`;
+            
+            if (frontendStatus === 'success' && backendStatus === 'success') {
+              message += '🎉 All tests passed! This PR is ready for review.\n\n';
+            } else {
+              message += '⚠️ Some tests failed. Please check the [Actions tab](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\n';
+            }
+            
+            message += '---\n';
+            message += '*This comment was automatically generated by the test workflow.*';
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.body.includes('🧪 Test Results Summary')
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: message
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+            }

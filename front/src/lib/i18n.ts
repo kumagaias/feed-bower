@@ -1,194 +1,137 @@
-export const translations = {
+// Translation system
+const translations = {
   ja: {
-    // Navigation
-    home: 'ホーム',
-    feeds: 'フィード',
-    bowers: 'バウアー',
-    liked: 'お気に入り',
+    // Common
+    loading: '読み込み中...',
+    error: 'エラーが発生しました',
     login: 'ログイン',
     logout: 'ログアウト',
-
     email: 'メールアドレス',
     password: 'パスワード',
-    loginSuccess: 'ログインしました',
-    logoutSuccess: 'ログアウトしました',
-    authRequired: '正しいメールアドレスまたはパスワードを入力してください',
-    authFailed: '認証に失敗しました。メールアドレスとパスワードを確認してください。',
-    invalidResponse: 'サーバーからの応答が無効です',
-    tokenVerificationFailed: 'トークンの検証に失敗しました',
     
-    // Landing Page
+    // Navigation
+    feeds: 'フィード',
+    bowers: 'バウアー',
+    liked: 'いいね',
+    
+    // Landing page
     title: 'Feed Bower',
-    subtitle: 'AIが見つける、あなただけのフィード体験',
-    description: 'キーワードや短い文章から、AIが最適なフィードを見つけます。鳥の巣のように情報を整理して、あなたの興味を育てましょう。',
+    subtitle: 'AIが見つける、あなただけのフィード',
+    description: 'キーワードベースでRSSフィードを整理し、鳥の巣のように情報を育てます',
     getStarted: '始める',
     
     // Bower
-    createBower: 'バウアーを作成',
-    bowerName: 'バウアー名',
-    addKeyword: 'キーワードを追加',
-    keywords: 'キーワード',
-    complete: '完了',
-    dragKeywords: 'キーワードを巣にドラッグしてください',
-    newBower: '新しいバウアー',
+    searchBowers: 'バウアーを検索...',
     myBowers: 'マイバウアー',
     preset: 'プリセット',
-    searchBowers: 'バウアーを検索...',
-    noBowersYet: 'バウアーがありません',
-    createFirstBower: '最初のバウアーを作成して、AIにフィードを見つけてもらいましょう',
-    editBower: 'バウアーを編集',
-    subscribedFeeds: '購読フィード',
-    addFeed: 'フィードを追加',
-    noFeeds: 'フィードがありません',
-    feedUrlPlaceholder: 'https://example.com/feed',
-    validUrlError: '有効なURL（例: https://example.com/feed）を入力してください',
-    checking: '確認中...',
-    add: '追加',
     edit: '編集',
     delete: '削除',
     public: '公開',
     private: '非公開',
+    add: '追加',
     added: '追加済み',
     likes: 'いいね',
-    create: '作成',
-    previous: '前へ',
-    next: '次へ',
-    cancel: 'キャンセル',
-    save: '保存',
-    close: '閉じる',
-    back: '戻る',
-    preview: 'プレビュー',
-    loadingPreview: 'プレビューを読み込み中...',
-    generatingFeeds: 'フィードを生成中...',
-    editKeywords: 'キーワード編集',
-    setKeywords: 'キーワードを設定してください',
-    keywordExample: '例: AI、プログラミング、デザイン',
-    maxKeywords: 'キーワードは最大8個までです',
-    keywordAlreadyAdded: 'このキーワードは既に追加されています',
-    refreshKeywords: 'キーワードを更新',
-    reset: 'やり直す',
-    saved: '保存しました！',
-    deleteBowerTitle: 'バウアーを削除',
-    deleteBowerMessage: 'このバウアーを削除してもよろしいですか？',
     
-    // Feed
+    // Articles
+    readMore: '続きを読む',
     like: 'いいね',
     unlike: 'いいね解除',
-    readMore: '続きを読む',
-    markAllAsRead: '✓',
-    markedAsRead: '✓',
-    checkedDays: 'チェックした日数',
-    collapseAll: '全て閉じる',
-    expandAll: '全て開く',
+    checked: 'チェック済',
+    uncheck: 'チェック解除',
+    searchArticles: '記事を検索...',
+    allArticles: 'すべて',
+    importantArticles: '重要',
+    likedArticles: 'お気に入り',
+    selectBower: 'バウアーを選択',
+    allBowers: 'すべてのバウアー',
+    openAll: '全て開く',
+    closeAll: '全て閉じる',
+    noArticles: '記事がありません',
+    loadingArticles: '記事を読み込み中...',
+    loadMore: 'さらに読み込む',
     
-    // Chick Stats
+    // Chick
     chickLevel: 'ひよこレベル',
     totalLikes: '総いいね数',
+    checkedDays: 'チェック日数',
     experience: '経験値',
     nextLevel: '次のレベルまで',
     
-    // Common
-    search: '検索',
-    loading: '読み込み中...',
-    error: 'エラーが発生しました',
-    retry: '再試行',
+    // Auth
+    authRequired: '認証が必要です',
+    authFailed: '認証に失敗しました',
+    tokenVerificationFailed: 'トークンの検証に失敗しました',
+    invalidResponse: '無効なレスポンスです'
   },
   en: {
+    // Common
+    loading: 'Loading...',
+    error: 'An error occurred',
+    login: 'Login',
+    logout: 'Logout',
+    email: 'Email',
+    password: 'Password',
+    
     // Navigation
-    home: 'Home',
     feeds: 'Feeds',
     bowers: 'Bowers',
     liked: 'Liked',
-    login: 'Login',
-    logout: 'Logout',
-
-    email: 'Email',
-    password: 'Password',
-    loginSuccess: 'Logged in successfully',
-    logoutSuccess: 'Logged out successfully',
-    authRequired: 'Please enter a valid email address or password',
-    authFailed: 'Authentication failed. Please check your email and password.',
-    invalidResponse: 'Invalid response from server',
-    tokenVerificationFailed: 'Token verification failed',
     
-    // Landing Page
+    // Landing page
     title: 'Feed Bower',
-    subtitle: 'AI-powered personalized feed experience',
-    description: 'Find the perfect feeds with AI from keywords or short phrases. Organize information like a bird\'s nest and nurture your interests.',
+    subtitle: 'AI-powered personalized RSS feed experience',
+    description: 'Organize RSS feeds by keywords and grow information like a bird\'s nest',
     getStarted: 'Get Started',
     
     // Bower
-    createBower: 'Create Bower',
-    bowerName: 'Bower Name',
-    addKeyword: 'Add Keyword',
-    keywords: 'Keywords',
-    complete: 'Complete',
-    dragKeywords: 'Drag keywords to the nest',
-    newBower: 'New Bower',
+    searchBowers: 'Search bowers...',
     myBowers: 'My Bowers',
     preset: 'Preset',
-    searchBowers: 'Search bowers...',
-    noBowersYet: 'No bowers yet',
-    createFirstBower: 'Create your first bower and let AI find feeds for you',
-    editBower: 'Edit Bower',
-    subscribedFeeds: 'Subscribed Feeds',
-    addFeed: 'Add Feed',
-    noFeeds: 'No feeds yet',
-    feedUrlPlaceholder: 'https://example.com/feed',
-    validUrlError: 'Please enter a valid URL (e.g., https://example.com/feed)',
-    checking: 'Checking...',
-    add: 'Add',
     edit: 'Edit',
     delete: 'Delete',
     public: 'Public',
     private: 'Private',
+    add: 'Add',
     added: 'Added',
-    likes: 'likes',
-    create: 'Create',
-    previous: 'Previous',
-    next: 'Next',
-    cancel: 'Cancel',
-    save: 'Save',
-    close: 'Close',
-    back: 'Back',
-    preview: 'Preview',
-    loadingPreview: 'Loading preview...',
-    generatingFeeds: 'Generating feeds...',
-    editKeywords: 'Edit Keywords',
-    setKeywords: 'Please set keywords',
-    keywordExample: 'e.g., AI, Programming, Design',
-    maxKeywords: 'Maximum 8 keywords allowed',
-    keywordAlreadyAdded: 'This keyword is already added',
-    refreshKeywords: 'Refresh keywords',
-    reset: 'Reset',
-    saved: 'Saved!',
-    deleteBowerTitle: 'Delete Bower',
-    deleteBowerMessage: 'Are you sure you want to delete this bower?',
+    likes: 'Likes',
     
-    // Feed
+    // Articles
+    readMore: 'Read more',
     like: 'Like',
     unlike: 'Unlike',
-    readMore: 'Read More',
-    markAllAsRead: '✓',
-    markedAsRead: '✓',
-    checkedDays: 'Checked Days',
-    collapseAll: 'Collapse All',
-    expandAll: 'Expand All',
+    checked: 'Checked',
+    uncheck: 'Uncheck',
+    searchArticles: 'Search articles...',
+    allArticles: 'All',
+    importantArticles: 'Important',
+    likedArticles: 'Liked',
+    selectBower: 'Select Bower',
+    allBowers: 'All Bowers',
+    openAll: 'Open All',
+    closeAll: 'Close All',
+    noArticles: 'No articles found',
+    loadingArticles: 'Loading articles...',
+    loadMore: 'Load More',
     
-    // Chick Stats
+    // Chick
     chickLevel: 'Chick Level',
     totalLikes: 'Total Likes',
+    checkedDays: 'Checked Days',
     experience: 'Experience',
     nextLevel: 'To Next Level',
     
-    // Common
-    search: 'Search',
-    loading: 'Loading...',
-    error: 'An error occurred',
-    retry: 'Retry',
+    // Auth
+    authRequired: 'Authentication required',
+    authFailed: 'Authentication failed',
+    tokenVerificationFailed: 'Token verification failed',
+    invalidResponse: 'Invalid response'
   }
-}
+} as const
 
-export function useTranslation(language: 'en' | 'ja') {
-  return translations[language]
+export const useTranslation = (language: 'ja' | 'en') => {
+  return {
+    ...translations[language],
+    // Fallback function for dynamic keys
+    t: (key: string) => translations[language][key as keyof typeof translations[typeof language]] || key
+  }
 }

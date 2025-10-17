@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/i18n'
 import { KEYWORD_COLORS, getKeywordColor } from '@/lib/colors'
@@ -134,26 +134,28 @@ export default function KeywordEditModal({
 
   const colors = KEYWORD_COLORS
 
-  // Japanese keywords pool
-  const keywordPool = language === 'ja' ? [
-    'プログラミング', 'SNS', '映画', 'アプリ開発', 'セキュリティ',
-    '教育', 'イノベーション', 'IoT', 'テクノロジー', 'AI', '機械学習', 'デザイン', 
-    'スタートアップ', 'データ分析', 'クラウド', 'モバイル', 'ウェブ開発', 
-    'ブロックチェーン', 'VR', 'AR', 'ゲーム', '娯楽', 'ビジネス', 
-    'マーケティング', '健康', 'フィットネス', '料理', '旅行', 'ファッション', 
-    '音楽', '読書', '科学', '環境', '持続可能性', 'アート', '写真'
-  ] : [
-    'Programming', 'Social Media', 'Movies', 'App Development', 'Security',
-    'Education', 'Innovation', 'IoT', 'Technology', 'AI', 'Machine Learning', 
-    'Design', 'Startup', 'Data Science', 'Cloud', 'Mobile', 'Web Dev', 
-    'Blockchain', 'VR', 'AR', 'Gaming', 'Entertainment', 'Business', 
-    'Marketing', 'Health', 'Fitness', 'Cooking', 'Travel', 'Fashion', 
-    'Music', 'Reading', 'Science', 'Environment', 'Sustainability', 'Art', 'Photography'
-  ]
+
 
   // Generate random floating keywords
-  const generateRandomKeywords = () => {
-    const shuffled = [...keywordPool].sort(() => 0.5 - Math.random())
+  const generateRandomKeywords = useCallback(() => {
+    // Define keyword pool inside callback to avoid dependency issues
+    const pool = language === 'ja' ? [
+      'プログラミング', 'SNS', '映画', 'アプリ開発', 'セキュリティ',
+      '教育', 'イノベーション', 'IoT', 'テクノロジー', 'AI', '機械学習', 'デザイン', 
+      'スタートアップ', 'データ分析', 'クラウド', 'モバイル', 'ウェブ開発', 
+      'ブロックチェーン', 'VR', 'AR', 'ゲーム', '娯楽', 'ビジネス', 
+      'マーケティング', '健康', 'フィットネス', '料理', '旅行', 'ファッション', 
+      '音楽', '読書', '科学', '環境', '持続可能性', 'アート', '写真'
+    ] : [
+      'Programming', 'Social Media', 'Movies', 'App Development', 'Security',
+      'Education', 'Innovation', 'IoT', 'Technology', 'AI', 'Machine Learning', 
+      'Design', 'Startup', 'Data Science', 'Cloud', 'Mobile', 'Web Dev', 
+      'Blockchain', 'VR', 'AR', 'Gaming', 'Entertainment', 'Business', 
+      'Marketing', 'Health', 'Fitness', 'Cooking', 'Travel', 'Fashion', 
+      'Music', 'Reading', 'Science', 'Environment', 'Sustainability', 'Art', 'Photography'
+    ]
+    
+    const shuffled = [...pool].sort(() => 0.5 - Math.random())
     const count = Math.floor(Math.random() * 3) + 8 // 8-10 keywords
     const selected = shuffled.slice(0, count)
 
@@ -190,7 +192,7 @@ export default function KeywordEditModal({
         color: getKeywordColor(keyword)
       }
     })
-  }
+  }, [language])
 
   // Initialize when modal opens
   useEffect(() => {
@@ -206,7 +208,7 @@ export default function KeywordEditModal({
       // Generate floating keywords
       setFloatingKeywords(generateRandomKeywords())
     }
-  }, [isOpen, initialKeywords])
+  }, [isOpen, initialKeywords, generateRandomKeywords])
 
   // Reset when modal closes
   useEffect(() => {
@@ -371,9 +373,9 @@ export default function KeywordEditModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden relative flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-amber-100">
+        <div className="flex items-center justify-between p-4 border-b bg-amber-100 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="text-2xl">🪺</div>
             <h2 className="text-xl font-bold text-gray-800">
@@ -388,8 +390,8 @@ export default function KeywordEditModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-0">
+        {/* Content - Scrollable */}
+        <div className="p-0 overflow-y-auto flex-1">
           {/* Sky Area with Floating Keywords */}
           <div
             className="relative h-[250px] overflow-hidden"

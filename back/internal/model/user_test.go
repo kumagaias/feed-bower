@@ -36,11 +36,11 @@ func TestNewUser(t *testing.T) {
 func TestUser_UpdateTimestamp(t *testing.T) {
 	user := NewUser("test@example.com", "hash", "Test", "en")
 	originalTime := user.UpdatedAt
-	
+
 	// Wait a full second to ensure timestamp changes
 	time.Sleep(1001 * time.Millisecond)
 	user.UpdateTimestamp()
-	
+
 	if user.UpdatedAt <= originalTime {
 		t.Errorf("UpdatedAt should be updated to a newer timestamp. Original: %d, New: %d", originalTime, user.UpdatedAt)
 	}

@@ -20,13 +20,13 @@ type BowerService interface {
 	GetBowersByUserID(ctx context.Context, userID string, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error)
 	UpdateBower(ctx context.Context, userID string, bowerID string, req *UpdateBowerRequest) (*model.Bower, error)
 	DeleteBower(ctx context.Context, userID string, bowerID string) error
-	
+
 	// Public bowers
 	GetPublicBowers(ctx context.Context, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error)
-	
+
 	// Search
 	SearchBowers(ctx context.Context, userID string, query string, limit int32) ([]*model.Bower, error)
-	
+
 	// Bower name generation
 	GenerateBowerName(keywords []string) string
 }
@@ -364,7 +364,7 @@ func (s *bowerService) GenerateBowerName(keywords []string) string {
 	}
 
 	selectedKeywords := keywords[:maxKeywords]
-	
+
 	// Join with appropriate separator based on language detection
 	// Simple heuristic: if any keyword contains Japanese characters, use Japanese separator
 	hasJapanese := false
@@ -372,7 +372,7 @@ func (s *bowerService) GenerateBowerName(keywords []string) string {
 		for _, r := range keyword {
 			if r >= 0x3040 && r <= 0x309F || // Hiragana
 				r >= 0x30A0 && r <= 0x30FF || // Katakana
-				r >= 0x4E00 && r <= 0x9FAF {   // CJK Unified Ideographs
+				r >= 0x4E00 && r <= 0x9FAF { // CJK Unified Ideographs
 				hasJapanese = true
 				break
 			}

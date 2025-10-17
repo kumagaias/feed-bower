@@ -21,11 +21,11 @@ type RequestSecurityConfig struct {
 // DefaultRequestSecurityConfig returns default request security configuration
 func DefaultRequestSecurityConfig() *RequestSecurityConfig {
 	return &RequestSecurityConfig{
-		MaxBodySize:    1 << 20,        // 1MB
-		MaxReadTimeout: 10 * time.Second, // 10 seconds
-		MaxHeaderSize:  8192,           // 8KB
-		MaxURILength:   2048,           // 2KB
-		BlockedMethods: []string{"TRACE", "CONNECT"},
+		MaxBodySize:     1 << 20,          // 1MB
+		MaxReadTimeout:  10 * time.Second, // 10 seconds
+		MaxHeaderSize:   8192,             // 8KB
+		MaxURILength:    2048,             // 2KB
+		BlockedMethods:  []string{"TRACE", "CONNECT"},
 		RequiredHeaders: []string{}, // No required headers by default
 	}
 }
@@ -116,7 +116,7 @@ func (srb *secureRequestBody) Read(p []byte) (n int, err error) {
 		if srb.bytesRead+int64(result.n) > srb.maxSize {
 			return 0, io.ErrUnexpectedEOF
 		}
-		
+
 		srb.bytesRead += int64(result.n)
 		return result.n, result.err
 

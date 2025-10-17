@@ -20,14 +20,14 @@ type FeedService interface {
 	GetFeedsByBowerID(ctx context.Context, bowerID string, userID string) ([]*model.Feed, error)
 	UpdateFeed(ctx context.Context, userID string, feedID string, req *UpdateFeedRequest) (*model.Feed, error)
 	DeleteFeed(ctx context.Context, userID string, feedID string) error
-	
+
 	// Feed preview and validation
 	PreviewFeed(ctx context.Context, userID string, feedURL string) (*FeedPreview, error)
 	ValidateFeedURL(feedURL string) error
-	
+
 	// Feed recommendations
 	GetFeedRecommendations(ctx context.Context, userID string, bowerID string, keywords []string) ([]*model.Feed, error)
-	
+
 	// Feed management
 	GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*model.Feed, error)
 }
@@ -382,7 +382,7 @@ func (s *feedService) ValidateFeedURL(feedURL string) error {
 	// Check for common feed patterns (optional validation)
 	path := strings.ToLower(parsedURL.Path)
 	query := strings.ToLower(parsedURL.RawQuery)
-	
+
 	// Common feed indicators
 	feedIndicators := []string{
 		"rss", "feed", "atom", "xml", "feeds",
@@ -440,7 +440,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 
 	// Generate mock feed recommendations based on keywords
 	recommendations := make([]*model.Feed, 0)
-	
+
 	// Keyword to feed URL mapping (mock data)
 	keywordFeedMap := map[string][]struct {
 		URL         string
@@ -477,7 +477,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 			{"https://realpython.com/atom.xml", "Real Python", "Python tutorials and guides", "Python"},
 			{"https://dev.to/feed/tag/python", "Dev.to Python", "Python community articles", "Python"},
 		},
-		
+
 		// Japanese keywords
 		"プログラミング": {
 			{"https://qiita.com/tags/programming/feed", "Qiita プログラミング", "プログラミング記事", "プログラミング"},
@@ -519,7 +519,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 	// Generate recommendations based on keywords
 	for _, keyword := range keywords {
 		keywordLower := strings.ToLower(keyword)
-		
+
 		// Try both original and lowercase
 		feedOptions := keywordFeedMap[keyword]
 		if len(feedOptions) == 0 {
@@ -537,7 +537,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 			feed := model.NewFeed(bowerID, feedOption.URL, feedOption.Title, feedOption.Description, feedOption.Category)
 			recommendations = append(recommendations, feed)
 			existingURLs[feedOption.URL] = true
-			
+
 			added++
 			if added >= 2 {
 				break // Limit to 2 feeds per keyword
@@ -560,7 +560,7 @@ func (s *feedService) GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*mo
 	}
 
 	maxAgeSeconds := int64(maxAgeHours * 3600)
-	
+
 	feeds, err := s.feedRepo.GetStaleFeeds(ctx, maxAgeSeconds, 100)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stale feeds: %w", err)
