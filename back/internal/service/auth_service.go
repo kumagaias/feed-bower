@@ -174,11 +174,8 @@ func (s *authService) Login(ctx context.Context, email, password string) (*model
 
 // ValidateToken validates a JWT token and returns the user
 func (s *authService) ValidateToken(ctx context.Context, tokenString string) (*model.User, error) {
-	tokenPreview := tokenString
-	if len(tokenString) > 20 {
-		tokenPreview = tokenString[:20] + "..."
-	}
-	fmt.Printf("🔍 ValidateToken called with token: %s\n", tokenPreview)
+	// Do not log token value to avoid exposure of sensitive information
+	fmt.Println("🔍 ValidateToken called")
 	
 	if tokenString == "" {
 		fmt.Println("❌ Token is empty")

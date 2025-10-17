@@ -51,7 +51,7 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 			// Check Bearer token format
 			parts := strings.SplitN(authHeader, " ", 2)
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				log.Printf("❌ Auth middleware: Invalid authorization header format for %s: %s", r.URL.Path, authHeader)
+				log.Printf("❌ Auth middleware: Invalid authorization header format for %s", r.URL.Path)
 				writeErrorResponse(w, http.StatusUnauthorized, "Invalid authorization header format")
 				return
 			}
@@ -63,12 +63,8 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 				return
 			}
 
-			tokenPreview := token
-			if len(token) > 20 {
-				tokenPreview = token[:20] + "..."
-			}
-			log.Printf("🔍 Auth middleware: Token received for %s (length: %d, preview: %s)", 
-				r.URL.Path, len(token), tokenPreview)
+			// NEVER log the token or its preview. For debug, log only the token length.
+			log.Printf("🔍 Auth middleware: Token received for %s (length: %d)", r.URL.Path, len(token))
 
 			// Validate token
 			user, err := config.AuthService.ValidateToken(r.Context(), token)
