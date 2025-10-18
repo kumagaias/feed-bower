@@ -6,9 +6,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/i18n";
 import { ApiError } from "@/lib/api";
 import Link from "next/link";
+import SignupModal from "@/components/SignupModal";
 
 export default function LandingHeader() {
   const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -33,29 +35,31 @@ export default function LandingHeader() {
       setEmail("");
       setPassword("");
 
-      // Redirect will be handled by the auth context
+      // Redirect to bowers page after successful login
+      window.location.href = "/bowers";
     } catch (error) {
       console.log("Login failed, keeping modal open:", error);
-      let errorMessage: string = t.error;
+      
+      // Default to invalid credentials message
+      let errorMessage: string = t.invalidCredentials;
 
-      if (error instanceof ApiError) {
-        if (error.status === 401) {
-          errorMessage = t.authRequired;
-        } else {
-          errorMessage = error.message;
-        }
-      } else if (error instanceof Error) {
-        // Translate common error messages
+      if (error instanceof Error) {
+        // Check for specific Cognito error messages
         if (
-          error.message.includes("Authentication failed") ||
-          error.message.includes("check your credentials")
+          error.message.includes("Incorrect username or password") ||
+          error.message.includes("User does not exist") ||
+          error.message.includes("NotAuthorizedException") ||
+          error.message.includes("UserNotFoundException")
         ) {
-          errorMessage = t.authFailed;
-        } else if (error.message === "Token verification failed") {
-          errorMessage = t.tokenVerificationFailed;
-        } else if (error.message === "Invalid response from server") {
-          errorMessage = t.invalidResponse;
+          errorMessage = t.invalidCredentials;
+        } else if (error.message.includes("Password attempts exceeded")) {
+          errorMessage = "パスワードの試行回数が上限を超えました。しばらくしてからお試しください。";
+        } else if (error.message.includes("User is not confirmed")) {
+          errorMessage = "ユーザーが確認されていません。メールを確認してください。";
+        } else if (error.message.includes("Network") || error.message.includes("Failed to fetch")) {
+          errorMessage = "ネットワークエラーが発生しました。接続を確認してください。";
         } else {
+          // For other errors, show the translated error message
           errorMessage = error.message;
         }
       }
@@ -77,25 +81,25 @@ export default function LandingHeader() {
       setShowLogin(false);
       setEmail("");
       setPassword("");
+      
+      // Redirect to bowers page after successful login
+      window.location.href = "/bowers";
     } catch (error) {
-      let errorMessage =
-        "開発用ユーザーでのログインに失敗しました。Cognitoユーザープールを確認してください。";
+      let errorMessage = "開発用ユーザーでのログインに失敗しました。";
 
-      if (error instanceof ApiError) {
-        if (error.status === 401) {
-          errorMessage = language === "ja" ? t.authRequired : t.authRequired;
+      if (error instanceof Error) {
+        // Check for specific Cognito error messages
+        if (
+          error.message.includes("Incorrect username or password") ||
+          error.message.includes("User does not exist") ||
+          error.message.includes("NotAuthorizedException") ||
+          error.message.includes("UserNotFoundException")
+        ) {
+          errorMessage = "開発用ユーザーが存在しません。スクリプトを実行してユーザーを作成してください。";
+        } else if (error.message.includes("Network") || error.message.includes("Failed to fetch")) {
+          errorMessage = "Magnitoに接続できません。Dockerコンテナを確認してください。";
         } else {
           errorMessage = `開発用ユーザーでのログインに失敗: ${error.message}`;
-        }
-      } else if (error instanceof Error) {
-        // Translate common error messages for dev login
-        if (
-          error.message.includes("Authentication failed") ||
-          error.message.includes("check your credentials")
-        ) {
-          errorMessage = language === "ja" ? t.authFailed : t.authFailed;
-        } else {
-          errorMessage = error.message;
         }
       }
 
@@ -261,9 +265,26 @@ export default function LandingHeader() {
               </button>
             </form>
 
+            {/* Signup Link */}
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                アカウントをお持ちでない方は{" "}
+                <button
+                  onClick={() => {
+                    setShowLogin(false);
+                    setShowSignup(true);
+                  }}
+                  className="font-medium hover:underline"
+                  style={{ color: "#14b8a6" }}
+                >
+                  アカウント作成
+                </button>
+              </p>
+            </div>
+
             {/* Development Info */}
             {process.env.NODE_ENV === "development" && (
-              <div className="text-center text-sm text-gray-600 bg-blue-50 p-3 rounded-md">
+              <div className="text-center text-sm text-gray-600 bg-blue-50 p-3 rounded-md mt-4">
                 <p className="font-medium text-blue-800 mb-2">
                   開発環境用アカウント (Cognito)
                 </p>
@@ -281,6 +302,9 @@ export default function LandingHeader() {
           </div>
         </div>
       )}
+
+      {/* Signup Modal */}
+      <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
     </>
   );
 }

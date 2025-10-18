@@ -8,7 +8,6 @@ import {
   ReactNode,
 } from "react";
 import { User } from "@/types";
-import { MockAuthService } from "@/lib/mockAuth";
 
 // Error message translations
 const translateAuthError = (error: string): string => {
@@ -42,6 +41,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string, language: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
@@ -76,16 +76,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, []);
 
-  // Login function using Custom Cognito Client (both local and production)
-  const login = async (email: string, password: string): Promise<void> => {
+  // Register function using Custom Cognito Client
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+    language: string
+  ): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
 
       // Use Custom Cognito Client (supports both local Magneto and AWS production)
-      console.log('Using Custom Cognito Client (local Magneto or AWS production)');
+      console.log('Using Custom Cognito Client for registration', {
+        email,
+        name,
+        language,
+      });
       const { customCognitoAuth } = await import('@/lib/cognito-client');
 
+      // Sign up the user (email is used as username, with email and name as attributes)
+      const signUpResult = await customCognitoAuth.signUp(email, password, email, name);
+
+      console.log('Sign up result:', signUpResult);
+
+      // Automatically sign in after successful registration
       const signInResult = await customCognitoAuth.signIn(email, password);
 
       if (signInResult.isSignedIn) {
@@ -93,15 +108,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData: User = {
           id: cognitoUser?.userId || 'unknown',
           email: cognitoUser?.email || email,
-          name: cognitoUser?.username || email,
+          name: cognitoUser?.username || name,
           isGuest: false,
         };
         setUser(userData);
       } else {
+        throw new Error("Sign in not completed after registration");
+      }
+    } catch (error) {
+      setUser(null);
+
+      let errorMessage = "Registration failed";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      // Translate error message to Japanese
+      const translatedError = translateAuthError(errorMessage);
+      setError(translatedError);
+
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Login function using Custom Cognito Client (both local and production)
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Use Custom Cognito Client (supports both local Magneto and AWS production)
+      console.log('🔐 Login attempt:', { email, passwordLength: password.length });
+      const { customCognitoAuth } = await import('@/lib/cognito-client');
+
+      console.log('📞 Calling customCognitoAuth.signIn...');
+      const signInResult = await customCognitoAuth.signIn(email, password);
+      console.log('📥 Sign in result:', signInResult);
+
+      if (signInResult.isSignedIn) {
+        console.log('✅ Sign in successful, getting user info...');
+        const cognitoUser = await customCognitoAuth.getCurrentUser();
+        console.log('👤 Cognito user:', cognitoUser);
+        
+        const userData: User = {
+          id: cognitoUser?.userId || 'unknown',
+          email: cognitoUser?.email || email,
+          name: cognitoUser?.username || email,
+          isGuest: false,
+        };
+        setUser(userData);
+        console.log('✅ Login successful, user set:', userData.email);
+      } else {
+        console.log('❌ Sign in result indicates failure');
         throw new Error("Sign in not completed");
       }
-      // Continue with sign in even if sign up fails
     } catch (error) {
+      console.error('❌ Login error caught:', error);
       setUser(null);
 
       let errorMessage = "Login failed";
@@ -156,9 +220,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Check Custom Cognito Client (local Magneto or AWS production)
       const { customCognitoAuth } = await import('@/lib/cognito-client');
+      
+      console.log('🔍 Checking auth status...');
+      console.log('🔑 Has access token:', !!customCognitoAuth.getAccessToken());
+      
+      if (!customCognitoAuth.getAccessToken()) {
+        console.log('⚠️ No access token found, user not authenticated');
+        setUser(null);
+        return;
+      }
+      
       const cognitoUser = await customCognitoAuth.getCurrentUser();
       
       if (cognitoUser) {
+        console.log('✅ User authenticated:', cognitoUser.email);
         const userData: User = {
           id: cognitoUser.userId,
           email: cognitoUser.email || cognitoUser.username,
@@ -167,9 +242,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         setUser(userData);
       } else {
+        console.log('⚠️ No user data returned');
         setUser(null);
       }
     } catch (error) {
+      console.error('❌ checkAuth error:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -191,6 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         error,
         login,
+        register,
         logout,
         checkAuth,
         clearError,

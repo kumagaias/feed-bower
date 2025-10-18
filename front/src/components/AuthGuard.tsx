@@ -11,7 +11,7 @@ interface AuthGuardProps {
 }
 
 // Pages that don't require authentication
-const PUBLIC_ROUTES = ['/', '/debug']
+const PUBLIC_ROUTES = ['/', '/debug', '/signup']
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()

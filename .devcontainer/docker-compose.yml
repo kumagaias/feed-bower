@@ -45,16 +45,21 @@ services:
     container_name: magnito
     ports:
       - "9229:9229"
+    volumes:
+      - ../.cognito:/app/.cognito:cached
     environment:
       - PORT=9229
       - HOST=0.0.0.0
       # Cognito Configuration
-      - COGNITO_USER_POOL_ID=local_xSR9dPrp8
+      - COGNITO_USER_POOL_ID=ap-northeast-1_xSR9dPrp8
       - COGNITO_USER_POOL_CLIENT_ID=73ev8tq1pmg6bum65mnj6vu3nm
       - COGNITO_REGION=ap-northeast-1
       # Optional: Custom user pool configuration
       - COGNITO_USER_POOL_NAME=feed-bower-pool
       - COGNITO_USER_POOL_CLIENT_NAME=feed-bower-client
+      # CORS Configuration
+      - CORS_ENABLED=true
+      - CORS_ORIGIN=http://localhost:3000
     networks:
       - feed-bower-network
     restart: unless-stopped
