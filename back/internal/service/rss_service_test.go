@@ -206,3 +206,215 @@ func TestRSSService_ExtractImageURL(t *testing.T) {
 		}
 	}
 }
+
+func TestRealFeed(t *testing.T) {
+	// This test fetches real RSS/Atom feeds to verify the parser works with actual data
+	// Skip in CI or if network is unavailable
+	if testing.Short() {
+		t.Skip("Skipping real feed test in short mode")
+	}
+
+	service := NewRSSService()
+	ctx := context.Background()
+
+	testFeeds := []struct {
+		name     string
+		url      string
+		feedType string
+	}{
+		{
+			name:     "GitHub Blog RSS",
+			url:      "https://github.blog/feed/",
+			feedType: "RSS",
+		},
+		{
+			name:     "Hacker News RSS",
+			url:      "https://news.ycombinator.com/rss",
+			feedType: "RSS",
+		},
+	}
+
+	for _, tf := range testFeeds {
+		t.Run(tf.name, func(t *testing.T) {
+			feedData, err := service.FetchFeed(ctx, tf.url)
+			if err != nil {
+				t.Logf("Warning: Failed to fetch %s: %v", tf.name, err)
+				t.Skip("Skipping due to network error or feed unavailability")
+				return
+			}
+
+			// Verify basic feed structure
+			if feedData.Title == "" {
+				t.Errorf("%s: Feed title is empty", tf.name)
+			}
+
+			if len(feedData.Articles) == 0 {
+				t.Errorf("%s: No articles found in feed", tf.name)
+			}
+
+			// Verify first article has required fields
+			if len(feedData.Articles) > 0 {
+				article := feedData.Articles[0]
+				if article.Title == "" {
+					t.Errorf("%s: First article has no title", tf.name)
+				}
+				if article.URL == "" {
+					t.Errorf("%s: First article has no URL", tf.name)
+				}
+				if article.PublishedAt.IsZero() {
+					t.Logf("%s: Warning - First article has zero published date", tf.name)
+				}
+			}
+
+			t.Logf("%s: Successfully parsed feed with %d articles", tf.name, len(feedData.Articles))
+		})
+	}
+}
+
+func TestRSSService_ParseInvalidFeed(t *testing.T) {
+	service := NewRSSService()
+
+	testCases := []struct {
+		name string
+		data []byte
+	}{
+		{
+			name: "Empty data",
+			data: []byte(""),
+		},
+		{
+			name: "Invalid XML",
+			data: []byte("not xml at all"),
+		},
+		{
+			name: "Malformed RSS",
+			data: []byte(`<?xml version="1.0"?><rss><channel>`),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := service.ParseRSSFeed(tc.data)
+			if err == nil {
+				t.Errorf("Expected error for %s, but got none", tc.name)
+			}
+		})
+	}
+}
+
+func TestRSSService_ParseRSSWithContentEncoded(t *testing.T) {
+	service := NewRSSService()
+
+	rssData := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Test Feed</title>
+    <description>A test RSS feed</description>
+    <link>http://example.com</link>
+    <item>
+      <title>Test Article</title>
+      <description>Short description</description>
+      <content:encoded><![CDATA[<p>Full HTML content with <img src="http://example.com/image.jpg" /></p>]]></content:encoded>
+      <link>http://example.com/article1</link>
+      <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>`)
+
+	feedData, err := service.ParseRSSFeed(rssData)
+	if err != nil {
+		t.Fatalf("Failed to parse RSS feed: %v", err)
+	}
+
+	if len(feedData.Articles) != 1 {
+		t.Fatalf("Expected 1 article, got %d", len(feedData.Articles))
+	}
+
+	article := feedData.Articles[0]
+	
+	// Should prefer content:encoded over description
+	if article.Content == "Short description" {
+		t.Error("Expected content:encoded to be used, but got description instead")
+	}
+
+	// Should extract image URL from content
+	if article.ImageURL == nil {
+		t.Error("Expected image URL to be extracted from content")
+	} else if *article.ImageURL != "http://example.com/image.jpg" {
+		t.Errorf("Expected image URL 'http://example.com/image.jpg', got '%s'", *article.ImageURL)
+	}
+}
+
+func TestRSSService_ParseAtomWithMultipleLinks(t *testing.T) {
+	service := NewRSSService()
+
+	atomData := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Test Atom Feed</title>
+  <subtitle>A test Atom feed</subtitle>
+  <link href="http://example.com" rel="alternate"/>
+  <link href="http://example.com/feed" rel="self"/>
+  <entry>
+    <title>Test Atom Article</title>
+    <summary>Test atom article content</summary>
+    <link href="http://example.com/article1" rel="alternate"/>
+    <link href="http://example.com/article1/comments" rel="replies"/>
+    <published>2024-01-01T00:00:00Z</published>
+  </entry>
+</feed>`)
+
+	feedData, err := service.ParseAtomFeed(atomData)
+	if err != nil {
+		t.Fatalf("Failed to parse Atom feed: %v", err)
+	}
+
+	if feedData.URL != "http://example.com" {
+		t.Errorf("Expected feed URL 'http://example.com', got '%s'", feedData.URL)
+	}
+
+	if len(feedData.Articles) != 1 {
+		t.Fatalf("Expected 1 article, got %d", len(feedData.Articles))
+	}
+
+	article := feedData.Articles[0]
+	if article.URL != "http://example.com/article1" {
+		t.Errorf("Expected article URL 'http://example.com/article1', got '%s'", article.URL)
+	}
+}
+
+func TestRSSService_CleanContentWithHTMLEntities(t *testing.T) {
+	service := NewRSSService()
+
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"AT&amp;T is a company",
+			"AT&T is a company",
+		},
+		{
+			"Price: &lt;$100&gt;",
+			"Price: <$100>",
+		},
+		{
+			"He said &quot;Hello&quot;",
+			"He said \"Hello\"",
+		},
+		{
+			"It&#39;s working",
+			"It's working",
+		},
+		{
+			"Multiple&nbsp;&nbsp;&nbsp;spaces",
+			"Multiple spaces",
+		},
+	}
+
+	for _, tc := range testCases {
+		result := service.CleanContent(tc.input)
+		if result != tc.expected {
+			t.Errorf("For input '%s', expected '%s', got '%s'", tc.input, tc.expected, result)
+		}
+	}
+}
