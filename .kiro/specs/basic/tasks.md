@@ -551,7 +551,7 @@
 
 ### タスク 4.2: フィード取得スケジューラー
 
-- [x] タスク 4.2: フィード取得スケジューラー
+- [ ] タスク 4.2: フィード取得スケジューラー
   - EventBridge ルール作成（Terraform）
   - Lambda 関数にスケジュール実行を追加
   - 全フィードの記事を取得
@@ -617,7 +617,7 @@
 
 ### タスク 5.1: Terraform モジュール作成
 
-- [ ] タスク 5.1: Terraform モジュール作成
+- [x] タスク 5.1: Terraform モジュール作成
   - `infra/modules/lambda/` 作成
   - `infra/modules/dynamodb/` 作成
   - `infra/modules/api-gateway/` 作成
