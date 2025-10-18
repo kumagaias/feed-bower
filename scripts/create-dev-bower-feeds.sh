@@ -126,7 +126,7 @@ else
     
     # Get Cognito user ID first
     COGNITO_ENDPOINT="http://localhost:9229"
-    USER_POOL_ID="local_xSR9dPrp8"
+    USER_POOL_ID="ap-northeast-1_xSR9dPrp8"
     COGNITO_REGION="ap-northeast-1"
     DEV_EMAIL="dev@feed-bower.local"
     

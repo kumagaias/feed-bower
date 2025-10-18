@@ -61,7 +61,8 @@ const translations = {
     authRequired: '認証が必要です',
     authFailed: '認証に失敗しました',
     tokenVerificationFailed: 'トークンの検証に失敗しました',
-    invalidResponse: '無効なレスポンスです'
+    invalidResponse: '無効なレスポンスです',
+    invalidCredentials: '正しいメールアドレスまたはパスワードを入力してください'
   },
   en: {
     // Common
@@ -124,7 +125,8 @@ const translations = {
     authRequired: 'Authentication required',
     authFailed: 'Authentication failed',
     tokenVerificationFailed: 'Token verification failed',
-    invalidResponse: 'Invalid response'
+    invalidResponse: 'Invalid response',
+    invalidCredentials: 'Please enter a valid email address or password'
   }
 } as const
 

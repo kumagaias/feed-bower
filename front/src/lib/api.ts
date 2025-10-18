@@ -597,6 +597,15 @@ export const authApi = {
     return apiRequest<any>('/auth/me')
   },
 
+  // Register new user
+  async register(email: string, password: string, name: string, language: string = 'ja') {
+    return apiRequest<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, language }),
+      skipAutoRedirect: true, // Don't auto-redirect on 401 during registration
+    })
+  },
+
   // Login
   async login(email: string, password: string) {
     return apiRequest<any>('/auth/login', {

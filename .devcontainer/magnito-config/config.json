@@ -1,17 +1,17 @@
 {
   "UserPools": {
-    "local_xSR9dPrp8": {
-      "Id": "local_xSR9dPrp8",
+    "ap-northeast-1_xSR9dPrp8": {
+      "Id": "ap-northeast-1_xSR9dPrp8",
       "Name": "feed-bower-local-pool",
       "CreationDate": "2024-01-01T00:00:00.000Z",
       "LastModifiedDate": "2024-01-01T00:00:00.000Z",
       "Policies": {
         "PasswordPolicy": {
           "MinimumLength": 8,
-          "RequireUppercase": false,
-          "RequireLowercase": false,
-          "RequireNumbers": false,
-          "RequireSymbols": false
+          "RequireUppercase": true,
+          "RequireLowercase": true,
+          "RequireNumbers": true,
+          "RequireSymbols": true
         }
       },
       "UsernameAttributes": ["email"],
@@ -48,7 +48,7 @@
   },
   "UserPoolClients": {
     "73ev8tq1pmg6bum65mnj6vu3nm": {
-      "UserPoolId": "local_xSR9dPrp8",
+      "UserPoolId": "ap-northeast-1_xSR9dPrp8",
       "ClientName": "feed-bower-local-client",
       "ClientId": "73ev8tq1pmg6bum65mnj6vu3nm",
       "GenerateSecret": false,

@@ -31,7 +31,7 @@ print_error() {
 
 # Cognito Local エンドポイント
 COGNITO_ENDPOINT="http://localhost:9229"
-USER_POOL_ID="local_xSR9dPrp8"
+USER_POOL_ID="ap-northeast-1_xSR9dPrp8"
 CLIENT_ID="73ev8tq1pmg6bum65mnj6vu3nm"
 REGION="ap-northeast-1"
 

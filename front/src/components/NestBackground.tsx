@@ -69,9 +69,14 @@ export default function NestBackground() {
 
   // 鳥を定期的に生成
   useEffect(() => {
+    let birdCounter = 0;
+    
     const generateBird = () => {
+      // より確実にユニークなIDを生成（タイムスタンプ + カウンター + ランダム値）
+      const uniqueId = Date.now() * 1000 + birdCounter++ * 100 + Math.floor(Math.random() * 100);
+      
       const newBird: Bird = {
-        id: Date.now(),
+        id: uniqueId,
         top: Math.random() * 50 + 20, // 20% - 70%の位置
         delay: 0,
         duration: 8 + Math.random() * 4, // 8-12秒の持続時間

@@ -31,7 +31,7 @@ print_error() {
 
 # Configuration
 COGNITO_ENDPOINT="http://localhost:9229"
-USER_POOL_ID="local_xSR9dPrp8"
+USER_POOL_ID="ap-northeast-1_xSR9dPrp8"
 COGNITO_REGION="ap-northeast-1"
 DYNAMODB_ENDPOINT="http://localhost:8000"
 DYNAMODB_REGION="ap-northeast-1"
@@ -49,8 +49,9 @@ COGNITO_USER_DATA=$(aws cognito-idp list-users \
     --query "Users[?Attributes[?Name=='email' && Value=='$DEV_EMAIL']]" 2>/dev/null)
 
 if [ -z "$COGNITO_USER_DATA" ] || [ "$COGNITO_USER_DATA" = "[]" ]; then
-    print_error "Cognitoにユーザー $DEV_EMAIL が見つかりません"
-    exit 1
+    print_warning "Cognitoにユーザー $DEV_EMAIL が見つかりません（まだ作成されていない可能性があります）"
+    print_status "サインアップ後に自動的に同期されます"
+    exit 0
 fi
 
 # Extract Cognito user ID (sub attribute)
