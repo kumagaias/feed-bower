@@ -1,8 +1,8 @@
 {
-  "task_name": "basic-task-3-7-and-3-8",
-  "branch_name": "feature/basic-task-3-7-and-3-8",
+  "task_name": "basic-task-4-1",
+  "branch_name": "feature/basic-task-4-1",
   "base_branch": "main",
-  "created_at": "2025-10-17T21:49:37Z",
-  "commit_sha": "359243b6d298c9176a8bde258dbec59b2022ef2f",
-  "pr_url": "https://github.com/kumagaias/feed-bower/pull/17"
+  "created_at": "2025-10-18T11:30:07Z",
+  "commit_sha": "dbc53fcb4d25f5b01788e5ae27d3762446e0719b",
+  "pr_url": "https://github.com/kumagaias/feed-bower/pull/19"
 }

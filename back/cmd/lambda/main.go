@@ -197,6 +197,39 @@ func isLambdaEnvironment() bool {
 	return os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != ""
 }
 
+// runScheduler runs the feed fetch scheduler
+func runScheduler(config *Config) error {
+	log.Println("🕐 Running in scheduler mode")
+
+	// Initialize DynamoDB client
+	dbConfig := &dynamodbpkg.Config{
+		EndpointURL: config.DynamoDBEndpoint,
+		TablePrefix: config.TablePrefix,
+	}
+
+	dbClient, err := dynamodbpkg.NewClient(context.Background(), dbConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create DynamoDB client: %w", err)
+	}
+
+	// Initialize repositories
+	feedRepo := repository.NewFeedRepository(dbClient)
+	articleRepo := repository.NewArticleRepository(dbClient)
+
+	// Initialize services
+	rssService := service.NewRSSService()
+	schedulerService := service.NewSchedulerService(feedRepo, articleRepo, rssService)
+
+	// Run the scheduler
+	ctx := context.Background()
+	if err := schedulerService.FetchAllFeeds(ctx); err != nil {
+		return fmt.Errorf("scheduler failed: %w", err)
+	}
+
+	log.Println("✅ Scheduler completed successfully")
+	return nil
+}
+
 func main() {
 	// Load .env file if not in Lambda environment
 	if !isLambdaEnvironment() {
@@ -214,6 +247,14 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Printf("Starting Feed Bower API - Environment: %s", config.Environment)
 
+	// Check for scheduler mode
+	if len(os.Args) > 1 && os.Args[1] == "--mode=scheduler" {
+		if err := runScheduler(config); err != nil {
+			log.Fatalf("Scheduler error: %v", err)
+		}
+		return
+	}
+
 	// Setup router
 	router, err := setupRouter(config)
 	if err != nil {
@@ -224,7 +265,7 @@ func main() {
 	if isLambdaEnvironment() {
 		log.Println("Running in AWS Lambda environment")
 
-		// Create Lambda adapter
+		// Create Lambda adapter for API Gateway events
 		adapter := httpadapter.New(router)
 
 		// Start Lambda handler
