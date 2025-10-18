@@ -331,7 +331,7 @@ func TestRSSService_ParseRSSWithContentEncoded(t *testing.T) {
 	}
 
 	article := feedData.Articles[0]
-	
+
 	// Should prefer content:encoded over description
 	if article.Content == "Short description" {
 		t.Error("Expected content:encoded to be used, but got description instead")

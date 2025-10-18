@@ -265,7 +265,7 @@ func main() {
 	if isLambdaEnvironment() {
 		log.Println("Running in AWS Lambda environment")
 
-		// Create Lambda adapter
+		// Create Lambda adapter for API Gateway events
 		adapter := httpadapter.New(router)
 
 		// Start Lambda handler
