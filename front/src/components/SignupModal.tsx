@@ -11,7 +11,7 @@ interface SignupModalProps {
 }
 
 // Password validation (Cognito compatible)
-// Note: Cognito requires symbols by default, but we show it as optional in UI
+// 8文字以上、英数字1文字以上
 function validatePassword(password: string): {
   isValid: boolean;
   errors: string[];
@@ -21,17 +21,12 @@ function validatePassword(password: string): {
   if (password.length < 8) {
     errors.push("パスワードは8文字以上である必要があります");
   }
-  if (!/[a-z]/.test(password)) {
-    errors.push("小文字を含める必要があります");
-  }
-  if (!/[A-Z]/.test(password)) {
-    errors.push("大文字を含める必要があります");
+  if (!/[a-zA-Z]/.test(password)) {
+    errors.push("英字を含める必要があります");
   }
   if (!/[0-9]/.test(password)) {
     errors.push("数字を含める必要があります");
   }
-  // Note: Special characters are required by Cognito but not validated here
-  // to avoid confusing users. Cognito will reject if missing.
   
   return {
     isValid: errors.length === 0,
@@ -243,22 +238,13 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 <li className={formData.password.length >= 8 ? "text-green-600" : ""}>
                   8文字以上
                 </li>
-                <li className={/[a-z]/.test(formData.password) ? "text-green-600" : ""}>
-                  小文字を含む
-                </li>
-                <li className={/[A-Z]/.test(formData.password) ? "text-green-600" : ""}>
-                  大文字を含む
+                <li className={/[a-zA-Z]/.test(formData.password) ? "text-green-600" : ""}>
+                  英字を含む
                 </li>
                 <li className={/[0-9]/.test(formData.password) ? "text-green-600" : ""}>
                   数字を含む
                 </li>
-                <li className={/[^a-zA-Z0-9]/.test(formData.password) ? "text-green-600" : "text-gray-500"}>
-                  特殊文字を含む（!@#$%^&*など）※推奨
-                </li>
               </ul>
-              <p className="text-xs text-gray-500 mt-1">
-                ※ Cognitoの設定により特殊文字が必要な場合があります
-              </p>
             </div>
           </div>
           

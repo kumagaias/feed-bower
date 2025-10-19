@@ -52,7 +52,7 @@ type CreateGuestUserResponse struct {
 // RegisterRequest represents the registration request
 type RegisterRequest struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
+	Password string `json:"password" validate:"required,min=8"`
 	Name     string `json:"name" validate:"required,min=1,max=100"`
 	Language string `json:"language" validate:"omitempty,oneof=ja en"`
 }
@@ -82,7 +82,7 @@ type RefreshTokenResponse struct {
 // ChangePasswordRequest represents the change password request
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" validate:"required"`
-	NewPassword string `json:"new_password" validate:"required,min=6"`
+	NewPassword string `json:"new_password" validate:"required,min=8"`
 }
 
 // UserResponse represents a user in API responses
