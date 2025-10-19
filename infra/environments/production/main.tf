@@ -420,7 +420,7 @@ module "amplify" {
   domain_config = [
     {
       branch_name = "main"
-      prefix      = ""  # ルートドメイン
+      prefix      = "www"
     }
   ]
 
