@@ -347,10 +347,12 @@ module "amplify" {
       environment_variables = {
         NEXT_PUBLIC_API_URL = module.api_gateway.invoke_url
         NEXT_PUBLIC_ENV     = local.environment
+        _CUSTOM_IMAGE       = "amplify:al2023"  # Next.js SSR サポート
       }
     }
   }
 
+  build_spec       = file("${path.root}/../../amplify.yml")  # モノレポ対応の buildSpec
   node_version     = "24"
   build_command    = "npm run build"
   output_directory = ".next"
