@@ -85,7 +85,7 @@ module "cognito" {
     temporary_password_validity_days = 7
   }
 
-  mfa_configuration   = "OPTIONAL"
+  mfa_configuration   = "OFF"
   deletion_protection = "ACTIVE"
 
   explicit_auth_flows = [

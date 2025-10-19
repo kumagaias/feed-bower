@@ -245,7 +245,6 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                   数字を含む
                 </li>
               </ul>
-              </p>
             </div>
           </div>
           
