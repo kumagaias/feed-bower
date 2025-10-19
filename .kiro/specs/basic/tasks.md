@@ -664,7 +664,7 @@
   - 本番 URL にアクセスできる
   - HTTPS で接続できる
   - カスタムドメインが機能している
-  - テスト: `terraform plan` → `terraform apply` → `curl https://api.feed-bower.com/health`
+  - テスト: `terraform plan` → `terraform apply` → `curl https://api.feed-bower.net/health`
 
 ---
 
@@ -776,7 +776,7 @@
   - バックエンドが Lambda にデプロイされる
   - 全機能が正常に動作する
   - デプロイエラーがない
-  - https://feed-bower.com にアクセスできる
+  - https://feed-bower.net にアクセスできる
   - バウアー作成が動作する
   - フィード追加が動作する
   - 記事一覧が表示される
@@ -785,7 +785,7 @@
   - 全ての画面でエラーがない
   - モバイル表示が正常
   - 日本語/英語切り替えが動作する
-  - テスト: `gh run list` → `curl https://api.feed-bower.com/health` → `curl -X POST https://api.feed-bower.com/api/auth/guest`
+  - テスト: `gh run list` → `curl https://api.feed-bower.net/health` → `curl -X POST https://api.feed-bower.net/api/auth/guest`
 
 ---
 

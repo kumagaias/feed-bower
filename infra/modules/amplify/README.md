@@ -31,7 +31,7 @@ module "amplify" {
   output_directory = ".next"
 
   environment_variables = {
-    NEXT_PUBLIC_API_URL = "https://api.feed-bower.com"
+    NEXT_PUBLIC_API_URL = "https://api.feed-bower.net"
     NODE_ENV            = "production"
   }
 
@@ -46,7 +46,7 @@ module "amplify" {
       enable_auto_build           = true
       enable_pull_request_preview = true
       environment_variables = {
-        NEXT_PUBLIC_API_URL = "https://api-dev.feed-bower.com"
+        NEXT_PUBLIC_API_URL = "https://api-dev.feed-bower.net"
       }
     }
   }
@@ -69,20 +69,20 @@ module "amplify" {
   app_name       = "feed-bower"
   repository_url = "https://github.com/your-org/feed-bower"
 
-  custom_domain = "feed-bower.com"
+  custom_domain = "feed-bower.net"
 
   domain_config = [
     {
       branch_name = "main"
-      prefix      = ""  # feed-bower.com
+      prefix      = ""  # feed-bower.net
     },
     {
       branch_name = "main"
-      prefix      = "www"  # www.feed-bower.com
+      prefix      = "www"  # www.feed-bower.net
     },
     {
       branch_name = "develop"
-      prefix      = "dev"  # dev.feed-bower.com
+      prefix      = "dev"  # dev.feed-bower.net
     }
   ]
 
