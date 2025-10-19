@@ -9,8 +9,13 @@ set -e
 ENDPOINT="http://localhost:8000"
 REGION="ap-northeast-1"
 
+# 環境名（デフォルトは development）
+ENVIRONMENT="${ENVIRONMENT:-development}"
+TABLE_SUFFIX="-${ENVIRONMENT}"
+
 echo "🐣 Feed Bower - 開発用ユーザー作成開始"
 echo "エンドポイント: $ENDPOINT"
+echo "環境: $ENVIRONMENT"
 echo ""
 
 # DynamoDB Local が起動しているかチェック
@@ -24,13 +29,13 @@ echo "✅ DynamoDB Local に接続しました"
 echo ""
 
 # Usersテーブルが存在するかチェック
-echo "Users テーブルの確認中..."
-if ! aws dynamodb describe-table --table-name Users --endpoint-url $ENDPOINT --region $REGION >/dev/null 2>&1; then
-    echo "❌ エラー: Users テーブルが存在しません"
+echo "Users${TABLE_SUFFIX} テーブルの確認中..."
+if ! aws dynamodb describe-table --table-name "Users${TABLE_SUFFIX}" --endpoint-url $ENDPOINT --region $REGION >/dev/null 2>&1; then
+    echo "❌ エラー: Users${TABLE_SUFFIX} テーブルが存在しません"
     echo "   scripts/create-dynamodb-tables.sh を先に実行してください"
     exit 1
 fi
-echo "✅ Users テーブルが存在します"
+echo "✅ Users${TABLE_SUFFIX} テーブルが存在します"
 echo ""
 
 # 開発用ユーザーの情報

@@ -56,7 +56,7 @@ locals {
 module "ecr" {
   source = "../../modules/ecr"
 
-  repository_name               = "${local.project_name}-api"
+  repository_name               = "${local.project_name}-api-${local.environment}"
   image_tag_mutability          = "MUTABLE"
   scan_on_push                  = true
   enable_lifecycle_policy       = true

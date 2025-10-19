@@ -10,7 +10,7 @@ set -e
 # 環境を引数から取得（デフォルトは development）
 ENVIRONMENT=${1:-development}
 REGION=${AWS_REGION:-ap-northeast-1}
-REPOSITORY_NAME="feed-bower-api"
+REPOSITORY_NAME="feed-bower-api-${ENVIRONMENT}"
 
 echo "🌍 環境: ${ENVIRONMENT}"
 echo "📍 リージョン: ${REGION}"

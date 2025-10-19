@@ -189,10 +189,10 @@ aws ecr get-login-password --region ap-northeast-1 | \
 cd ../../../
 
 # Docker イメージをビルド
-docker build -t feed-bower-api -f api/Dockerfile .
+docker build -t feed-bower-api-production -f api/Dockerfile .
 
 # イメージにタグを付ける
-docker tag feed-bower-api:latest $ECR_URL:latest
+docker tag feed-bower-api-production:latest $ECR_URL:latest
 
 # ECR にプッシュ
 docker push $ECR_URL:latest

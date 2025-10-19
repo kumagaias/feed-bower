@@ -145,10 +145,10 @@ aws ecr get-login-password --region ap-northeast-1 | \
 cd ../../../
 
 # Docker イメージをビルド
-docker build -t feed-bower-api -f api/Dockerfile .
+docker build -t feed-bower-api-development -f api/Dockerfile .
 
 # イメージにタグを付けてプッシュ
-docker tag feed-bower-api:latest $ECR_URL:latest
+docker tag feed-bower-api-development:latest $ECR_URL:latest
 docker push $ECR_URL:latest
 
 # Lambda 関数を更新（イメージが反映される）
@@ -191,7 +191,7 @@ git push origin develop
 **解決方法**:
 ```bash
 # 既存のリポジトリを削除
-aws ecr delete-repository --repository-name feed-bower-api --force
+aws ecr delete-repository --repository-name feed-bower-api-development --force
 
 # 再度デプロイ
 terraform apply

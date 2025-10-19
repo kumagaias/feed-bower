@@ -56,7 +56,7 @@ locals {
 module "ecr" {
   source = "../../modules/ecr"
 
-  repository_name               = "${local.project_name}-api"
+  repository_name               = "${local.project_name}-api-${local.environment}"
   image_tag_mutability          = "MUTABLE"
   scan_on_push                  = true
   enable_lifecycle_policy       = true
@@ -369,7 +369,14 @@ module "amplify" {
   enable_pull_request_preview = false
   enable_basic_auth           = false
 
-  custom_domain = "feed-bower.com"
+  custom_domain = null  # カスタムドメインは後で設定
+  # custom_domain = "feed-bower.com"
+  # domain_config = {
+  #   main = {
+  #     branch_name = "main"
+  #     prefix      = ""  # ルートドメイン
+  #   }
+  # }
 
   tags = local.common_tags
 

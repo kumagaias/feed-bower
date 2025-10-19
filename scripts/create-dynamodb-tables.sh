@@ -9,8 +9,13 @@ set -e
 ENDPOINT="http://localhost:8000"
 REGION="ap-northeast-1"
 
+# 環境名（デフォルトは development）
+ENVIRONMENT="${ENVIRONMENT:-development}"
+TABLE_SUFFIX="-${ENVIRONMENT}"
+
 echo "🐣 Feed Bower - DynamoDB Local テーブル作成開始"
 echo "エンドポイント: $ENDPOINT"
+echo "環境: $ENVIRONMENT"
 echo ""
 
 # DynamoDB Local が起動しているかチェック
@@ -77,9 +82,9 @@ create_table() {
 }
 
 # 1. Users テーブル作成（EmailIndex GSI付き）
-echo "📝 Users テーブル作成中..."
+echo "📝 Users${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name Users \
+    --table-name "Users${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
         AttributeName=email,AttributeType=S \
@@ -91,12 +96,12 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ Users テーブルを作成しました"
+echo "✅ Users${TABLE_SUFFIX} テーブルを作成しました"
 
 # 2. Bowers テーブル作成（UserIdIndex GSI付き）
-echo "📝 Bowers テーブル作成中..."
+echo "📝 Bowers${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name Bowers \
+    --table-name "Bowers${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=bower_id,AttributeType=S \
         AttributeName=user_id,AttributeType=S \
@@ -108,12 +113,12 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ Bowers テーブルを作成しました"
+echo "✅ Bowers${TABLE_SUFFIX} テーブルを作成しました"
 
 # 3. Feeds テーブル作成（BowerIdIndex GSI付き）
-echo "📝 Feeds テーブル作成中..."
+echo "📝 Feeds${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name Feeds \
+    --table-name "Feeds${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=feed_id,AttributeType=S \
         AttributeName=bower_id,AttributeType=S \
@@ -125,12 +130,12 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ Feeds テーブルを作成しました"
+echo "✅ Feeds${TABLE_SUFFIX} テーブルを作成しました"
 
 # 4. Articles テーブル作成（FeedIdPublishedAtIndex GSI付き）
-echo "📝 Articles テーブル作成中..."
+echo "📝 Articles${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name Articles \
+    --table-name "Articles${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=article_id,AttributeType=S \
         AttributeName=feed_id,AttributeType=S \
@@ -143,12 +148,12 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ Articles テーブルを作成しました"
+echo "✅ Articles${TABLE_SUFFIX} テーブルを作成しました"
 
 # 5. LikedArticles テーブル作成（複合キー）
-echo "📝 LikedArticles テーブル作成中..."
+echo "📝 LikedArticles${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name LikedArticles \
+    --table-name "LikedArticles${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
         AttributeName=article_id,AttributeType=S \
@@ -159,12 +164,12 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ LikedArticles テーブルを作成しました"
+echo "✅ LikedArticles${TABLE_SUFFIX} テーブルを作成しました"
 
 # 6. ChickStats テーブル作成（シンプルなハッシュキー）
-echo "📝 ChickStats テーブル作成中..."
+echo "📝 ChickStats${TABLE_SUFFIX} テーブル作成中..."
 aws dynamodb create-table \
-    --table-name ChickStats \
+    --table-name "ChickStats${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
     --key-schema \
@@ -173,7 +178,7 @@ aws dynamodb create-table \
         ReadCapacityUnits=5,WriteCapacityUnits=5 \
     --endpoint-url $ENDPOINT \
     --region $REGION >/dev/null
-echo "✅ ChickStats テーブルを作成しました"
+echo "✅ ChickStats${TABLE_SUFFIX} テーブルを作成しました"
 
 echo ""
 echo "⏳ テーブル作成の完了を待機中..."
@@ -188,6 +193,6 @@ aws dynamodb list-tables --endpoint-url $ENDPOINT --region ap-northeast-1 --quer
 echo ""
 echo "🔍 テーブル詳細確認:"
 echo "   DynamoDB Admin: http://localhost:8001"
-echo "   AWS CLI: aws dynamodb describe-table --table-name [TABLE_NAME] --endpoint-url $ENDPOINT --region ap-northeast-1"
+echo "   AWS CLI: aws dynamodb describe-table --table-name [TABLE_NAME]${TABLE_SUFFIX} --endpoint-url $ENDPOINT --region ap-northeast-1"
 echo ""
-echo "✨ セットアップ完了！"
+echo "✨ セットアップ完了！（環境: $ENVIRONMENT）"
