@@ -18,6 +18,7 @@ const customJestConfig = {
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
+  testTimeout: 10000, // 10秒でタイムアウト
 }
 
 module.exports = createJestConfig(customJestConfig)

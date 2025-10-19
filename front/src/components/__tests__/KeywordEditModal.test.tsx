@@ -53,7 +53,7 @@ describe('KeywordEditModal', () => {
     expect(screen.getByPlaceholderText(/AI、プログラミング、デザイン/)).toBeInTheDocument()
   })
 
-  it('should display initial keywords', () => {
+  it('should display initial keywords', async () => {
     render(
       <KeywordEditModal
         isOpen={true}
@@ -63,8 +63,11 @@ describe('KeywordEditModal', () => {
       />
     )
 
-    expect(screen.getByText('AI')).toBeInTheDocument()
-    expect(screen.getByText('プログラミング')).toBeInTheDocument()
+    await waitFor(() => {
+      // Check if eggs are rendered as SVG elements with title attributes
+      expect(screen.getByTitle('AI')).toBeInTheDocument()
+      expect(screen.getByTitle('プログラミング')).toBeInTheDocument()
+    })
   })
 
   it('should add keywords from input', async () => {
@@ -82,10 +85,10 @@ describe('KeywordEditModal', () => {
     await user.type(input, 'AI, プログラミング')
     await user.click(screen.getByText('>'))
 
-    // Keywords should appear in the nest area
+    // Keywords should appear in the selected keywords display (with ✕)
     await waitFor(() => {
-      expect(screen.getByText('AI')).toBeInTheDocument()
-      expect(screen.getByText('プログラミング')).toBeInTheDocument()
+      expect(screen.getByText(/AI ✕/)).toBeInTheDocument()
+      expect(screen.getByText(/プログラミング ✕/)).toBeInTheDocument()
     })
   })
 
@@ -105,7 +108,7 @@ describe('KeywordEditModal', () => {
     await user.keyboard('{Enter}')
 
     await waitFor(() => {
-      expect(screen.getByText('テスト')).toBeInTheDocument()
+      expect(screen.getByText(/テスト ✕/)).toBeInTheDocument()
     })
   })
 
@@ -180,18 +183,23 @@ describe('KeywordEditModal', () => {
       />
     )
 
-    // Click on the AI keyword to remove it
-    const aiKeyword = screen.getByText('AI')
+    // Click on the AI keyword to remove it (click on the selected keyword with ✕)
+    await waitFor(() => {
+      const aiKeyword = screen.getByText(/AI ✕/)
+      expect(aiKeyword).toBeInTheDocument()
+    })
+    
+    const aiKeyword = screen.getByText(/AI ✕/)
     await user.click(aiKeyword)
 
-    // AI should be removed and moved back to floating keywords
+    // AI should be removed from selected keywords
     await waitFor(() => {
-      // The keyword should still exist but in a different location (floating)
-      expect(screen.getAllByText('AI')).toHaveLength(1)
+      // The keyword with ✕ should no longer exist
+      expect(screen.queryByText(/AI ✕/)).not.toBeInTheDocument()
     })
   })
 
-  it('should reset when modal closes', () => {
+  it('should reset when modal closes', async () => {
     const { rerender } = render(
       <KeywordEditModal
         isOpen={true}
@@ -201,8 +209,12 @@ describe('KeywordEditModal', () => {
       />
     )
 
-    expect(screen.getByText('AI')).toBeInTheDocument()
+    // Check initial keyword is displayed as egg (with title attribute)
+    await waitFor(() => {
+      expect(screen.getByTitle('AI')).toBeInTheDocument()
+    })
 
+    // Close modal
     rerender(
       <KeywordEditModal
         isOpen={false}
@@ -212,6 +224,7 @@ describe('KeywordEditModal', () => {
       />
     )
 
+    // Reopen with different keyword
     rerender(
       <KeywordEditModal
         isOpen={true}
@@ -221,6 +234,9 @@ describe('KeywordEditModal', () => {
       />
     )
 
-    expect(screen.getByText('プログラミング')).toBeInTheDocument()
+    // Check new keyword is displayed
+    await waitFor(() => {
+      expect(screen.getByTitle('プログラミング')).toBeInTheDocument()
+    })
   })
 })

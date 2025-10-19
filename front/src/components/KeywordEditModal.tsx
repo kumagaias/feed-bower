@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/i18n'
 import { KEYWORD_COLORS, getKeywordColor } from '@/lib/colors'
@@ -192,11 +192,14 @@ export default function KeywordEditModal({
         color: getKeywordColor(keyword)
       }
     })
-  }, [language])
+  }, [])
 
-  // Initialize when modal opens
+  // Track if modal was just opened to avoid re-initializing
+  const wasOpenRef = useRef(false)
+
+  // Initialize when modal opens or reset when closes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       // Set initial eggs from existing keywords
       const initialEggs = initialKeywords.map((keyword, index) => ({
         id: `initial-${index}`,
@@ -207,18 +210,16 @@ export default function KeywordEditModal({
       
       // Generate floating keywords
       setFloatingKeywords(generateRandomKeywords())
-    }
-  }, [isOpen, initialKeywords, generateRandomKeywords])
-
-  // Reset when modal closes
-  useEffect(() => {
-    if (!isOpen) {
+      wasOpenRef.current = true
+    } else if (!isOpen) {
+      // Reset when modal closes
       setFloatingKeywords([])
       setEggs([])
       setUserQuery('')
       setModalClouds([])
       setModalBirds([])
       setBalloons([])
+      wasOpenRef.current = false
     }
   }, [isOpen])
 
