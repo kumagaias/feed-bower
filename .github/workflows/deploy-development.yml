@@ -22,6 +22,7 @@ jobs:
   deploy-backend:
     name: Deploy Backend to Development
     runs-on: ubuntu-latest
+    environment: development
     permissions:
       id-token: write  # OIDC 用
       contents: read
