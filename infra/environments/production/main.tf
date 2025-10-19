@@ -336,7 +336,7 @@ module "amplify" {
   source = "../../modules/amplify"
 
   app_name       = "${local.project_name}-${local.environment}"
-  repository_url = var.github_repository
+  repository_url = var.github_repository_url
   access_token   = var.github_token
 
   branches = {
