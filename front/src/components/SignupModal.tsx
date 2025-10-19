@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/lib/i18n";
+import VerificationModal from "./VerificationModal";
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -44,16 +46,17 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const router = useRouter();
   const { language, setLanguage } = useApp();
   const { register, error: authError, clearError } = useAuth();
+  const t = useTranslation(language);
   
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
     confirmPassword: "",
     language: language,
   });
   
   const [errors, setErrors] = useState<{
-    username?: string;
+    email?: string;
     password?: string;
     confirmPassword?: string;
     general?: string;
@@ -61,6 +64,8 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const passwordValidation = validatePassword(formData.password);
@@ -78,13 +83,11 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
     
-    // Username validation
-    if (!formData.username) {
-      newErrors.username = "ユーザー名を入力してください";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "ユーザー名は3文字以上である必要があります";
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.username)) {
-      newErrors.username = "ユーザー名は英数字、ハイフン、アンダースコアのみ使用できます";
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "メールアドレスを入力してください";
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = "有効なメールアドレスを入力してください";
     }
     
     // Password validation
@@ -118,16 +121,24 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     
     try {
       console.log("🚀 Starting signup process...", {
-        username: formData.username,
+        email: formData.email,
         language: formData.language,
       });
       
-      await register(
-        formData.username,
+      // サインアップ（確認コードが必要）
+      setPendingEmail(formData.email);
+      
+      // Cognito にサインアップ（自動ログインなし）
+      const { customCognitoAuth } = await import('@/lib/cognito-client');
+      await customCognitoAuth.signUp(
+        formData.email,
         formData.password,
-        formData.username,
-        formData.language
+        formData.email,
+        formData.email.split("@")[0]
       );
+      
+      // 確認コード入力画面を表示
+      setShowVerification(true);
       
       console.log("✅ Registration successful!");
       
@@ -162,15 +173,50 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     }
   };
   
+  const handleVerify = async (code: string) => {
+    const { customCognitoAuth } = await import('@/lib/cognito-client');
+    await customCognitoAuth.confirmSignUp(pendingEmail, code);
+    
+    // 確認後、自動ログイン
+    await register(pendingEmail, formData.password, pendingEmail.split("@")[0], formData.language);
+    
+    // モーダルを閉じてリダイレクト
+    onClose();
+    router.push("/bowers");
+  };
+
+  const handleResend = async () => {
+    const { customCognitoAuth } = await import('@/lib/cognito-client');
+    // Cognito の resendConfirmationCode を実装する必要があります
+    // 今は signUp を再実行
+    await customCognitoAuth.signUp(
+      pendingEmail,
+      formData.password,
+      pendingEmail,
+      pendingEmail.split("@")[0]
+    );
+  };
+
   if (!isOpen) return null;
   
   return (
+    <>
+      <VerificationModal
+        isOpen={showVerification}
+        email={pendingEmail}
+        onVerify={handleVerify}
+        onResend={handleResend}
+        onClose={() => {
+          setShowVerification(false);
+          onClose();
+        }}
+      />
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <div className="text-2xl">🪺</div>
-            <h2 className="text-2xl font-bold text-gray-800">アカウント作成</h2>
+            <h2 className="text-2xl font-bold text-gray-800">{t.createAccount}</h2>
           </div>
           <button
             onClick={onClose}
@@ -184,27 +230,27 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
           {/* Username */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              ユーザー名 <span className="text-red-500">*</span>
+              {t.email} <span className="text-red-500">*</span>
             </label>
             <input
-              type="text"
-              value={formData.username}
-              onChange={(e) => handleChange("username", e.target.value)}
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
               disabled={isSubmitting}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-transparent disabled:opacity-50 ${
-                errors.username ? "border-red-500" : "border-gray-300"
+                errors.email ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="username"
+              placeholder="your@email.com"
             />
-            {errors.username && (
-              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
             )}
           </div>
           
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード <span className="text-red-500">*</span>
+              {t.password} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -232,7 +278,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
             
             {/* Password requirements */}
             <div className="mt-2 text-xs text-gray-600 space-y-1">
-              <p className="font-medium">パスワードの要件:</p>
+              <p className="font-medium">{t.passwordRequirements}</p>
               <ul className="list-disc list-inside space-y-0.5 ml-2">
                 <li className={formData.password.length >= 8 ? "text-green-600" : ""}>
                   8文字以上
@@ -250,7 +296,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
           {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード（確認） <span className="text-red-500">*</span>
+              {t.confirmPassword} <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -335,11 +381,12 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 作成中...
               </span>
             ) : (
-              "アカウントを作成"
+              "              t.createAccount"
             )}
           </button>
         </form>
       </div>
     </div>
+    </>
   );
 }

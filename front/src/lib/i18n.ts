@@ -65,7 +65,27 @@ const translations = {
     invalidResponse: '無効なレスポンスです',
     invalidCredentials: '正しいユーザー名またはパスワードを入力してください',
     noAccount: 'アカウントをお持ちでない方は',
-    createAccount: 'アカウント作成'
+    createAccount: 'アカウント作成',
+    signup: 'サインアップ',
+    confirmPassword: 'パスワード（確認）',
+    alreadyHaveAccount: 'すでにアカウントをお持ちの方は',
+    passwordRequirements: 'パスワードの要件:',
+    minLength: '8文字以上',
+    includeLetters: '英字を含む',
+    includeNumbers: '数字を含む',
+    usernameInUse: 'このユーザー名は既に使用されています',
+    networkError: 'ネットワークエラーが発生しました',
+    signupFailed: 'サインアップに失敗しました',
+    verifyEmail: 'メールアドレスを確認',
+    verificationCode: '確認コード',
+    verificationCodeSent: '確認コードを送信しました:',
+    verify: '確認',
+    verifying: '確認中...',
+    verificationFailed: '確認に失敗しました',
+    resendCode: 'コードを再送信',
+    resending: '再送信中...',
+    resendFailed: '再送信に失敗しました',
+    cancel: 'キャンセル'
   },
   en: {
     // Common
@@ -132,7 +152,27 @@ const translations = {
     invalidResponse: 'Invalid response',
     invalidCredentials: 'Please enter a valid username or password',
     noAccount: 'Don\'t have an account?',
-    createAccount: 'Create Account'
+    createAccount: 'Create Account',
+    signup: 'Sign Up',
+    confirmPassword: 'Confirm Password',
+    alreadyHaveAccount: 'Already have an account?',
+    passwordRequirements: 'Password requirements:',
+    minLength: '8+ characters',
+    includeLetters: 'Include letters',
+    includeNumbers: 'Include numbers',
+    usernameInUse: 'This username is already taken',
+    networkError: 'Network error occurred',
+    signupFailed: 'Sign up failed',
+    verifyEmail: 'Verify Email',
+    verificationCode: 'Verification Code',
+    verificationCodeSent: 'Verification code sent to:',
+    verify: 'Verify',
+    verifying: 'Verifying...',
+    verificationFailed: 'Verification failed',
+    resendCode: 'Resend Code',
+    resending: 'Resending...',
+    resendFailed: 'Resend failed',
+    cancel: 'Cancel'
   }
 } as const
 

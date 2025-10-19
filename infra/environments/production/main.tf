@@ -73,8 +73,8 @@ module "cognito" {
   user_pool_name = "${local.project_name}-${local.environment}"
   client_name    = "${local.project_name}-client-${local.environment}"
 
-  username_attributes      = []  # ユーザー名でサインイン（メール不要）
-  auto_verified_attributes = []
+  username_attributes      = ["email"]
+  auto_verified_attributes = ["email"]
 
   password_policy = {
     minimum_length                   = 8
