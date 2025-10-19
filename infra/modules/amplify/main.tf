@@ -13,7 +13,7 @@ resource "aws_amplify_app" "app" {
   name         = var.app_name
   repository   = var.repository_url
   access_token = var.access_token
-  platform     = "WEB_COMPUTE"  # Next.js SSR サポート
+  platform     = "WEB"  # 静的サイト
 
   # ビルド設定
   build_spec = var.build_spec != null ? var.build_spec : templatefile("${path.module}/templates/amplify.yml.tpl", {
