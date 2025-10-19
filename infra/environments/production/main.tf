@@ -73,8 +73,8 @@ module "cognito" {
   user_pool_name = "${local.project_name}-${local.environment}"
   client_name    = "${local.project_name}-client-${local.environment}"
 
-  username_attributes      = ["email"]
-  auto_verified_attributes = ["email"]
+  username_attributes      = []  # ユーザー名でサインイン（メール不要）
+  auto_verified_attributes = []
 
   password_policy = {
     minimum_length                   = 8
@@ -86,7 +86,7 @@ module "cognito" {
   }
 
   mfa_configuration   = "OFF"
-  deletion_protection = "ACTIVE"
+  deletion_protection = "INACTIVE"
 
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
@@ -348,7 +348,11 @@ module "api_gateway" {
   stage_name           = local.environment
 
   enable_cors        = true
-  cors_allow_origins = ["https://feed-bower.net", "https://www.feed-bower.net"]
+  cors_allow_origins = [
+    "https://feed-bower.net",
+    "https://www.feed-bower.net",
+    "https://main.dwjgow9ofphjt.amplifyapp.com"  # Amplify ドメイン
+  ]
   cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   cors_allow_headers = ["Content-Type", "Authorization", "X-Requested-With"]
 

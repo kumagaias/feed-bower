@@ -134,6 +134,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		corsConfig.AllowedOrigins = []string{
 			"https://feed-bower.net",
 			"https://www.feed-bower.net",
+			"https://main.dwjgow9ofphjt.amplifyapp.com",
 		}
 	} else {
 		// In development, allow localhost origins

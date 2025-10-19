@@ -16,6 +16,23 @@ resource "aws_cognito_user_pool" "pool" {
   username_attributes      = var.username_attributes
   auto_verified_attributes = var.auto_verified_attributes
 
+  # 自動確認設定
+  admin_create_user_config {
+    allow_admin_create_user_only = false
+  }
+
+  # メール設定（デフォルトの Cognito メールを使用）
+  email_configuration {
+    email_sending_account = "COGNITO_DEFAULT"
+  }
+
+  # 検証メッセージのカスタマイズ
+  verification_message_template {
+    default_email_option = "CONFIRM_WITH_CODE"
+    email_subject        = "Feed Bower - Verify your email"
+    email_message        = "Welcome to Feed Bower! Your verification code is: {####}"
+  }
+
   # パスワードポリシー
   password_policy {
     minimum_length                   = var.password_policy.minimum_length
@@ -40,7 +57,64 @@ resource "aws_cognito_user_pool" "pool" {
   # ユーザープール削除保護
   deletion_protection = var.deletion_protection
 
+  # Lambda トリガー（自動確認）
+  lambda_config {
+    pre_sign_up = var.auto_confirm_users ? aws_lambda_function.auto_confirm[0].arn : null
+  }
+
   tags = var.tags
+}
+
+# Lambda 関数（自動確認用）
+resource "aws_lambda_function" "auto_confirm" {
+  count = var.auto_confirm_users ? 1 : 0
+
+  filename      = "${path.module}/lambda/auto-confirm.zip"
+  function_name = "${var.user_pool_name}-auto-confirm"
+  role          = aws_iam_role.lambda[0].arn
+  handler       = "auto-confirm.handler"
+  runtime       = "nodejs20.x"
+  timeout       = 3
+
+  source_code_hash = filebase64sha256("${path.module}/lambda/auto-confirm.zip")
+}
+
+# Lambda 用 IAM ロール
+resource "aws_iam_role" "lambda" {
+  count = var.auto_confirm_users ? 1 : 0
+
+  name = "${var.user_pool_name}-auto-confirm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  count = var.auto_confirm_users ? 1 : 0
+
+  role       = aws_iam_role.lambda[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# Cognito が Lambda を呼び出す権限
+resource "aws_lambda_permission" "cognito" {
+  count = var.auto_confirm_users ? 1 : 0
+
+  statement_id  = "AllowCognitoInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.auto_confirm[0].function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.pool.arn
 }
 
 # Cognito User Pool Client
