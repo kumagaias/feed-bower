@@ -1,11 +1,42 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.17"
     }
   }
+}
+
+# API Gateway CloudWatch Logs 用 IAM ロール
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "${var.api_name}-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# CloudWatch Logs への書き込み権限
+resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
+  role       = aws_iam_role.api_gateway_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+# API Gateway アカウント設定
+resource "aws_api_gateway_account" "account" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
 }
 
 # API Gateway REST API
@@ -164,6 +195,8 @@ resource "aws_api_gateway_stage" "stage" {
   xray_tracing_enabled = var.xray_tracing_enabled
 
   tags = var.tags
+
+  depends_on = [aws_api_gateway_account.account]
 }
 
 # CloudWatch Logs

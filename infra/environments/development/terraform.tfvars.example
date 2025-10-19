@@ -1,0 +1,10 @@
+# AWS リージョン
+aws_region = "ap-northeast-1"
+
+# GitHub リポジトリ URL
+github_repository = "https://github.com/your-username/feed-bower"
+
+# GitHub Personal Access Token
+# Amplify が GitHub リポジトリにアクセスするために必要
+# スコープ: repo, admin:repo_hook
+# github_token = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
