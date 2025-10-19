@@ -199,8 +199,9 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
 
   if (!isOpen) return null;
   
-  return (
-    <>
+  // 確認コード画面を表示中は SignupModal を非表示
+  if (showVerification) {
+    return (
       <VerificationModal
         isOpen={showVerification}
         email={pendingEmail}
@@ -211,6 +212,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
           onClose();
         }}
       />
+    );
+  }
+  
+  return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-8 max-w-md w-full">
         <div className="flex items-center justify-between mb-6">
@@ -381,12 +386,11 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                 作成中...
               </span>
             ) : (
-              "              t.createAccount"
+              t.createAccount
             )}
           </button>
         </form>
       </div>
     </div>
-    </>
   );
 }
