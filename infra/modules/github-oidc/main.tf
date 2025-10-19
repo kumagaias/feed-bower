@@ -8,9 +8,12 @@ terraform {
   }
 }
 
+# 現在の AWS アカウント ID を取得
+data "aws_caller_identity" "current" {}
+
 # GitHub OIDC プロバイダー（既存のものを参照）
 data "aws_iam_openid_connect_provider" "github" {
-  url = "https://token.actions.githubusercontent.com"
+  arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
 }
 
 # GitHub Actions 用 IAM ロール
@@ -31,7 +34,7 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:ref:refs/heads/${var.branch_name}"
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:environment:${var.environment_name}"
           }
         }
       }
