@@ -61,3 +61,13 @@ output "dynamodb_table_arns" {
     chick_stats    = module.dynamodb_chick_stats.table_arn
   }
 }
+
+output "github_actions_role_arn" {
+  description = "GitHub Actions 用 IAM ロール ARN"
+  value       = module.github_oidc.role_arn
+}
+
+output "github_oidc_provider_arn" {
+  description = "GitHub OIDC プロバイダー ARN"
+  value       = module.github_oidc.oidc_provider_arn
+}
