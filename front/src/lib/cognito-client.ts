@@ -279,16 +279,10 @@ export class CustomCognitoAuth {
     try {
       console.log("📝 Attempting sign up with custom Cognito client", {
         username,
-        email,
         name,
       });
 
-      const userAttributes = [
-        {
-          Name: "email",
-          Value: email,
-        },
-      ];
+      const userAttributes = [];
 
       // Add name attribute if provided
       if (name) {
