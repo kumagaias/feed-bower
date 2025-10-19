@@ -79,7 +79,7 @@ export default function LandingHeader() {
       await login("dev@feed-bower.local", "DevPassword123!");
       // Only close modal if login was successful
       setShowLogin(false);
-      setEmail("");
+      setUsername("");
       setPassword("");
       
       // Redirect to bowers page after successful login
@@ -194,7 +194,7 @@ export default function LandingHeader() {
                   setShowLogin(false);
                   setError("");
                   clearError();
-                  setEmail("");
+                  setUsername("");
                   setPassword("");
                 }}
                 className="text-gray-500 hover:text-gray-700 text-xl"
