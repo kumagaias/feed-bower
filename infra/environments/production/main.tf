@@ -352,7 +352,7 @@ module "amplify" {
     }
   }
 
-  build_spec       = file("${path.root}/../../amplify.yml")  # モノレポ対応の buildSpec
+  build_spec       = file("${path.module}/../../../amplify.yml")  # モノレポ対応の buildSpec
   node_version     = "24"
   build_command    = "npm run build"
   output_directory = ".next"
