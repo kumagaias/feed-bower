@@ -46,14 +46,14 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const { register, error: authError, clearError } = useAuth();
   
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
     confirmPassword: "",
     language: language,
   });
   
   const [errors, setErrors] = useState<{
-    email?: string;
+    username?: string;
     password?: string;
     confirmPassword?: string;
     general?: string;
@@ -78,11 +78,13 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const validateForm = (): boolean => {
     const newErrors: typeof errors = {};
     
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = "メールアドレスを入力してください";
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "有効なメールアドレスを入力してください";
+    // Username validation
+    if (!formData.username) {
+      newErrors.username = "ユーザー名を入力してください";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "ユーザー名は3文字以上である必要があります";
+    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.username)) {
+      newErrors.username = "ユーザー名は英数字、ハイフン、アンダースコアのみ使用できます";
     }
     
     // Password validation
@@ -116,17 +118,14 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     
     try {
       console.log("🚀 Starting signup process...", {
-        email: formData.email,
+        username: formData.username,
         language: formData.language,
       });
       
-      // Use email as name (since we're not collecting name separately)
-      const name = formData.email.split("@")[0];
-      
       await register(
-        formData.email,
+        formData.username,
         formData.password,
-        name,
+        formData.username,
         formData.language
       );
       
@@ -147,7 +146,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
       
       if (error instanceof Error) {
         if (error.message.includes("already exists") || error.message.includes("UsernameExistsException")) {
-          errorMessage = "このメールアドレスは既に使用されています";
+          errorMessage = "このユーザー名は既に使用されています";
         } else if (error.message.includes("Network")) {
           errorMessage = "ネットワークエラーが発生しました";
         } else if (error.message.includes("Password")) {
@@ -182,23 +181,23 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
+          {/* Username */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              メールアドレス <span className="text-red-500">*</span>
+              ユーザー名 <span className="text-red-500">*</span>
             </label>
             <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              type="text"
+              value={formData.username}
+              onChange={(e) => handleChange("username", e.target.value)}
               disabled={isSubmitting}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#14b8a6] focus:border-transparent disabled:opacity-50 ${
-                errors.email ? "border-red-500" : "border-gray-300"
+                errors.username ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="your@email.com"
+              placeholder="username"
             />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
             )}
           </div>
           
