@@ -313,7 +313,7 @@ module "api_gateway" {
   stage_name           = local.environment
 
   enable_cors        = true
-  cors_allow_origins = ["https://feed-bower.com", "https://www.feed-bower.com"]
+  cors_allow_origins = ["https://feed-bower.net", "https://www.feed-bower.net"]
   cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   cors_allow_headers = ["Content-Type", "Authorization", "X-Requested-With"]
 
@@ -369,14 +369,13 @@ module "amplify" {
   enable_pull_request_preview = false
   enable_basic_auth           = false
 
-  custom_domain = null  # カスタムドメインは後で設定
-  # custom_domain = "feed-bower.com"
-  # domain_config = {
-  #   main = {
-  #     branch_name = "main"
-  #     prefix      = ""  # ルートドメイン
-  #   }
-  # }
+  custom_domain = "feed-bower.net"
+  domain_config = [
+    {
+      branch_name = "main"
+      prefix      = ""  # ルートドメイン
+    }
+  ]
 
   tags = local.common_tags
 

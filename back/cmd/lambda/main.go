@@ -132,8 +132,8 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	if config.Environment == "production" {
 		// In production, restrict origins
 		corsConfig.AllowedOrigins = []string{
-			"https://feed-bower.com",
-			"https://www.feed-bower.com",
+			"https://feed-bower.net",
+			"https://www.feed-bower.net",
 		}
 	} else {
 		// In development, allow localhost origins
