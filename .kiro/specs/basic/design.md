@@ -916,7 +916,7 @@ module "api_gateway" {
   stage_name      = var.environment
 
   cors_configuration = {
-    allow_origins = ["https://feed-bower.com"]
+    allow_origins = ["https://feed-bower.net"]
     allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     allow_headers = ["Content-Type", "Authorization"]
   }

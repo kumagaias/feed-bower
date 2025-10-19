@@ -29,7 +29,7 @@ module "api_gateway" {
   lambda_function_name = module.lambda.function_name
 
   enable_cors        = true
-  cors_allow_origins = ["https://feed-bower.com"]
+  cors_allow_origins = ["https://feed-bower.net"]
   cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   cors_allow_headers = ["Content-Type", "Authorization"]
 
@@ -57,7 +57,7 @@ module "api_gateway" {
   lambda_invoke_arn    = module.lambda.function_invoke_arn
   lambda_function_name = module.lambda.function_name
 
-  custom_domain_name = "api.feed-bower.com"
+  custom_domain_name = "api.feed-bower.net"
   certificate_arn    = aws_acm_certificate.api.arn
 
   tags = {
@@ -69,7 +69,7 @@ module "api_gateway" {
 # Route53 レコードの作成
 resource "aws_route53_record" "api" {
   zone_id = aws_route53_zone.main.zone_id
-  name    = "api.feed-bower.com"
+  name    = "api.feed-bower.net"
   type    = "A"
 
   alias {
