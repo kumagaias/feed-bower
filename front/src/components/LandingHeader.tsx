@@ -11,7 +11,7 @@ import SignupModal from "@/components/SignupModal";
 export default function LandingHeader() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,11 +28,11 @@ export default function LandingHeader() {
 
     try {
       console.log("Attempting login...");
-      await login(email, password);
+      await login(username, password);
       console.log("Login successful, closing modal");
       // Only close modal if login was successful
       setShowLogin(false);
-      setEmail("");
+      setUsername("");
       setPassword("");
 
       // Redirect to bowers page after successful login
@@ -206,16 +206,16 @@ export default function LandingHeader() {
             <form onSubmit={handleLogin} className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t.email}
+                  {t.username}
                 </label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={isSubmitting}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f59e0b] focus:border-transparent disabled:opacity-50"
-                  placeholder="your@email.com"
+                  placeholder="username"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export default function LandingHeader() {
             {/* Signup Link */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
-                アカウントをお持ちでない方は{" "}
+                {t.noAccount}{" "}
                 <button
                   onClick={() => {
                     setShowLogin(false);
@@ -277,7 +277,7 @@ export default function LandingHeader() {
                   className="font-medium hover:underline"
                   style={{ color: "#14b8a6" }}
                 >
-                  アカウント作成
+                  {t.createAccount}
                 </button>
               </p>
             </div>
