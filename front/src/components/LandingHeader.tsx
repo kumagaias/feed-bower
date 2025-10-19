@@ -11,7 +11,7 @@ import SignupModal from "@/components/SignupModal";
 export default function LandingHeader() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,11 +28,11 @@ export default function LandingHeader() {
 
     try {
       console.log("Attempting login...");
-      await login(username, password);
+      await login(email, password);
       console.log("Login successful, closing modal");
       // Only close modal if login was successful
       setShowLogin(false);
-      setUsername("");
+      setEmail("");
       setPassword("");
 
       // Redirect to bowers page after successful login
@@ -79,7 +79,7 @@ export default function LandingHeader() {
       await login("dev@feed-bower.local", "DevPassword123!");
       // Only close modal if login was successful
       setShowLogin(false);
-      setUsername("");
+      setEmail("");
       setPassword("");
       
       // Redirect to bowers page after successful login
@@ -194,7 +194,7 @@ export default function LandingHeader() {
                   setShowLogin(false);
                   setError("");
                   clearError();
-                  setUsername("");
+                  setEmail("");
                   setPassword("");
                 }}
                 className="text-gray-500 hover:text-gray-700 text-xl"
@@ -206,12 +206,12 @@ export default function LandingHeader() {
             <form onSubmit={handleLogin} className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t.username}
+                  {t.email}
                 </label>
                 <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isSubmitting}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f59e0b] focus:border-transparent disabled:opacity-50"
