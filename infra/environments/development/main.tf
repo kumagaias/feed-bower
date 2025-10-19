@@ -383,6 +383,7 @@ module "github_oidc" {
   role_name         = "GitHubActions-FeedBower-Development"
   github_repository = var.github_repository
   branch_name       = "develop"
+  environment_name  = "development"
 
   ecr_repository_arns = [
     module.ecr.repository_arn,

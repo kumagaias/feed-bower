@@ -390,6 +390,7 @@ module "github_oidc" {
   role_name         = "GitHubActions-FeedBower-Production"
   github_repository = var.github_repository
   branch_name       = "main"
+  environment_name  = "production"
 
   ecr_repository_arns = [
     module.ecr.repository_arn,

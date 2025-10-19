@@ -13,6 +13,11 @@ variable "branch_name" {
   type        = string
 }
 
+variable "environment_name" {
+  description = "GitHub Environment 名（例: production, development）"
+  type        = string
+}
+
 variable "ecr_repository_arns" {
   description = "ECR リポジトリの ARN リスト"
   type        = list(string)
