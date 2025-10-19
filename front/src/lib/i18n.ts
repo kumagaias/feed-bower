@@ -6,6 +6,7 @@ const translations = {
     error: 'エラーが発生しました',
     login: 'ログイン',
     logout: 'ログアウト',
+    username: 'ユーザー名',
     email: 'メールアドレス',
     password: 'パスワード',
     
@@ -62,7 +63,9 @@ const translations = {
     authFailed: '認証に失敗しました',
     tokenVerificationFailed: 'トークンの検証に失敗しました',
     invalidResponse: '無効なレスポンスです',
-    invalidCredentials: '正しいメールアドレスまたはパスワードを入力してください'
+    invalidCredentials: '正しいユーザー名またはパスワードを入力してください',
+    noAccount: 'アカウントをお持ちでない方は',
+    createAccount: 'アカウント作成'
   },
   en: {
     // Common
@@ -70,6 +73,7 @@ const translations = {
     error: 'An error occurred',
     login: 'Login',
     logout: 'Logout',
+    username: 'Username',
     email: 'Email',
     password: 'Password',
     
@@ -126,7 +130,9 @@ const translations = {
     authFailed: 'Authentication failed',
     tokenVerificationFailed: 'Token verification failed',
     invalidResponse: 'Invalid response',
-    invalidCredentials: 'Please enter a valid email address or password'
+    invalidCredentials: 'Please enter a valid username or password',
+    noAccount: 'Don\'t have an account?',
+    createAccount: 'Create Account'
   }
 } as const
 
