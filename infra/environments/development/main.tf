@@ -375,3 +375,27 @@ module "amplify" {
 
   depends_on = [module.api_gateway]
 }
+
+# GitHub OIDC for GitHub Actions
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  role_name         = "GitHubActions-FeedBower-Development"
+  github_repository = var.github_repository
+  branch_name       = "develop"
+
+  ecr_repository_arns = [
+    module.ecr.repository_arn,
+  ]
+
+  lambda_function_arns = [
+    module.lambda.function_arn,
+  ]
+
+  tags = local.common_tags
+
+  depends_on = [
+    module.ecr,
+    module.lambda,
+  ]
+}
