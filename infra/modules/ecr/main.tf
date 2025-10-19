@@ -1,9 +1,9 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.17"
     }
   }
 }
@@ -34,11 +34,12 @@ resource "aws_ecr_lifecycle_policy" "policy" {
     rules = [
       {
         rulePriority = 1
-        description  = "最新の ${var.max_image_count} イメージを保持"
+        description  = "${var.untagged_image_retention_days} 日以上経過したタグなしイメージを削除"
         selection = {
-          tagStatus   = "any"
-          countType   = "imageCountMoreThan"
-          countNumber = var.max_image_count
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = var.untagged_image_retention_days
         }
         action = {
           type = "expire"
@@ -46,12 +47,11 @@ resource "aws_ecr_lifecycle_policy" "policy" {
       },
       {
         rulePriority = 2
-        description  = "${var.untagged_image_retention_days} 日以上経過したタグなしイメージを削除"
+        description  = "最新の ${var.max_image_count} イメージを保持"
         selection = {
-          tagStatus   = "untagged"
-          countType   = "sinceImagePushed"
-          countUnit   = "days"
-          countNumber = var.untagged_image_retention_days
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = var.max_image_count
         }
         action = {
           type = "expire"

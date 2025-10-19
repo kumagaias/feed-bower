@@ -9,6 +9,10 @@ set -e
 ENDPOINT="http://localhost:8000"
 REGION="ap-northeast-1"
 
+# 環境名（デフォルトは development）
+ENVIRONMENT="${ENVIRONMENT:-development}"
+TABLE_SUFFIX="-${ENVIRONMENT}"
+
 # DynamoDB Local が起動しているかチェック
 if ! aws dynamodb list-tables --endpoint-url $ENDPOINT --region $REGION >/dev/null 2>&1; then
     echo "❌ エラー: DynamoDB Local に接続できません"
@@ -27,7 +31,7 @@ echo "DynamoDB テーブルを作成中..."
 
 # 1. Users テーブル作成（EmailIndex GSI付き）
 aws dynamodb create-table \
-    --table-name Users \
+    --table-name "Users${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
         AttributeName=email,AttributeType=S \
@@ -42,7 +46,7 @@ aws dynamodb create-table \
 
 # 2. Bowers テーブル作成（UserIdIndex GSI付き）
 aws dynamodb create-table \
-    --table-name Bowers \
+    --table-name "Bowers${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=bower_id,AttributeType=S \
         AttributeName=user_id,AttributeType=S \
@@ -57,7 +61,7 @@ aws dynamodb create-table \
 
 # 3. Feeds テーブル作成（BowerIdIndex GSI付き）
 aws dynamodb create-table \
-    --table-name Feeds \
+    --table-name "Feeds${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=feed_id,AttributeType=S \
         AttributeName=bower_id,AttributeType=S \
@@ -72,7 +76,7 @@ aws dynamodb create-table \
 
 # 4. Articles テーブル作成（FeedIdPublishedAtIndex GSI付き）
 aws dynamodb create-table \
-    --table-name Articles \
+    --table-name "Articles${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=article_id,AttributeType=S \
         AttributeName=feed_id,AttributeType=S \
@@ -88,7 +92,7 @@ aws dynamodb create-table \
 
 # 5. LikedArticles テーブル作成（複合キー）
 aws dynamodb create-table \
-    --table-name LikedArticles \
+    --table-name "LikedArticles${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
         AttributeName=article_id,AttributeType=S \
@@ -102,7 +106,7 @@ aws dynamodb create-table \
 
 # 6. ChickStats テーブル作成（シンプルなハッシュキー）
 aws dynamodb create-table \
-    --table-name ChickStats \
+    --table-name "ChickStats${TABLE_SUFFIX}" \
     --attribute-definitions \
         AttributeName=user_id,AttributeType=S \
     --key-schema \

@@ -19,7 +19,7 @@ Docker コンテナイメージを保存する ECR リポジトリを作成す�
 module "ecr" {
   source = "../../modules/ecr"
 
-  repository_name      = "feed-bower-api"
+  repository_name      = "feed-bower-api-development"  # または "feed-bower-api-production"
   image_tag_mutability = "MUTABLE"
   scan_on_push         = true
 

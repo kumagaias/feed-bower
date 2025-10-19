@@ -1559,7 +1559,7 @@ terraform plan
 terraform apply
 
 # 環境別の適用
-cd infra/environments/dev
+cd infra/environments/development
 terraform apply
 ```
 

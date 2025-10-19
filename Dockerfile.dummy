@@ -1,0 +1,13 @@
+FROM public.ecr.aws/lambda/provided:al2023-x86_64
+
+# 最小限のダミーハンドラー
+COPY --chmod=755 <<'BOOTSTRAP' /var/runtime/bootstrap
+#!/bin/bash
+while true; do
+  EVENT_DATA=$(curl -sS -LD "$HEADERS" -X GET "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/next")
+  REQUEST_ID=$(grep -Fi Lambda-Runtime-Aws-Request-Id "$HEADERS" | tr -d '[:space:]' | cut -d: -f2)
+  curl -X POST "http://${AWS_LAMBDA_RUNTIME_API}/2018-06-01/runtime/invocation/$REQUEST_ID/response" -d '{"statusCode":200,"body":"Dummy Lambda"}'
+done
+BOOTSTRAP
+
+CMD [ "dummy.handler" ]

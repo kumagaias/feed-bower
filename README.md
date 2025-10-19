@@ -304,14 +304,47 @@ aws dynamodb delete-table --table-name Users --endpoint-url http://localhost:800
 
 ## Deployment
 
-### Infrastructure Setup (Manual)
+### Infrastructure Setup
+
+#### 1. S3 バックエンドの作成
+
+Terraform のステートファイルを保存する S3 バケットを作成します。
 
 ```bash
-cd infra
-terraform init
-terraform plan
-terraform apply
+# 開発環境用
+bash scripts/create-s3-backend.sh dev
+
+# 本番環境用
+bash scripts/create-s3-backend.sh prod
 ```
+
+このスクリプトは以下を自動で設定します：
+- S3 バケット作成
+- バージョニング有効化
+- 暗号化有効化（AES256）
+- パブリックアクセスブロック
+
+#### 2. Terraform でインフラをデプロイ
+
+```bash
+cd infra/environments/development
+
+# 設定ファイルを作成
+cp terraform.tfvars.example terraform.tfvars
+vim terraform.tfvars
+
+# Terraform 初期化
+terraform init
+
+# デプロイ
+terraform apply
+
+# S3 バックエンドに移行（推奨）
+# main.tf の backend "s3" ブロックのコメントを外してから
+terraform init -migrate-state
+```
+
+詳細は [開発環境デプロイ手順](infra/environments/development/README.md) を参照してください。
 
 ### Application Deployment (Automated)
 

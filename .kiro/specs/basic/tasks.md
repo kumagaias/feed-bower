@@ -632,8 +632,8 @@
 
 ### タスク 5.2: 開発環境デプロイ
 
-- [ ] タスク 5.2: 開発環境デプロイ
-  - `infra/environments/dev/` 設定
+- [x] タスク 5.2: 開発環境デプロイ
+  - `infra/environments/development/` 設定
   - DynamoDB テーブル作成
   - Lambda 関数デプロイ
   - API Gateway デプロイ

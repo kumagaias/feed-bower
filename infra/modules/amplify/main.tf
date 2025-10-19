@@ -1,17 +1,18 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.0.0"
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.17"
     }
   }
 }
 
 # Amplify アプリケーション
 resource "aws_amplify_app" "app" {
-  name       = var.app_name
-  repository = var.repository_url
+  name         = var.app_name
+  repository   = var.repository_url
+  access_token = var.access_token
 
   # ビルド設定
   build_spec = var.build_spec != null ? var.build_spec : templatefile("${path.module}/templates/amplify.yml.tpl", {

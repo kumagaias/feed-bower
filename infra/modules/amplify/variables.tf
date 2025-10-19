@@ -8,6 +8,12 @@ variable "repository_url" {
   type        = string
 }
 
+variable "access_token" {
+  description = "GitHub Personal Access Token"
+  type        = string
+  sensitive   = true
+}
+
 variable "build_spec" {
   description = "カスタムビルド仕様（YAML 形式）"
   type        = string

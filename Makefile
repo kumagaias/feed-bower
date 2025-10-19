@@ -35,7 +35,7 @@ test:
 	@echo "2. Frontend linting..."
 	cd front && npm run lint
 	@echo "3. Frontend tests..."
-	cd front && npm test -- --watchAll=false --testPathIgnorePatterns="KeywordEditModal.test.tsx"
+	cd front && npm test -- --watchAll=false
 	@echo "4. Backend linting..."
 	cd back && go vet ./...
 	cd back && gofmt -s -l . | (! grep .)
@@ -67,7 +67,7 @@ test-backend:
 # Test with coverage
 test-coverage:
 	@echo "Running tests with coverage..."
-	cd front && npm run test:coverage
+	cd front && npm run test:coverage && npm run type-check && npm run lint
 	cd back && go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 	cd back && go tool cover -html=coverage.out -o coverage.html
 	@echo "✅ Coverage reports generated"
