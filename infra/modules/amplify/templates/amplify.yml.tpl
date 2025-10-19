@@ -3,16 +3,17 @@ frontend:
   phases:
     preBuild:
       commands:
+        - cd front
         - nvm use ${node_version}
         - npm ci
     build:
       commands:
         - ${build_command}
   artifacts:
-    baseDirectory: ${output_directory}
+    baseDirectory: front/${output_directory}
     files:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
-      - .next/cache/**/*
+      - front/node_modules/**/*
+      - front/.next/cache/**/*
