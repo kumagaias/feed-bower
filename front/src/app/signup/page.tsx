@@ -42,6 +42,7 @@ function calculatePasswordStrength(password: string): {
 }
 
 // Password validation
+// 8文字以上、英数字1文字以上
 function validatePassword(password: string): {
   isValid: boolean;
   errors: string[];
@@ -51,11 +52,8 @@ function validatePassword(password: string): {
   if (password.length < 8) {
     errors.push("パスワードは8文字以上である必要があります");
   }
-  if (!/[a-z]/.test(password)) {
-    errors.push("小文字を含める必要があります");
-  }
-  if (!/[A-Z]/.test(password)) {
-    errors.push("大文字を含める必要があります");
+  if (!/[a-zA-Z]/.test(password)) {
+    errors.push("英字を含める必要があります");
   }
   if (!/[0-9]/.test(password)) {
     errors.push("数字を含める必要があります");
@@ -347,17 +345,10 @@ export default function SignupPage() {
                 </li>
                 <li
                   className={
-                    /[a-z]/.test(formData.password) ? "text-green-600" : ""
+                    /[a-zA-Z]/.test(formData.password) ? "text-green-600" : ""
                   }
                 >
-                  小文字を含む
-                </li>
-                <li
-                  className={
-                    /[A-Z]/.test(formData.password) ? "text-green-600" : ""
-                  }
-                >
-                  大文字を含む
+                  英字を含む
                 </li>
                 <li
                   className={

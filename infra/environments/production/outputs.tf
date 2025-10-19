@@ -71,3 +71,18 @@ output "github_oidc_provider_arn" {
   description = "GitHub OIDC プロバイダー ARN"
   value       = module.github_oidc.oidc_provider_arn
 }
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID"
+  value       = module.cognito.client_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  value       = module.cognito.user_pool_arn
+}

@@ -66,6 +66,41 @@ module "ecr" {
   tags = local.common_tags
 }
 
+# Cognito User Pool
+module "cognito" {
+  source = "../../modules/cognito"
+
+  user_pool_name = "${local.project_name}-${local.environment}"
+  client_name    = "${local.project_name}-client-${local.environment}"
+
+  username_attributes      = ["email"]
+  auto_verified_attributes = ["email"]
+
+  password_policy = {
+    minimum_length                   = 8
+    require_lowercase                = true
+    require_uppercase                = false
+    require_numbers                  = true
+    require_symbols                  = false
+    temporary_password_validity_days = 7
+  }
+
+  mfa_configuration   = "OPTIONAL"
+  deletion_protection = "ACTIVE"
+
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_SRP_AUTH"
+  ]
+
+  refresh_token_validity = 30
+  access_token_validity  = 1
+  id_token_validity      = 1
+
+  tags = local.common_tags
+}
+
 # DynamoDB テーブル: Users
 module "dynamodb_users" {
   source = "../../modules/dynamodb"
@@ -345,9 +380,12 @@ module "amplify" {
       enable_auto_build           = true
       enable_pull_request_preview = false
       environment_variables = {
-        NEXT_PUBLIC_API_URL = module.api_gateway.invoke_url
-        NEXT_PUBLIC_ENV     = local.environment
-        _CUSTOM_IMAGE       = "amplify:al2023"  # Next.js SSR サポート
+        NEXT_PUBLIC_API_URL                    = module.api_gateway.invoke_url
+        NEXT_PUBLIC_ENV                        = local.environment
+        NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
+        NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
+        NEXT_PUBLIC_AWS_REGION                 = var.aws_region
+        _CUSTOM_IMAGE                          = "amplify:al2023"
       }
     }
   }
@@ -358,8 +396,11 @@ module "amplify" {
   output_directory = ".next"
 
   environment_variables = {
-    NEXT_PUBLIC_API_URL = module.api_gateway.invoke_url
-    NEXT_PUBLIC_ENV     = local.environment
+    NEXT_PUBLIC_API_URL                    = module.api_gateway.invoke_url
+    NEXT_PUBLIC_ENV                        = local.environment
+    NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
+    NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
+    NEXT_PUBLIC_AWS_REGION                 = var.aws_region
     _LIVE_UPDATES = jsonencode([{
       pkg     = "node"
       type    = "nvm"
