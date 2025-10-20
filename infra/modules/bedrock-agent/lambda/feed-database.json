@@ -1,0 +1,227 @@
+[
+  {
+    "url": "https://techcrunch.com/feed/",
+    "title": "TechCrunch",
+    "description": "Latest technology news, startup news, and tech industry analysis",
+    "category": "Technology",
+    "language": "en",
+    "tags": ["tech", "startup", "innovation", "business", "ai", "software"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.theverge.com/rss/index.xml",
+    "title": "The Verge",
+    "description": "Technology news, reviews, and analysis covering gadgets, science, and culture",
+    "category": "Technology",
+    "language": "en",
+    "tags": ["tech", "gadgets", "science", "culture", "reviews"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://gigazine.net/news/rss_2.0/",
+    "title": "GIGAZINE",
+    "description": "日本の技術ニュース、ガジェット、レビュー、科学記事",
+    "category": "Technology",
+    "language": "ja",
+    "tags": ["tech", "gadgets", "science", "reviews", "japan"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.itmedia.co.jp/news/rss/rss2.xml",
+    "title": "ITmedia NEWS",
+    "description": "IT・テクノロジー関連のニュース速報",
+    "category": "Technology",
+    "language": "ja",
+    "tags": ["tech", "it", "news", "japan", "business"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://dev.to/feed",
+    "title": "DEV Community",
+    "description": "Community of software developers sharing articles and tutorials",
+    "category": "Programming",
+    "language": "en",
+    "tags": ["programming", "development", "coding", "tutorial", "web"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://qiita.com/popular-items/feed",
+    "title": "Qiita",
+    "description": "日本のプログラマーのための技術情報共有サービス",
+    "category": "Programming",
+    "language": "ja",
+    "tags": ["programming", "development", "coding", "tutorial", "japan"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://aws.amazon.com/blogs/aws/feed/",
+    "title": "AWS News Blog",
+    "description": "Official AWS blog with announcements and updates",
+    "category": "Cloud",
+    "language": "en",
+    "tags": ["aws", "cloud", "devops", "infrastructure", "serverless"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://cloud.google.com/blog/rss",
+    "title": "Google Cloud Blog",
+    "description": "News and updates from Google Cloud Platform",
+    "category": "Cloud",
+    "language": "en",
+    "tags": ["gcp", "cloud", "devops", "infrastructure", "ai"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://arxiv.org/rss/cs.AI",
+    "title": "arXiv AI Research",
+    "description": "Latest artificial intelligence research papers",
+    "category": "AI Research",
+    "language": "en",
+    "tags": ["ai", "machine learning", "research", "deep learning", "science"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://ai.googleblog.com/feeds/posts/default",
+    "title": "Google AI Blog",
+    "description": "Latest news and updates from Google AI research",
+    "category": "AI Research",
+    "language": "en",
+    "tags": ["ai", "machine learning", "research", "google", "deep learning"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://openai.com/blog/rss/",
+    "title": "OpenAI Blog",
+    "description": "Research and updates from OpenAI",
+    "category": "AI Research",
+    "language": "en",
+    "tags": ["ai", "machine learning", "research", "gpt", "chatgpt"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.reddit.com/r/MachineLearning/.rss",
+    "title": "r/MachineLearning",
+    "description": "Machine learning community discussions and news",
+    "category": "AI Community",
+    "language": "en",
+    "tags": ["ai", "machine learning", "community", "discussion", "research"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.wired.com/feed/rss",
+    "title": "WIRED",
+    "description": "Technology, science, culture, and business news",
+    "category": "Technology",
+    "language": "en",
+    "tags": ["tech", "science", "culture", "business", "innovation"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.engadget.com/rss.xml",
+    "title": "Engadget",
+    "description": "Technology news, reviews, and analysis",
+    "category": "Technology",
+    "language": "en",
+    "tags": ["tech", "gadgets", "reviews", "news", "consumer electronics"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.publickey1.jp/atom.xml",
+    "title": "Publickey",
+    "description": "日本のエンタープライズIT、クラウド、開発者向けニュース",
+    "category": "Technology",
+    "language": "ja",
+    "tags": ["tech", "enterprise", "cloud", "development", "japan"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://zenn.dev/feed",
+    "title": "Zenn",
+    "description": "日本のエンジニアのための技術記事共有プラットフォーム",
+    "category": "Programming",
+    "language": "ja",
+    "tags": ["programming", "development", "tutorial", "japan", "tech"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://news.ycombinator.com/rss",
+    "title": "Hacker News",
+    "description": "Technology and startup news aggregator",
+    "category": "Technology",
+    "language": "en",
+    "tags": ["tech", "startup", "news", "programming", "business"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.nature.com/subjects/machine-learning.rss",
+    "title": "Nature Machine Learning",
+    "description": "Scientific research articles on machine learning",
+    "category": "AI Research",
+    "language": "en",
+    "tags": ["ai", "machine learning", "research", "science", "academic"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://blog.tensorflow.org/feeds/posts/default",
+    "title": "TensorFlow Blog",
+    "description": "Updates and tutorials from the TensorFlow team",
+    "category": "AI Development",
+    "language": "en",
+    "tags": ["ai", "machine learning", "tensorflow", "deep learning", "tutorial"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://pytorch.org/blog/feed.xml",
+    "title": "PyTorch Blog",
+    "description": "News and tutorials from the PyTorch team",
+    "category": "AI Development",
+    "language": "en",
+    "tags": ["ai", "machine learning", "pytorch", "deep learning", "tutorial"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.kaggle.com/feed",
+    "title": "Kaggle Blog",
+    "description": "Data science competitions and community updates",
+    "category": "Data Science",
+    "language": "en",
+    "tags": ["data science", "machine learning", "kaggle", "competition", "ai"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://towardsdatascience.com/feed",
+    "title": "Towards Data Science",
+    "description": "Data science and machine learning articles",
+    "category": "Data Science",
+    "language": "en",
+    "tags": ["data science", "machine learning", "ai", "analytics", "tutorial"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.kdnuggets.com/feed",
+    "title": "KDnuggets",
+    "description": "Data science, machine learning, and AI news",
+    "category": "Data Science",
+    "language": "en",
+    "tags": ["data science", "machine learning", "ai", "analytics", "news"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.analyticsvidhya.com/feed/",
+    "title": "Analytics Vidhya",
+    "description": "Data science and machine learning tutorials",
+    "category": "Data Science",
+    "language": "en",
+    "tags": ["data science", "machine learning", "ai", "tutorial", "analytics"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://machinelearningmastery.com/feed/",
+    "title": "Machine Learning Mastery",
+    "description": "Practical machine learning tutorials",
+    "category": "AI Development",
+    "language": "en",
+    "tags": ["machine learning", "ai", "tutorial", "deep learning", "practical"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  }
+]
