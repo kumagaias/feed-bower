@@ -63,7 +63,7 @@ export default function Sidebar() {
               className="flex items-center space-x-3 w-full hover:opacity-90 transition-opacity"
             >
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold bg-green-50 text-teal-500">
-                {user.name.charAt(0).toUpperCase()}
+                {user.email.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base font-extrabold flex items-center gap-1 text-green-50">
@@ -71,7 +71,7 @@ export default function Sidebar() {
                   <span>Feed Bower</span>
                 </p>
                 <p className="text-xs text-teal-700">
-                  {user.name}
+                  {user.email}
                 </p>
               </div>
               <span className="text-sm text-green-50">

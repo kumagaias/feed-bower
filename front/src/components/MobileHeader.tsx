@@ -120,10 +120,10 @@ export default function MobileHeader({ searchBar }: MobileHeaderProps) {
               {user ? (
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-amber-500 text-white">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.email.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-green-50">{user.name}</p>
+                    <p className="text-sm font-medium text-green-50">{user.email}</p>
                     <button 
                       onClick={handleLogout}
                       disabled={isLoggingOut}

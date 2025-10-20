@@ -384,7 +384,7 @@ module "amplify" {
       enable_auto_build           = true
       enable_pull_request_preview = false
       environment_variables = {
-        NEXT_PUBLIC_API_URL                    = module.api_gateway.invoke_url
+        NEXT_PUBLIC_API_URL                    = "${module.api_gateway.invoke_url}/api"
         NEXT_PUBLIC_ENV                        = local.environment
         NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
         NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
@@ -400,7 +400,7 @@ module "amplify" {
   output_directory = ".next"
 
   environment_variables = {
-    NEXT_PUBLIC_API_URL                    = module.api_gateway.invoke_url
+    NEXT_PUBLIC_API_URL                    = "${module.api_gateway.invoke_url}/api"
     NEXT_PUBLIC_ENV                        = local.environment
     NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
     NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
