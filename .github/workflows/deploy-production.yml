@@ -50,6 +50,8 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd back
+          echo "Verifying source code before build:"
+          grep -A 3 "GetTableNames.*TableNames" pkg/dynamodb/client.go || echo "Pattern not found"
           docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
