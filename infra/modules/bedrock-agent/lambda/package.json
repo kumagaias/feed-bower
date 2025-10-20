@@ -1,0 +1,12 @@
+{
+  "name": "feed-search-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function for Bedrock Agent feed search",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": ["bedrock", "lambda", "feed", "rss"],
+  "author": "",
+  "license": "MIT"
+}
