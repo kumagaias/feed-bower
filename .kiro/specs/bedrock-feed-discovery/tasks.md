@@ -26,7 +26,7 @@
   - **確認**: `terraform plan`を実行してエラーがないことを確認
   - _要件: 3.1, 3.2_
 
-- [ ] 3. Bedrock Agent と Action Group の設定
+- [x] 3. Bedrock Agent と Action Group の設定
 
   - Claude 3 Haiku で Bedrock Agent リソースを作成
   - フィード検索用のエージェント指示を定義
