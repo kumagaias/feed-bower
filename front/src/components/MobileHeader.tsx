@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import DeleteAccountModal from './DeleteAccountModal'
 
 
 interface MobileHeaderProps {
@@ -15,6 +16,7 @@ interface MobileHeaderProps {
 export default function MobileHeader({ searchBar }: MobileHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { language, setLanguage } = useApp()
   const { user, logout } = useAuth()
   const t = useTranslation(language)
@@ -118,20 +120,31 @@ export default function MobileHeader({ searchBar }: MobileHeaderProps) {
               </div>
               
               {user ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-amber-500 text-white">
-                    {user.email.charAt(0).toUpperCase()}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-amber-500 text-white">
+                      {user.email.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-50">{user.email}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-green-50">{user.email}</p>
-                    <button 
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                      className="text-xs py-1 pr-4 transition-colors text-green-200 disabled:opacity-50"
-                    >
-                      {isLoggingOut ? t.loading : t.logout}
-                    </button>
-                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-600 text-white hover:bg-teal-700 disabled:opacity-50"
+                  >
+                    {isLoggingOut ? t.loading : t.logout}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      setShowDeleteModal(true)
+                    }}
+                    className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
+                  >
+                    {language === 'ja' ? 'アカウント削除' : 'Delete Account'}
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -148,6 +161,12 @@ export default function MobileHeader({ searchBar }: MobileHeaderProps) {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal 
+        isOpen={showDeleteModal} 
+        onClose={() => setShowDeleteModal(false)} 
+      />
     </>
   )
 }

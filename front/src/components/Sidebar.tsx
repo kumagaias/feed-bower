@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTranslation } from '@/lib/i18n'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import DeleteAccountModal from './DeleteAccountModal'
 
 import { useState, useEffect, useRef } from 'react'
 
@@ -16,6 +17,7 @@ export default function Sidebar() {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const handleLogout = async () => {
@@ -124,19 +126,9 @@ export default function Sidebar() {
                 </button>
                 {/* Delete Account Button */}
                 <button
-                  onClick={async () => {
-                    if (window.confirm(language === 'ja' 
-                      ? 'アカウントを削除しますか？この操作は取り消せません。すべてのデータが削除されます。' 
-                      : 'Are you sure you want to delete your account? This action cannot be undone. All your data will be deleted.')) {
-                      try {
-                        const { authApi } = await import('@/lib/api')
-                        await authApi.deleteCurrentUser()
-                        await logout()
-                      } catch (error) {
-                        console.error('Delete account error:', error)
-                        alert(language === 'ja' ? 'アカウント削除に失敗しました' : 'Failed to delete account')
-                      }
-                    }
+                  onClick={() => {
+                    setMenuOpen(false)
+                    setShowDeleteModal(true)
                   }}
                   className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
                 >
@@ -200,6 +192,12 @@ export default function Sidebar() {
           </div>
         </div>
       )}
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal 
+        isOpen={showDeleteModal} 
+        onClose={() => setShowDeleteModal(false)} 
+      />
     </div>
   )
 }

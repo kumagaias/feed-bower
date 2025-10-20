@@ -2,70 +2,73 @@
 
 ## Overview
 
-This design implements AI-powered RSS/Atom feed discovery using Amazon Bedrock Agent Core with Claude 3 Haiku. The system provides intelligent feed recommendations based on user keywords while maintaining a robust fallback mechanism for reliability.
+This design document outlines the technical architecture for integrating Amazon Bedrock Agent Core into Feed Bower to provide AI-powered RSS/Atom feed discovery. The system uses Claude 3 Haiku to intelligently match user keywords with a curated database of feeds, with a fallback to static keyword mapping for reliability.
 
 ## Architecture
 
 ### High-Level Architecture
 
 ```
-┌─────────────────┐
-│   Frontend      │
-│  (Next.js)      │
-└────────┬────────┘
-         │
-         │ HTTPS
-         ▼
-┌─────────────────┐
-│  API Gateway    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐      ┌──────────────────┐
-│  Lambda         │─────▶│  Bedrock Agent   │
-│  (Go Backend)   │      │  Runtime         │
-└────────┬────────┘      └────────┬─────────┘
-         │                        │
-         │                        ▼
-         │               ┌──────────────────┐
-         │               │  Lambda Executor │
-         │               │  (Feed Search)   │
-         │               └────────┬─────────┘
-         │                        │
-         │                        ▼
-         │               ┌──────────────────┐
-         │               │  Feed Database   │
-         │               │  (JSON)          │
-         │               └──────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│   DynamoDB      │
-│  (User Data)    │
-└─────────────────┘
+┌─────────────┐
+│   User      │
+│  (Browser)  │
+└──────┬──────┘
+       │ Keywords
+       ▼
+┌─────────────────────────────────────────┐
+│         Feed Bower Backend              │
+│  ┌───────────────────────────────────┐  │
+│  │      Feed Service                 │  │
+│  │  - GetFeedRecommendations()       │  │
+│  │  - Try Bedrock → Fallback         │  │
+│  └────────┬──────────────────┬───────┘  │
+│           │                  │          │
+│           ▼                  ▼          │
+│  ┌────────────────┐  ┌──────────────┐  │
+│  │ Bedrock Client │  │Static Mapping│  │
+│  └────────┬───────┘  └──────────────┘  │
+└───────────┼──────────────────────────────┘
+            │
+            ▼
+┌───────────────────────────────────────────┐
+│      Amazon Bedrock Agent                 │
+│  ┌─────────────────────────────────────┐  │
+│  │  Claude 3 Haiku                     │  │
+│  │  - Analyze keywords                 │  │
+│  │  - Generate search query            │  │
+│  └──────────────┬──────────────────────┘  │
+│                 │                          │
+│                 ▼                          │
+│  ┌─────────────────────────────────────┐  │
+│  │  Action Group: feed-search          │  │
+│  │  - API Schema validation            │  │
+│  └──────────────┬──────────────────────┘  │
+└─────────────────┼──────────────────────────┘
+                  │
+                  ▼
+┌───────────────────────────────────────────┐
+│      AWS Lambda Function                  │
+│  ┌─────────────────────────────────────┐  │
+│  │  Feed Search Executor               │  │
+│  │  - Load feed database               │  │
+│  │  - Calculate relevance scores       │  │
+│  │  - Return top matches               │  │
+│  └─────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────┐  │
+│  │  Feed Database (JSON)               │  │
+│  │  - 20+ curated feeds                │  │
+│  │  - Metadata (tags, category, lang)  │  │
+│  └─────────────────────────────────────┘  │
+└───────────────────────────────────────────┘
 ```
-
-### Component Interaction Flow
-
-1. **User Request**: User provides keywords through frontend
-2. **API Call**: Frontend calls `/api/feeds/recommendations`
-3. **Backend Processing**: 
-   - Lambda receives request
-   - Validates user authentication
-   - Calls FeedService.GetFeedRecommendations()
-4. **Bedrock Invocation**:
-   - If BEDROCK_AGENT_ID is configured, invoke Bedrock Agent
-   - Bedrock Agent calls Lambda Executor
-   - Lambda Executor searches Feed Database
-   - Returns ranked results
-5. **Fallback**: If Bedrock fails, use static keyword mapping
-6. **Response**: Return feed recommendations to frontend
 
 ## Components and Interfaces
 
 ### 1. Bedrock Client (Go)
 
 **Location**: `back/pkg/bedrock/client.go`
+
+**Status**: ✅ Already implemented
 
 **Interface**:
 ```go
@@ -81,123 +84,149 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 ```
 
 **Responsibilities**:
-- Manage Bedrock Agent Runtime client
-- Format prompts for feed search
-- Parse streaming responses
+- Invoke Bedrock Agent with keyword parameters
+- Parse streaming response from Bedrock
+- Extract feed recommendations from response
 - Handle errors and timeouts
 
-**Implementation Details**:
-- Uses AWS SDK v2 for Go
-- Implements streaming response handling
-- Generates unique session IDs per request
-- Timeout: 10 seconds
-
-### 2. Feed Service (Go)
+### 2. Feed Service Integration (Go)
 
 **Location**: `back/internal/service/feed_service.go`
 
-**Modified Method**:
+**Current State**: Has TODO comment for Bedrock integration
+
+**Updated Interface**:
 ```go
-func (s *feedService) GetFeedRecommendations(
-    ctx context.Context, 
-    userID string, 
-    bowerID string, 
-    keywords []string
-) ([]*model.Feed, error)
+func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string, bowerID string, keywords []string) ([]*model.Feed, error) {
+    // 1. Validate inputs
+    // 2. Try Bedrock Agent (if configured)
+    // 3. Fallback to static mapping on error
+    // 4. Convert to model.Feed
+    // 5. Return results
+}
+
+func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, keywords []string) ([]*model.Feed, error) {
+    // New private method for Bedrock integration
+}
 ```
 
-**Logic Flow**:
-```
-1. Validate inputs (userID, bowerID, keywords)
-2. Check if BEDROCK_AGENT_ID is configured
-3. If configured:
-   a. Call getFeedRecommendationsFromBedrock()
-   b. If successful, return results
-   c. If error, log and continue to fallback
-4. Use static keyword mapping (existing logic)
-5. Return recommendations
-```
-
-**New Helper Method**:
+**Configuration**:
 ```go
-func (s *feedService) getFeedRecommendationsFromBedrock(
-    ctx context.Context, 
-    keywords []string
-) ([]*model.Feed, error)
+type Config struct {
+    BedrockAgentID    string
+    BedrockAgentAlias string
+    BedrockRegion     string
+}
 ```
 
-### 3. Lambda Executor (Node.js)
+### 3. Lambda Function (Node.js)
 
-**Location**: `infra/modules/bedrock-agent/lambda/index.js`
+**Location**: `infra/modules/bedrock-agent/lambda/`
 
-**Handler**:
+**Files**:
+- `index.js` - Main handler
+- `feed-database.json` - Curated feed list
+- `package.json` - Dependencies
+
+**Handler Signature**:
 ```javascript
 exports.handler = async (event) => {
-    const { actionGroup, function: functionName, parameters } = event;
+    // event structure from Bedrock Agent:
+    // {
+    //   actionGroup: 'feed-search',
+    //   function: 'search-feeds',
+    //   parameters: {
+    //     keywords: ['AI', 'machine learning'],
+    //     language: 'ja',
+    //     limit: 5
+    //   }
+    // }
     
-    if (actionGroup === 'feed-search' && functionName === 'search-feeds') {
-        return await searchFeeds(parameters);
-    }
-    
-    return { statusCode: 400, body: JSON.stringify({ error: 'Unknown action' }) };
+    return {
+        statusCode: 200,
+        body: JSON.stringify({
+            feeds: [...],
+            total: 5
+        })
+    };
 }
 ```
 
 **Search Algorithm**:
 ```javascript
-async function searchFeeds(parameters) {
-    const { keywords, language = 'ja', limit = 5 } = parameters;
+function calculateRelevance(feed, keywords) {
+    let score = 0;
     
-    // Calculate relevance scores
-    for each feed in database:
-        relevance = 0
-        for each keyword:
-            if keyword in title: relevance += 0.4
-            if keyword in description: relevance += 0.3
-            if keyword in category: relevance += 0.2
-            if keyword in tags: relevance += 0.1
-        
-        if language != feed.language:
-            relevance *= 0.7
-        
-        if relevance > 0:
-            add to results
+    // Title match: 0.4 weight
+    keywords.forEach(kw => {
+        if (feed.title.toLowerCase().includes(kw.toLowerCase())) {
+            score += 0.4;
+        }
+    });
     
-    // Sort by relevance and return top N
-    return top(limit) results sorted by relevance desc
-}
-```
-
-### 4. Feed Database (JSON)
-
-**Location**: `infra/modules/bedrock-agent/lambda/feed-database.json`
-
-**Schema**:
-```json
-{
-  "feeds": [
-    {
-      "url": "string",
-      "title": "string",
-      "description": "string",
-      "category": "string",
-      "language": "ja|en",
-      "tags": ["string"],
-      "lastUpdated": "ISO8601 datetime"
+    // Description match: 0.3 weight
+    keywords.forEach(kw => {
+        if (feed.description.toLowerCase().includes(kw.toLowerCase())) {
+            score += 0.3;
+        }
+    });
+    
+    // Category match: 0.2 weight
+    keywords.forEach(kw => {
+        if (feed.category.toLowerCase().includes(kw.toLowerCase())) {
+            score += 0.2;
+        }
+    });
+    
+    // Tag match: 0.1 weight
+    keywords.forEach(kw => {
+        if (feed.tags.some(tag => tag.toLowerCase().includes(kw.toLowerCase()))) {
+            score += 0.1;
+        }
+    });
+    
+    // Language penalty
+    if (language && feed.language !== language) {
+        score *= 0.7;
     }
-  ]
+    
+    return Math.min(score, 1.0);
 }
 ```
 
-**Initial Content**: 20+ curated feeds covering:
-- Technology (AI, programming, cloud)
-- News (Japanese and English)
-- Science
-- Business
+### 4. Bedrock Agent Configuration
+
+**Terraform Module**: `infra/modules/bedrock-agent/`
+
+**Resources**:
+- `aws_bedrockagent_agent` - The Bedrock Agent
+- `aws_bedrockagent_agent_action_group` - Feed search action
+- `aws_bedrockagent_agent_alias` - Production alias
+- `aws_lambda_function` - Feed search executor
+- IAM roles and permissions
+
+**Agent Configuration**:
+```hcl
+resource "aws_bedrockagent_agent" "feed_bower_agent" {
+  agent_name              = "feed-bower-agent"
+  foundation_model        = "anthropic.claude-3-haiku-20240307-v1:0"
+  
+  instruction = <<-EOT
+    You are an RSS/Atom feed discovery expert.
+    Find high-quality feeds related to user keywords.
+    Prioritize:
+    - Active feeds (recent posts)
+    - Trusted sources
+    - Language match (Japanese or English)
+    - High relevance to keywords
+    Return results in JSON format.
+  EOT
+}
+```
 
 ## Data Models
 
-### FeedRecommendation (Go)
+### Feed Recommendation (Bedrock Response)
 
 ```go
 type FeedRecommendation struct {
@@ -209,47 +238,128 @@ type FeedRecommendation struct {
 }
 ```
 
-### Bedrock Agent Configuration
+### Feed Database Entry (Lambda)
 
-**Agent Settings**:
-- Name: `feed-bower-agent-production`
-- Model: `anthropic.claude-3-haiku-20240307-v1:0`
-- Instructions: Detailed prompt for feed discovery
-- Timeout: 30 seconds
+```json
+{
+  "url": "https://example.com/feed.xml",
+  "title": "Example Tech Blog",
+  "description": "Latest technology news and tutorials",
+  "category": "Technology",
+  "language": "en",
+  "tags": ["tech", "programming", "ai", "web"],
+  "lastUpdated": "2024-10-20T10:00:00Z"
+}
+```
 
-**Action Group**:
-- Name: `feed-search`
-- Executor: Lambda function
-- API Schema: OpenAPI 3.0 specification
+### API Schema (OpenAPI 3.0)
+
+```json
+{
+  "paths": {
+    "/search-feeds": {
+      "post": {
+        "operationId": "search-feeds",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "keywords": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                    "maxItems": 8
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": ["ja", "en"],
+                    "default": "ja"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "default": 5
+                  }
+                },
+                "required": ["keywords"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ## Error Handling
 
-### Error Scenarios and Responses
+### Error Flow
 
-| Scenario | Detection | Response | User Impact |
-|----------|-----------|----------|-------------|
-| Bedrock Agent unavailable | Connection timeout | Log error, use fallback | None (transparent) |
-| Invalid keywords | Empty array | Return validation error | Error message shown |
-| Lambda executor error | 500 response | Log error, use fallback | None (transparent) |
-| No matching feeds | Empty results | Return empty array | "No recommendations" message |
-| Bedrock quota exceeded | ThrottlingException | Log error, use fallback | None (transparent) |
+```
+User Request
+    ↓
+Feed Service
+    ↓
+Try Bedrock Agent
+    ↓
+┌─────────────┐
+│  Success?   │
+└──┬──────┬───┘
+   │Yes   │No
+   ↓      ↓
+Return  Log Error
+Feeds      ↓
+        Fallback to
+        Static Mapping
+           ↓
+        Return Feeds
+```
+
+### Error Types and Handling
+
+1. **Bedrock Agent Timeout** (>10s)
+   - Log: `⚠️ Bedrock timeout after 10s, using fallback`
+   - Action: Use static mapping
+   - User Impact: None (transparent fallback)
+
+2. **Bedrock Agent Error** (500, 503)
+   - Log: `❌ Bedrock error: {error}, using fallback`
+   - Action: Use static mapping
+   - User Impact: None (transparent fallback)
+
+3. **Invalid Response Format**
+   - Log: `⚠️ Invalid Bedrock response format, using fallback`
+   - Action: Use static mapping
+   - User Impact: None (transparent fallback)
+
+4. **Lambda Execution Error**
+   - Log: `❌ Lambda execution failed: {error}`
+   - Action: Bedrock retries, then fallback
+   - User Impact: Slight delay, then fallback
+
+5. **No Feeds Found**
+   - Log: `ℹ️ No feeds found for keywords: {keywords}`
+   - Action: Return empty array
+   - User Impact: User sees "No recommendations" message
 
 ### Logging Strategy
 
-**Backend Logs**:
 ```go
-log.Printf("🤖 Bedrock Agent request: keywords=%v", keywords)
-log.Printf("✅ Bedrock Agent response: %d recommendations", len(recommendations))
-log.Printf("⚠️ Bedrock Agent error, using fallback: %v", err)
-log.Printf("📋 Using static keyword mapping for recommendations")
-```
+// Success
+log.Printf("✅ Bedrock returned %d recommendations in %dms", len(feeds), duration)
 
-**Lambda Logs**:
-```javascript
-console.log('🤖 Bedrock Agent Action Event:', JSON.stringify(event, null, 2));
-console.log('🔍 Starting feed search with parameters:', parameters);
-console.log('📈 Match found:', feed.title, 'relevance:', relevance);
-console.log('🎯 Found N matches, returning top M');
+// Fallback
+log.Printf("⚠️ Bedrock unavailable, using static mapping: %v", err)
+
+// Error
+log.Printf("❌ Bedrock error: %v", err)
+
+// Performance
+log.Printf("📊 Bedrock latency: %dms, Fallback latency: %dms", bedrockMs, fallbackMs)
 ```
 
 ## Testing Strategy
@@ -257,85 +367,204 @@ console.log('🎯 Found N matches, returning top M');
 ### Unit Tests
 
 **Backend (Go)**:
-- `TestBedrockClient_GetFeedRecommendations`: Mock Bedrock responses
-- `TestFeedService_GetFeedRecommendationsWithBedrock`: Test integration
-- `TestFeedService_FallbackMechanism`: Verify fallback works
+```go
+// back/pkg/bedrock/client_test.go
+func TestClient_GetFeedRecommendations(t *testing.T) {
+    // Test cases:
+    // - Valid keywords return feeds
+    // - Empty keywords return error
+    // - Invalid response format handled
+    // - Timeout handled
+}
+
+// back/internal/service/feed_service_test.go
+func TestFeedService_GetFeedRecommendationsWithBedrock(t *testing.T) {
+    // Test cases:
+    // - Bedrock success path
+    // - Bedrock failure triggers fallback
+    // - Fallback returns valid feeds
+    // - Empty keywords handled
+}
+```
 
 **Lambda (Node.js)**:
-- Test keyword matching algorithm
-- Test relevance scoring
-- Test language filtering
-- Test parameter validation
+```javascript
+// infra/modules/bedrock-agent/lambda/test.js
+describe('Feed Search Lambda', () => {
+    it('should return feeds for valid keywords', async () => {
+        const event = {
+            actionGroup: 'feed-search',
+            function: 'search-feeds',
+            parameters: {
+                keywords: ['AI', 'machine learning'],
+                language: 'en',
+                limit: 5
+            }
+        };
+        const result = await handler(event);
+        expect(result.statusCode).toBe(200);
+        expect(JSON.parse(result.body).feeds.length).toBeGreaterThan(0);
+    });
+    
+    it('should calculate relevance scores correctly', () => {
+        // Test relevance calculation
+    });
+    
+    it('should handle language filtering', () => {
+        // Test language preference
+    });
+});
+```
 
 ### Integration Tests
 
-**End-to-End Flow**:
-1. Deploy Bedrock Agent to test environment
-2. Call API with test keywords
-3. Verify Bedrock is invoked
-4. Verify correct feeds returned
-5. Simulate Bedrock failure
-6. Verify fallback works
+```bash
+# Test Bedrock Agent directly
+aws bedrock-agent-runtime invoke-agent \
+  --agent-id $AGENT_ID \
+  --agent-alias-id production \
+  --session-id test-$(date +%s) \
+  --input-text "Find feeds for: AI, machine learning" \
+  --region ap-northeast-1
 
-**Test Cases**:
-- Japanese keywords → Japanese feeds prioritized
-- English keywords → English feeds prioritized
-- Mixed keywords → Balanced results
-- No matches → Empty array
-- Invalid parameters → Error response
+# Test through API
+curl -X POST "$API_URL/api/feeds/recommendations" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bower_id": "test-bower",
+    "keywords": ["AI", "machine learning"]
+  }'
+```
 
 ### Performance Tests
 
-**Metrics to Monitor**:
-- Bedrock response time (target: < 5s)
-- Fallback response time (target: < 2s)
-- Success rate (target: > 95%)
-- Error rate (target: < 5%)
+**Metrics to Track**:
+- Bedrock Agent response time (target: <5s)
+- Fallback response time (target: <2s)
+- Success rate (target: >95%)
+- Relevance score distribution
+
+**Load Test**:
+```bash
+# Simulate 100 concurrent requests
+ab -n 1000 -c 100 -T 'application/json' \
+  -H "Authorization: Bearer $TOKEN" \
+  -p keywords.json \
+  "$API_URL/api/feeds/recommendations"
+```
 
 ## Deployment Strategy
 
 ### Phase 1: Infrastructure Setup
-
 1. Create Terraform module for Bedrock Agent
-2. Create Lambda function with feed database
-3. Deploy to production
-4. Verify Agent is accessible
+2. Deploy Lambda function with feed database
+3. Configure IAM roles and permissions
+4. Test Bedrock Agent independently
 
 ### Phase 2: Backend Integration
+1. Update Feed Service with Bedrock client
+2. Add environment variables
+3. Deploy backend with feature flag (disabled)
+4. Test in staging environment
 
-1. Update environment variables:
-   - `BEDROCK_AGENT_ID`
-   - `BEDROCK_AGENT_ALIAS`
-   - `BEDROCK_REGION`
-2. Deploy backend with Bedrock integration
-3. Test with feature flag (if needed)
+### Phase 3: Gradual Rollout
+1. Enable Bedrock for 10% of requests
+2. Monitor metrics and errors
+3. Increase to 50% if stable
+4. Full rollout to 100%
 
-### Phase 3: Monitoring and Optimization
-
-1. Set up CloudWatch dashboards
-2. Monitor Bedrock usage and costs
-3. Tune relevance scoring based on feedback
-4. Expand feed database
+### Phase 4: Optimization
+1. Tune relevance scoring algorithm
+2. Expand feed database
+3. Optimize Lambda cold start
+4. Add caching layer if needed
 
 ## Configuration
 
 ### Environment Variables
 
-**Backend (Lambda)**:
+**Backend**:
 ```bash
-BEDROCK_AGENT_ID=<agent-id>           # Required for Bedrock
-BEDROCK_AGENT_ALIAS=production        # Default: production
-BEDROCK_REGION=ap-northeast-1         # Default: ap-northeast-1
+BEDROCK_AGENT_ID=ABCDEFGHIJ
+BEDROCK_AGENT_ALIAS=production
+BEDROCK_REGION=ap-northeast-1
+BEDROCK_ENABLED=true
+BEDROCK_TIMEOUT=10s
 ```
 
-**Terraform Variables**:
+**Lambda**:
+```bash
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+```
+
+### Terraform Variables
+
 ```hcl
-variable "enable_bedrock" {
-  description = "Enable Bedrock Agent integration"
-  type        = bool
-  default     = true
+variable "bedrock_agent_name" {
+  description = "Name of the Bedrock Agent"
+  default     = "feed-bower-agent"
+}
+
+variable "bedrock_model" {
+  description = "Foundation model for Bedrock Agent"
+  default     = "anthropic.claude-3-haiku-20240307-v1:0"
+}
+
+variable "lambda_timeout" {
+  description = "Lambda function timeout in seconds"
+  default     = 30
+}
+
+variable "lambda_memory" {
+  description = "Lambda function memory in MB"
+  default     = 256
 }
 ```
+
+## Monitoring and Observability
+
+### CloudWatch Metrics
+
+**Custom Metrics**:
+- `BedrockInvocations` - Total Bedrock calls
+- `BedrockSuccesses` - Successful responses
+- `BedrockFailures` - Failed responses
+- `BedrockLatency` - Response time
+- `FallbackUsage` - Fallback invocations
+
+**Alarms**:
+- Bedrock error rate > 10%
+- Bedrock latency > 8s (p95)
+- Fallback usage > 50%
+
+### Logs
+
+**Structured Logging**:
+```json
+{
+  "timestamp": "2024-10-21T10:00:00Z",
+  "level": "INFO",
+  "service": "feed-service",
+  "action": "bedrock_recommendation",
+  "keywords": ["AI", "ML"],
+  "bedrock_latency_ms": 3500,
+  "feeds_returned": 5,
+  "fallback_used": false
+}
+```
+
+### Dashboards
+
+**CloudWatch Dashboard**:
+- Bedrock invocation rate (requests/min)
+- Success rate (%)
+- Latency (p50, p95, p99)
+- Fallback usage rate (%)
+- Lambda execution metrics
+
+## Security Considerations
 
 ### IAM Permissions
 
@@ -347,9 +576,11 @@ variable "enable_bedrock" {
     {
       "Effect": "Allow",
       "Action": [
-        "bedrock:InvokeAgent"
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
       ],
-      "Resource": "arn:aws:bedrock:*:*:agent/*"
+      "Resource": "arn:aws:logs:*:*:*"
     }
   ]
 }
@@ -372,60 +603,61 @@ variable "enable_bedrock" {
       "Action": [
         "lambda:InvokeFunction"
       ],
-      "Resource": "arn:aws:lambda:*:*:function:*-feed-search"
+      "Resource": "arn:aws:lambda:*:*:function:feed-bower-*-feed-search"
     }
   ]
 }
 ```
 
-## Monitoring and Observability
+**Backend Lambda Role** (add Bedrock permission):
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "bedrock:InvokeAgent"
+  ],
+  "Resource": "arn:aws:bedrock:*:*:agent/*"
+}
+```
 
-### CloudWatch Metrics
+### Data Privacy
 
-**Custom Metrics**:
-- `BedrockInvocations`: Count of Bedrock calls
-- `BedrockErrors`: Count of Bedrock failures
-- `FallbackUsage`: Count of fallback usage
-- `BedrockLatency`: Response time distribution
-
-**Alarms**:
-- Error rate > 10% for 5 minutes
-- Latency > 10 seconds for 3 consecutive periods
-- Fallback usage > 50% for 10 minutes
-
-### Logging
-
-**Log Groups**:
-- `/aws/lambda/feed-bower-api-production`: Backend logs
-- `/aws/lambda/feed-bower-feed-search-production`: Lambda executor logs
-- `/aws/bedrock/agent/feed-bower-agent-production`: Bedrock Agent logs
-
-## Security Considerations
-
-1. **API Authentication**: All requests require valid JWT token
-2. **IAM Least Privilege**: Each component has minimal required permissions
-3. **Input Validation**: Keywords are validated and sanitized
-4. **Rate Limiting**: API Gateway throttling prevents abuse
-5. **Secrets Management**: No hardcoded credentials
+- No user PII sent to Bedrock (only keywords)
+- Feed URLs are public information
+- No sensitive data in Lambda logs
+- Bedrock requests are encrypted in transit
 
 ## Cost Estimation
 
-**Monthly Costs (estimated)**:
-- Bedrock Agent: ~$0 (free tier covers development usage)
-- Claude 3 Haiku invocations: ~$5-10 (based on usage)
-- Lambda executor: ~$0.20 (minimal compute)
-- Total: ~$5-15/month
+### Bedrock Agent Costs
 
-**Cost Optimization**:
-- Use fallback for non-critical requests
-- Cache common keyword combinations
-- Monitor and set budget alerts
+**Claude 3 Haiku Pricing** (as of 2024):
+- Input: $0.00025 per 1K tokens
+- Output: $0.00125 per 1K tokens
+
+**Estimated Usage**:
+- Average request: ~100 input tokens, ~500 output tokens
+- Cost per request: ~$0.00065
+- 10,000 requests/month: ~$6.50/month
+
+### Lambda Costs
+
+**Pricing**:
+- $0.20 per 1M requests
+- $0.0000166667 per GB-second
+
+**Estimated Usage**:
+- 256MB memory, 1s average duration
+- 10,000 invocations/month
+- Cost: ~$0.50/month
+
+**Total Estimated Cost**: ~$7/month for 10,000 recommendations
 
 ## Future Enhancements
 
 1. **Caching Layer**: Cache Bedrock responses for common keywords
-2. **User Feedback**: Allow users to rate recommendations
-3. **Learning System**: Improve recommendations based on user behavior
-4. **Multi-language Support**: Expand beyond Japanese and English
-5. **Real-time Feed Validation**: Check if feeds are still active
-6. **Personalization**: Use user history to improve recommendations
+2. **User Feedback**: Allow users to rate feed recommendations
+3. **Learning**: Use feedback to improve relevance scoring
+4. **Multi-language**: Expand to more languages
+5. **Real-time Updates**: Periodically refresh feed database
+6. **A/B Testing**: Compare Bedrock vs static mapping quality

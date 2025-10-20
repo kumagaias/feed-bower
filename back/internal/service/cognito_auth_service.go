@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/golang-jwt/jwt/v5"
 
 	"feed-bower-api/internal/model"
@@ -21,24 +24,43 @@ import (
 
 // CognitoAuthService implements AuthService using AWS Cognito
 type CognitoAuthService struct {
-	userRepo     repository.UserRepository
-	userPoolID   string
-	region       string
-	clientID     string
-	endpoint     string
-	jwksCache    map[string]*rsa.PublicKey
-	jwksCacheExp time.Time
+	userRepo       repository.UserRepository
+	cognitoClient  *cognitoidentityprovider.Client
+	userPoolID     string
+	region         string
+	clientID       string
+	endpoint       string
+	jwksCache      map[string]*rsa.PublicKey
+	jwksCacheExp   time.Time
 }
 
 // NewCognitoAuthService creates a new Cognito auth service
 func NewCognitoAuthService(userRepo repository.UserRepository, userPoolID, region, clientID, endpoint string) AuthService {
+	// Create AWS config
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+	if err != nil {
+		log.Printf("Failed to load AWS config: %v", err)
+	}
+
+	// Create Cognito client
+	var cognitoClient *cognitoidentityprovider.Client
+	if endpoint != "" {
+		// Use custom endpoint for local development
+		cognitoClient = cognitoidentityprovider.NewFromConfig(cfg, func(o *cognitoidentityprovider.Options) {
+			o.BaseEndpoint = aws.String(endpoint)
+		})
+	} else {
+		cognitoClient = cognitoidentityprovider.NewFromConfig(cfg)
+	}
+
 	return &CognitoAuthService{
-		userRepo:   userRepo,
-		userPoolID: userPoolID,
-		region:     region,
-		clientID:   clientID,
-		endpoint:   endpoint,
-		jwksCache:  make(map[string]*rsa.PublicKey),
+		userRepo:      userRepo,
+		cognitoClient: cognitoClient,
+		userPoolID:    userPoolID,
+		region:        region,
+		clientID:      clientID,
+		endpoint:      endpoint,
+		jwksCache:     make(map[string]*rsa.PublicKey),
 	}
 }
 
@@ -286,18 +308,35 @@ func (s *CognitoAuthService) jwkToRSAPublicKey(jwk JWK) (*rsa.PublicKey, error) 
 	return publicKey, nil
 }
 
-// DeleteUser deletes a user and all associated data
+// DeleteUser deletes a user from both Cognito and DynamoDB
 func (s *CognitoAuthService) DeleteUser(ctx context.Context, userID string) error {
 	if userID == "" {
 		return errors.New("user ID is required")
 	}
 
-	// Delete user from repository
-	err := s.userRepo.Delete(ctx, userID)
-	if err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
+	log.Printf("🗑️ Deleting user: %s", userID)
+
+	// Delete user from Cognito
+	if s.cognitoClient != nil {
+		_, err := s.cognitoClient.AdminDeleteUser(ctx, &cognitoidentityprovider.AdminDeleteUserInput{
+			UserPoolId: aws.String(s.userPoolID),
+			Username:   aws.String(userID),
+		})
+		if err != nil {
+			log.Printf("⚠️ Failed to delete user from Cognito: %v", err)
+			// Continue to delete from DynamoDB even if Cognito deletion fails
+		} else {
+			log.Printf("✅ User deleted from Cognito: %s", userID)
+		}
 	}
 
+	// Delete user from DynamoDB
+	err := s.userRepo.Delete(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user from database: %w", err)
+	}
+
+	log.Printf("✅ User deleted from database: %s", userID)
 	return nil
 }
 
