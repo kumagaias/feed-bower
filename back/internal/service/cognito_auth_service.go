@@ -286,6 +286,21 @@ func (s *CognitoAuthService) jwkToRSAPublicKey(jwk JWK) (*rsa.PublicKey, error) 
 	return publicKey, nil
 }
 
+// DeleteUser deletes a user and all associated data
+func (s *CognitoAuthService) DeleteUser(ctx context.Context, userID string) error {
+	if userID == "" {
+		return errors.New("user ID is required")
+	}
+
+	// Delete user from repository
+	err := s.userRepo.Delete(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	return nil
+}
+
 // getOrCreateUser gets an existing user or creates a new one
 func (s *CognitoAuthService) getOrCreateUser(ctx context.Context, cognitoUserID, email string) (*model.User, error) {
 	// Try to get user by Cognito user ID first
