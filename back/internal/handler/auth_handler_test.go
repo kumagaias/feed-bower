@@ -109,6 +109,10 @@ func (m *mockAuthService) ChangePassword(ctx context.Context, userID, oldPasswor
 	return nil
 }
 
+func (m *mockAuthService) DeleteUser(ctx context.Context, userID string) error {
+	return nil
+}
+
 func TestAuthHandler_CreateGuestUser(t *testing.T) {
 	mockService := &mockAuthService{}
 	handler := NewAuthHandler(mockService)

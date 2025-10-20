@@ -54,6 +54,10 @@ func (m *mockAuthService) ChangePassword(ctx context.Context, userID, oldPasswor
 	return nil
 }
 
+func (m *mockAuthService) DeleteUser(ctx context.Context, userID string) error {
+	return nil
+}
+
 func TestAuth_ValidToken(t *testing.T) {
 	mockService := &mockAuthService{}
 	config := &AuthConfig{

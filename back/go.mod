@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.12
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.20.14
 	github.com/aws/aws-sdk-go-v2/service/bedrockagentruntime v1.50.1
+	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.57.8
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.51.0
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/go-playground/validator/v10 v10.28.0
