@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/i18n";
-import VerificationModal from "./VerificationModal";
 
 interface SignupModalProps {
   isOpen: boolean;
@@ -64,8 +63,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showVerification, setShowVerification] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const passwordValidation = validatePassword(formData.password);
@@ -125,10 +123,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         language: formData.language,
       });
       
-      // サインアップ（確認コードが必要）
-      setPendingEmail(formData.email);
-      
-      // Cognito にサインアップ（自動ログインなし）
+      // Cognito にサインアップ
       const { customCognitoAuth } = await import('@/lib/cognito-client');
       await customCognitoAuth.signUp(
         formData.email,
@@ -137,33 +132,37 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
         formData.email.split("@")[0]
       );
       
-      // 確認コード入力画面を表示
-      setShowVerification(true);
-      
-      console.log("✅ Registration successful!");
+      console.log("✅ Signup successful! Email verification link sent.");
       
       // Update language preference
       setLanguage(formData.language as "ja" | "en");
       
-      // Close modal
-      onClose();
-      
-      // Redirect to bowers page
-      router.push("/bowers");
+      // 成功メッセージを表示
+      setShowSuccess(true);
     } catch (error) {
       console.error("❌ Signup error:", error);
       
       let errorMessage = "アカウント作成に失敗しました";
       
       if (error instanceof Error) {
+        console.error("Error details:", {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+        
         if (error.message.includes("already exists") || error.message.includes("UsernameExistsException")) {
-          errorMessage = "このユーザー名は既に使用されています";
-        } else if (error.message.includes("Network")) {
-          errorMessage = "ネットワークエラーが発生しました";
-        } else if (error.message.includes("Password")) {
-          errorMessage = "パスワードがポリシーに準拠していません";
+          errorMessage = "このメールアドレスは既に使用されています";
+        } else if (error.message.includes("Network") || error.message.includes("network")) {
+          errorMessage = "ネットワークエラーが発生しました。接続を確認してください。";
+        } else if (error.message.includes("Password") || error.message.includes("password")) {
+          errorMessage = "パスワードがポリシーに準拠していません（8文字以上、英数字を含む）";
+        } else if (error.message.includes("domain") || error.message.includes("Domain")) {
+          errorMessage = "システム設定エラーが発生しました。管理者に連絡してください。";
+        } else if (error.message.includes("InvalidParameterException")) {
+          errorMessage = "入力内容に問題があります。メールアドレスとパスワードを確認してください。";
         } else {
-          errorMessage = error.message;
+          errorMessage = `エラー: ${error.message}`;
         }
       }
       
@@ -173,45 +172,44 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
     }
   };
   
-  const handleVerify = async (code: string) => {
-    const { customCognitoAuth } = await import('@/lib/cognito-client');
-    await customCognitoAuth.confirmSignUp(pendingEmail, code);
-    
-    // 確認後、自動ログイン
-    await register(pendingEmail, formData.password, pendingEmail.split("@")[0], formData.language);
-    
-    // モーダルを閉じてリダイレクト
-    onClose();
-    router.push("/bowers");
-  };
-
-  const handleResend = async () => {
-    const { customCognitoAuth } = await import('@/lib/cognito-client');
-    // Cognito の resendConfirmationCode を実装する必要があります
-    // 今は signUp を再実行
-    await customCognitoAuth.signUp(
-      pendingEmail,
-      formData.password,
-      pendingEmail,
-      pendingEmail.split("@")[0]
-    );
-  };
-
   if (!isOpen) return null;
   
-  // 確認コード画面を表示中は SignupModal を非表示
-  if (showVerification) {
+  // 成功メッセージを表示
+  if (showSuccess) {
     return (
-      <VerificationModal
-        isOpen={showVerification}
-        email={pendingEmail}
-        onVerify={handleVerify}
-        onResend={handleResend}
-        onClose={() => {
-          setShowVerification(false);
-          onClose();
-        }}
-      />
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full">
+          <div className="text-center">
+            <div className="text-6xl mb-4">📧</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              {language === "ja" ? "確認メールを送信しました" : "Verification Email Sent"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {language === "ja" 
+                ? `${formData.email} に確認メールを送信しました。メール内のリンクをクリックしてアカウントを有効化してください。`
+                : `We've sent a verification email to ${formData.email}. Please click the link in the email to activate your account.`
+              }
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800">
+                {language === "ja"
+                  ? "💡 メールが届かない場合は、迷惑メールフォルダをご確認ください。"
+                  : "💡 If you don't see the email, please check your spam folder."
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowSuccess(false);
+                onClose();
+              }}
+              className="w-full px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium"
+            >
+              {language === "ja" ? "閉じる" : "Close"}
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
   

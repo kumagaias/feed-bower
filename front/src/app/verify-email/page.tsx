@@ -67,17 +67,28 @@ export default function VerifyEmailPage() {
               <h1 className="text-2xl font-bold text-gray-800 mb-2">
                 {language === 'ja' ? 'メールアドレスが確認されました！' : 'Email verified successfully!'}
               </h1>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-4">
                 {language === 'ja' 
-                  ? 'アカウントの作成が完了しました。ログインしてFeed Bowerを始めましょう。'
-                  : 'Your account has been created. Log in to start using Feed Bower.'
+                  ? 'アカウントの作成が完了しました！'
+                  : 'Your account has been created!'
                 }
               </p>
-              <div className="bg-teal-50 rounded-lg p-4 mb-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-blue-800 font-medium mb-2">
+                  {language === 'ja' ? '📝 次のステップ：' : '📝 Next Steps:'}
+                </p>
+                <ol className="text-sm text-blue-700 text-left space-y-1 ml-4">
+                  <li>{language === 'ja' ? '1. トップページでログイン' : '1. Log in on the top page'}</li>
+                  <li>{language === 'ja' ? '2. バウアー（フィードコレクション）を作成' : '2. Create a bower (feed collection)'}</li>
+                  <li>{language === 'ja' ? '3. 興味のあるキーワードを追加' : '3. Add keywords of interest'}</li>
+                  <li>{language === 'ja' ? '4. AIが自動でフィードを推奨' : '4. AI recommends feeds automatically'}</li>
+                </ol>
+              </div>
+              <div className="bg-teal-50 rounded-lg p-3 mb-4">
                 <p className="text-sm text-teal-700">
                   {language === 'ja' 
-                    ? `${countdown}秒後にログインページに移動します...`
-                    : `Redirecting to login page in ${countdown} seconds...`
+                    ? `${countdown}秒後にトップページに移動します...`
+                    : `Redirecting to top page in ${countdown} seconds...`
                   }
                 </p>
               </div>
@@ -85,7 +96,7 @@ export default function VerifyEmailPage() {
                 onClick={() => router.push('/')}
                 className="w-full bg-teal-500 text-white py-3 rounded-lg hover:bg-teal-600 transition-colors font-semibold"
               >
-                {language === 'ja' ? '今すぐログイン' : 'Login Now'}
+                {language === 'ja' ? 'トップページへ' : 'Go to Top Page'}
               </button>
             </>
           )}

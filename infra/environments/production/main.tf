@@ -99,17 +99,19 @@ module "cognito" {
   id_token_validity      = 1
 
   # OAuth設定（メール確認後のリダイレクト用）
-  enable_oauth         = false
-  callback_urls        = []
-  logout_urls          = []
+  enable_oauth         = true
+  callback_urls        = ["https://www.feed-bower.net/verify-email"]
+  logout_urls          = ["https://www.feed-bower.net"]
+  allowed_oauth_flows  = ["code"]
+  allowed_oauth_scopes = ["email", "openid", "profile"]
 
   # Cognitoドメイン（サブドメイン形式）
   domain_name = "${local.project_name}-${local.environment}"
 
-  # Hosted UIのカスタマイズ
-  enable_ui_customization = true
-  ui_customization_css    = file("${path.module}/../../modules/cognito/hosted-ui.css")
-  ui_logo_file            = null # ロゴファイルのパスを指定（オプション）
+  # Hosted UIのカスタマイズ（一旦無効化）
+  enable_ui_customization = false
+  ui_customization_css    = null
+  ui_logo_file            = null
 
   tags = local.common_tags
 }
