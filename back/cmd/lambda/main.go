@@ -121,28 +121,6 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	// Create router
 	router := mux.NewRouter()
 
-	// Setup CORS middleware
-	corsConfig := &middleware.CORSConfig{
-		AllowedOrigins: []string{"*"}, // Configure based on environment
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Content-Type", "Authorization", "X-Requested-With"},
-		MaxAge:         86400,
-	}
-
-	if config.Environment == "production" {
-		// In production, restrict origins
-		corsConfig.AllowedOrigins = []string{
-			"https://www.feed-bower.net",
-		}
-	} else {
-		// In development, allow localhost origins
-		corsConfig.AllowedOrigins = []string{
-			"http://localhost:3000",
-			"http://127.0.0.1:3000",
-			"*", // Fallback for development
-		}
-	}
-
 	// Setup authentication middleware
 	authConfig := &middleware.AuthConfig{
 		AuthService: authService,
@@ -156,7 +134,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	}
 
 	// Apply middleware in order
-	router.Use(middleware.CORS(corsConfig))
+	// Note: CORS is handled by API Gateway, not by Lambda
 	router.Use(middleware.Logger(nil)) // Add request logging
 	router.Use(middleware.Auth(authConfig))
 
