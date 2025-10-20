@@ -348,7 +348,7 @@ module "api_gateway" {
   stage_name           = local.environment
 
   enable_cors        = true
-  cors_allow_origins = ["https://feed-bower.net", "https://www.feed-bower.net", "https://main.dwjgow9ofphjt.amplifyapp.com"]
+  cors_allow_origins = ["https://www.feed-bower.net"]
   cors_allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   cors_allow_headers = ["Content-Type", "Authorization", "X-Requested-With"]
 
