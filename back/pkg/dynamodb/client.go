@@ -14,6 +14,7 @@ import (
 type Client struct {
 	*dynamodb.Client
 	TablePrefix string
+	TableSuffix string
 }
 
 // Config holds configuration for DynamoDB client
@@ -21,6 +22,7 @@ type Config struct {
 	Region      string
 	EndpointURL string // For local development
 	TablePrefix string
+	TableSuffix string
 }
 
 // NewClient creates a new DynamoDB client with the provided configuration
@@ -56,6 +58,7 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	return &Client{
 		Client:      client,
 		TablePrefix: cfg.TablePrefix,
+		TableSuffix: cfg.TableSuffix,
 	}, nil
 }
 
@@ -65,6 +68,7 @@ func NewClientFromEnv(ctx context.Context) (*Client, error) {
 		Region:      os.Getenv("AWS_REGION"),
 		EndpointURL: os.Getenv("DYNAMODB_ENDPOINT_URL"),
 		TablePrefix: os.Getenv("DYNAMODB_TABLE_PREFIX"),
+		TableSuffix: os.Getenv("DYNAMODB_TABLE_SUFFIX"),
 	}
 
 	// Set defaults
@@ -75,12 +79,16 @@ func NewClientFromEnv(ctx context.Context) (*Client, error) {
 	return NewClient(ctx, cfg)
 }
 
-// GetTableName returns the full table name with prefix
+// GetTableName returns the full table name with prefix and suffix
 func (c *Client) GetTableName(tableName string) string {
-	if c.TablePrefix == "" {
-		return tableName
+	result := tableName
+	if c.TablePrefix != "" {
+		result = c.TablePrefix + result
 	}
-	return c.TablePrefix + tableName
+	if c.TableSuffix != "" {
+		result = result + c.TableSuffix
+	}
+	return result
 }
 
 // TableNames contains all table names used by the application
@@ -93,15 +101,15 @@ type TableNames struct {
 	ChickStats    string
 }
 
-// GetTableNames returns all table names with the configured prefix
+// GetTableNames returns all table names with the configured prefix and suffix
 func (c *Client) GetTableNames() *TableNames {
 	return &TableNames{
-		Users:         c.GetTableName("Users"),
-		Bowers:        c.GetTableName("Bowers"),
-		Feeds:         c.GetTableName("Feeds"),
-		Articles:      c.GetTableName("Articles"),
-		LikedArticles: c.GetTableName("LikedArticles"),
-		ChickStats:    c.GetTableName("ChickStats"),
+		Users:         c.GetTableName("users"),
+		Bowers:        c.GetTableName("bowers"),
+		Feeds:         c.GetTableName("feeds"),
+		Articles:      c.GetTableName("articles"),
+		LikedArticles: c.GetTableName("liked-articles"),
+		ChickStats:    c.GetTableName("chick-stats"),
 	}
 }
 
