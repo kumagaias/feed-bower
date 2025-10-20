@@ -17,6 +17,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Clean build cache to ensure fresh build
+RUN go clean -cache
+
 # Build the application with maximum optimization
 # CGO_ENABLED=0 for static binary
 # GOOS=linux for Linux target
