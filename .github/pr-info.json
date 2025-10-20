@@ -1,8 +1,8 @@
 {
-  "task_name": "basic-task-5-2",
-  "branch_name": "feature/basic-task-5-2",
+  "task_name": "bedrock-task-1",
+  "branch_name": "feature/bedrock-task-1",
   "base_branch": "main",
-  "created_at": "2025-10-19T00:59:07Z",
-  "commit_sha": "9f1bc18d2c3ff3cc4ebf681e07a3f8313fbaa48c",
-  "pr_url": "https://github.com/kumagaias/feed-bower/pull/22"
+  "created_at": "2025-10-20T23:41:45Z",
+  "commit_sha": "174f6a3161fba6cf259129adc48f3f79f2b8a618",
+  "pr_url": "https://github.com/kumagaias/feed-bower/pull/47"
 }

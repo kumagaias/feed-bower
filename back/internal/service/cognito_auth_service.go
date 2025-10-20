@@ -24,14 +24,14 @@ import (
 
 // CognitoAuthService implements AuthService using AWS Cognito
 type CognitoAuthService struct {
-	userRepo       repository.UserRepository
-	cognitoClient  *cognitoidentityprovider.Client
-	userPoolID     string
-	region         string
-	clientID       string
-	endpoint       string
-	jwksCache      map[string]*rsa.PublicKey
-	jwksCacheExp   time.Time
+	userRepo      repository.UserRepository
+	cognitoClient *cognitoidentityprovider.Client
+	userPoolID    string
+	region        string
+	clientID      string
+	endpoint      string
+	jwksCache     map[string]*rsa.PublicKey
+	jwksCacheExp  time.Time
 }
 
 // NewCognitoAuthService creates a new Cognito auth service
