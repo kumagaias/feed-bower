@@ -90,12 +90,8 @@ func CORS(config *CORSConfig) func(http.Handler) http.Handler {
 
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-			// Handle preflight requests
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
+			// Note: OPTIONS requests are handled by API Gateway, not here
+			// Just pass through to next handler
 			next.ServeHTTP(w, r)
 		})
 	}
