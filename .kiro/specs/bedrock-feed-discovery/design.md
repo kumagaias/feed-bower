@@ -1,12 +1,12 @@
-# Design Document
+# 設計書
 
-## Overview
+## 概要
 
-This design document outlines the technical architecture for integrating Amazon Bedrock Agent Core into Feed Bower to provide AI-powered RSS/Atom feed discovery. The system uses Claude 3 Haiku to intelligently match user keywords with a curated database of feeds, with a fallback to static keyword mapping for reliability.
+この設計書は、AI駆動のRSS/Atomフィード検索を提供するために、Amazon Bedrock Agent CoreをFeed Bowerに統合するための技術アーキテクチャを概説します。システムはClaude 3 Haikuを使用してユーザーのキーワードと厳選されたフィードデータベースをインテリジェントにマッチングし、信頼性のために静的キーワードマッピングへのフォールバックを備えています。
 
-## Architecture
+## アーキテクチャ
 
-### High-Level Architecture
+### 高レベルアーキテクチャ
 
 ```
 ┌─────────────┐
