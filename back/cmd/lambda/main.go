@@ -25,6 +25,7 @@ type Config struct {
 	// Database
 	DynamoDBEndpoint string
 	TablePrefix      string
+	TableSuffix      string
 
 	// Authentication
 	JWTSecret         string
@@ -47,6 +48,7 @@ func loadConfig() *Config {
 	config := &Config{
 		DynamoDBEndpoint:  getEnv("DYNAMODB_ENDPOINT", ""),
 		TablePrefix:       getEnv("DYNAMODB_TABLE_PREFIX", ""),
+		TableSuffix:       getEnv("DYNAMODB_TABLE_SUFFIX", ""),
 		JWTSecret:         getEnv("JWT_SECRET", "default-secret-change-in-production"),
 		CognitoUserPoolID: getEnv("COGNITO_USER_POOL_ID", ""),
 		CognitoRegion:     getEnv("COGNITO_REGION", "ap-northeast-1"),
@@ -81,6 +83,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	dbConfig := &dynamodbpkg.Config{
 		EndpointURL: config.DynamoDBEndpoint,
 		TablePrefix: config.TablePrefix,
+		TableSuffix: config.TableSuffix,
 	}
 
 	dbClient, err := dynamodbpkg.NewClient(context.Background(), dbConfig)
@@ -199,6 +202,7 @@ func runScheduler(config *Config) error {
 	dbConfig := &dynamodbpkg.Config{
 		EndpointURL: config.DynamoDBEndpoint,
 		TablePrefix: config.TablePrefix,
+		TableSuffix: config.TableSuffix,
 	}
 
 	dbClient, err := dynamodbpkg.NewClient(context.Background(), dbConfig)
