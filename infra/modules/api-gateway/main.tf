@@ -122,9 +122,10 @@ resource "aws_api_gateway_method_response" "options" {
   status_code = "200"
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = true
-    "method.response.header.Access-Control-Allow-Methods" = true
-    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Headers"     = true
+    "method.response.header.Access-Control-Allow-Methods"     = true
+    "method.response.header.Access-Control-Allow-Origin"      = true
+    "method.response.header.Access-Control-Allow-Credentials" = true
   }
 
   response_models = {
@@ -140,9 +141,10 @@ resource "aws_api_gateway_integration_response" "options" {
   status_code = aws_api_gateway_method_response.options[0].status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'${join(",", var.cors_allow_headers)}'"
-    "method.response.header.Access-Control-Allow-Methods" = "'${join(",", var.cors_allow_methods)}'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'${var.cors_allow_origins[0]}'"
+    "method.response.header.Access-Control-Allow-Headers"     = "'${join(",", var.cors_allow_headers)}'"
+    "method.response.header.Access-Control-Allow-Methods"     = "'${join(",", var.cors_allow_methods)}'"
+    "method.response.header.Access-Control-Allow-Origin"      = "'${var.cors_allow_origins[0]}'"
+    "method.response.header.Access-Control-Allow-Credentials" = "'true'"
   }
 }
 
@@ -162,6 +164,8 @@ resource "aws_api_gateway_deployment" "deployment" {
       aws_api_gateway_integration.lambda.id,
       aws_api_gateway_method.proxy_root.id,
       aws_api_gateway_integration.lambda_root.id,
+      var.enable_cors ? aws_api_gateway_integration_response.options[0].id : "",
+      var.enable_cors ? jsonencode(var.cors_allow_origins) : "",
     ]))
   }
 
