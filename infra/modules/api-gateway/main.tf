@@ -142,7 +142,7 @@ resource "aws_api_gateway_integration_response" "options" {
   response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'${join(",", var.cors_allow_headers)}'"
     "method.response.header.Access-Control-Allow-Methods" = "'${join(",", var.cors_allow_methods)}'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'${join(",", var.cors_allow_origins)}'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'${var.cors_allow_origins[0]}'"
   }
 }
 
