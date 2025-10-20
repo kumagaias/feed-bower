@@ -34,6 +34,7 @@ func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 	authRouter.HandleFunc("/login", h.Login).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/refresh", h.RefreshToken).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/me", h.GetCurrentUser).Methods("GET", "OPTIONS")
+	authRouter.HandleFunc("/me", h.DeleteCurrentUser).Methods("DELETE", "OPTIONS")
 	authRouter.HandleFunc("/change-password", h.ChangePassword).Methods("PUT", "OPTIONS")
 	authRouter.HandleFunc("/dev-user", h.GetDevUser).Methods("GET", "OPTIONS")
 }
@@ -264,6 +265,23 @@ func (h *AuthHandler) toUserResponse(user *model.User) *UserResponse {
 		Language:  user.Language,
 		CreatedAt: user.CreatedAt,
 	}
+}
+
+// DeleteCurrentUser deletes the current authenticated user and all associated data
+func (h *AuthHandler) DeleteCurrentUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
+		return
+	}
+
+	// Delete user and all associated data
+	err := h.authService.DeleteUser(r.Context(), user.UserID)
+	if err != nil {
+		response.InternalServerError(w, "Failed to delete user")
+		return
+	}
+
+	response.Success(w, map[string]string{"message": "User deleted successfully"})
 }
 
 // GetDevUser returns the development user information (development only)

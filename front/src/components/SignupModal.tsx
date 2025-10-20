@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/lib/i18n";
+import VerificationModal from "./VerificationModal";
 
 interface SignupModalProps {
   isOpen: boolean;

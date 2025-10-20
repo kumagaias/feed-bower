@@ -29,8 +29,17 @@ resource "aws_cognito_user_pool" "pool" {
   # 検証メッセージのカスタマイズ
   verification_message_template {
     default_email_option  = "CONFIRM_WITH_LINK"
-    email_subject         = "Feed Bower - Verify your email"
-    email_message_by_link = "Welcome to Feed Bower! Please click the link below to verify your email address: {##Verify Email##}"
+    email_subject         = "Feed Bower - メールアドレスを確認してください"
+    email_message_by_link = <<-EOT
+      Feed Bowerへようこそ！
+      
+      以下のリンクをクリックしてメールアドレスを確認してください：
+      {##こちらをクリック##}
+      
+      確認後、https://www.feed-bower.net にアクセスしてログインしてください。
+      
+      このメールに心当たりがない場合は、無視してください。
+    EOT
   }
 
   # パスワードポリシー

@@ -629,6 +629,13 @@ export const authApi = {
       method: 'POST',
     })
   },
+
+  // Delete current user
+  async deleteCurrentUser() {
+    return apiRequest<void>('/auth/me', {
+      method: 'DELETE',
+    })
+  },
 }
 
 // Export the ApiError class for error handling

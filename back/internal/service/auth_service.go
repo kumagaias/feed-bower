@@ -32,6 +32,7 @@ type AuthService interface {
 	GetUserByID(ctx context.Context, userID string) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
 	ChangePassword(ctx context.Context, userID, oldPassword, newPassword string) error
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 // authService implements AuthService interface
@@ -333,6 +334,21 @@ func (s *authService) ChangePassword(ctx context.Context, userID, oldPassword, n
 	err = s.userRepo.Update(ctx, user)
 	if err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteUser deletes a user and all associated data
+func (s *authService) DeleteUser(ctx context.Context, userID string) error {
+	if userID == "" {
+		return errors.New("user ID is required")
+	}
+
+	// Delete user from repository
+	err := s.userRepo.Delete(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
 	return nil

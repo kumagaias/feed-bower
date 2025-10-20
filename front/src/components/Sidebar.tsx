@@ -122,6 +122,26 @@ export default function Sidebar() {
                     t.logout
                   )}
                 </button>
+                {/* Delete Account Button */}
+                <button
+                  onClick={async () => {
+                    if (window.confirm(language === 'ja' 
+                      ? 'アカウントを削除しますか？この操作は取り消せません。すべてのデータが削除されます。' 
+                      : 'Are you sure you want to delete your account? This action cannot be undone. All your data will be deleted.')) {
+                      try {
+                        const { authApi } = await import('@/lib/api')
+                        await authApi.deleteCurrentUser()
+                        await logout()
+                      } catch (error) {
+                        console.error('Delete account error:', error)
+                        alert(language === 'ja' ? 'アカウント削除に失敗しました' : 'Failed to delete account')
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
+                >
+                  {language === 'ja' ? 'アカウント削除' : 'Delete Account'}
+                </button>
               </div>
             </div>
             )}

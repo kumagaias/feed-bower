@@ -31,7 +31,7 @@ output "domain" {
 
 output "hosted_ui_url" {
   description = "Cognito Hosted UI URL"
-  value       = var.domain_name != null ? "https://${aws_cognito_user_pool_domain.domain[0].domain}.auth.${data.aws_region.current.name}.amazoncognito.com" : null
+  value       = var.domain_name != null ? "https://${aws_cognito_user_pool_domain.domain[0].domain}.auth.${data.aws_region.current.id}.amazoncognito.com" : null
 }
 
 # 現在のリージョンを取得
