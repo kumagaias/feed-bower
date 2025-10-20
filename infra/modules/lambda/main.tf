@@ -90,6 +90,26 @@ resource "aws_iam_role_policy" "bedrock_policy" {
   })
 }
 
+# Cognito アクセスポリシー（ユーザー削除用）
+resource "aws_iam_role_policy" "cognito_policy" {
+  name = "${var.function_name}-cognito-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminDeleteUser",
+          "cognito-idp:AdminGetUser"
+        ]
+        Resource = "arn:aws:cognito-idp:*:*:userpool/*"
+      }
+    ]
+  })
+}
+
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "lambda_logs" {
   name              = "/aws/lambda/${var.function_name}"

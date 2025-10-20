@@ -124,16 +124,18 @@ export default function Sidebar() {
                     t.logout
                   )}
                 </button>
-                {/* Delete Account Button */}
-                <button
-                  onClick={() => {
-                    setMenuOpen(false)
-                    setShowDeleteModal(true)
-                  }}
-                  className="w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
-                >
-                  {language === 'ja' ? 'アカウント削除' : 'Delete Account'}
-                </button>
+                {/* Delete Account Link */}
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setShowDeleteModal(true)
+                    }}
+                    className="text-xs text-red-600 hover:text-red-700 hover:underline transition-colors"
+                  >
+                    {language === 'ja' ? 'アカウント削除' : 'Delete Account'}
+                  </button>
+                </div>
               </div>
             </div>
             )}
