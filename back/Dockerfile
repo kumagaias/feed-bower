@@ -23,9 +23,10 @@ RUN go clean -cache
 # Build the application with maximum optimization
 # CGO_ENABLED=0 for static binary
 # GOOS=linux for Linux target
+# GOCACHE=off to disable build cache completely
 # -ldflags="-w -s" to strip debug info and reduce size
 # -trimpath to remove file system paths from binary
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN GOCACHE=off CGO_ENABLED=0 GOOS=linux go build \
     -a -installsuffix cgo \
     -ldflags="-w -s -extldflags '-static'" \
     -trimpath \
