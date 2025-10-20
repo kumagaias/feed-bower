@@ -438,6 +438,9 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		return nil, errors.New("access denied: not bower owner")
 	}
 
+	// TODO: Integrate with Bedrock Agent Core for AI-powered feed recommendations
+	// For now, use static keyword mapping as fallback
+
 	// Generate mock feed recommendations based on keywords
 	recommendations := make([]*model.Feed, 0)
 

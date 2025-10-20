@@ -137,6 +137,24 @@ variable "domain_name" {
   default     = null
 }
 
+variable "enable_ui_customization" {
+  description = "Hosted UI のカスタマイズを有効にするか"
+  type        = bool
+  default     = false
+}
+
+variable "ui_customization_css" {
+  description = "Hosted UI のカスタム CSS"
+  type        = string
+  default     = ""
+}
+
+variable "ui_logo_file" {
+  description = "Hosted UI のロゴ画像ファイルパス（オプション）"
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "リソースに付与するタグ"
   type        = map(string)

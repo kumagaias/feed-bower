@@ -60,7 +60,10 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem"
         ]
-        Resource = var.dynamodb_table_arns
+        Resource = concat(
+          var.dynamodb_table_arns,
+          [for arn in var.dynamodb_table_arns : "${arn}/*"]
+        )
       }
     ]
   })

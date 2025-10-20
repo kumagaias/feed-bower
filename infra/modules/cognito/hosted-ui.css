@@ -1,0 +1,232 @@
+/* Feed Bower - Cognito Hosted UI Custom CSS */
+/* 現在のログインモーダルに近いデザイン */
+
+/* 全体のコンテナ */
+.modal-content {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 28rem;
+  width: 100%;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* ヘッダー */
+.banner-customizable {
+  background-color: #ffffff !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* ロゴとタイトル */
+.logo-customizable {
+  max-width: 2rem;
+  max-height: 2rem;
+}
+
+.textDescription-customizable {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+/* フォーム全体 */
+.form-signin {
+  background-color: #ffffff;
+}
+
+/* ラベル */
+.label-customizable {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* 入力フィールド */
+.inputField-customizable {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.inputField-customizable:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+/* ボタン */
+.submitButton-customizable {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #14b8a6 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  font-weight: 500 !important;
+  font-size: 1rem !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  margin-top: 1rem !important;
+}
+
+.submitButton-customizable:hover {
+  background-color: #505050 !important;
+}
+
+.submitButton-customizable:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+/* リンク */
+.redirect-customizable {
+  color: #14b8a6 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+.redirect-customizable:hover {
+  text-decoration: underline !important;
+}
+
+/* エラーメッセージ */
+.errorMessage-customizable {
+  background-color: #fef2f2;
+  color: #dc2626;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* 成功メッセージ */
+.successMessage-customizable {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* フッターリンク */
+.textDescription-customizable a {
+  color: #14b8a6;
+  font-weight: 500;
+}
+
+.textDescription-customizable a:hover {
+  text-decoration: underline;
+}
+
+/* 背景 */
+body {
+  background: linear-gradient(to bottom right, #f0fdfa, #ffffff, #fef3c7) !important;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .textDescription-customizable {
+    font-size: 1.25rem;
+  }
+}
+
+/* 確認コード入力フィールド */
+.code-input {
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 0.5rem;
+}
+
+/* パスワード強度インジケーター */
+.password-strength {
+  height: 0.25rem;
+  border-radius: 0.125rem;
+  margin-top: 0.5rem;
+  transition: all 0.3s;
+}
+
+/* チェックボックス */
+.checkbox-customizable {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+}
+
+.checkbox-customizable:checked {
+  background-color: #14b8a6;
+  border-color: #14b8a6;
+}
+
+/* セパレーター */
+.separator-customizable {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.separator-customizable::before,
+.separator-customizable::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.separator-customizable span {
+  padding: 0 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* ローディングスピナー */
+.spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #14b8a6;
+  border-radius: 50%;
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Feed Bowerブランディング */
+.legalText-customizable {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 2rem;
+}
+
+.legalText-customizable::before {
+  content: '🪺 Feed Bower';
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}

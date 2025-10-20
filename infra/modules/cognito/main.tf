@@ -28,9 +28,9 @@ resource "aws_cognito_user_pool" "pool" {
 
   # 検証メッセージのカスタマイズ
   verification_message_template {
-    default_email_option = "CONFIRM_WITH_CODE"
-    email_subject        = "Feed Bower - Verify your email"
-    email_message        = "Welcome to Feed Bower! Your verification code is: {####}"
+    default_email_option  = "CONFIRM_WITH_LINK"
+    email_subject         = "Feed Bower - Verify your email"
+    email_message_by_link = "Welcome to Feed Bower! Please click the link below to verify your email address: {##Verify Email##}"
   }
 
   # パスワードポリシー
@@ -100,4 +100,19 @@ resource "aws_cognito_user_pool_domain" "domain" {
 
   domain       = var.domain_name
   user_pool_id = aws_cognito_user_pool.pool.id
+}
+
+# Cognito UI Customization (Hosted UI)
+resource "aws_cognito_user_pool_ui_customization" "ui" {
+  count = var.enable_ui_customization ? 1 : 0
+
+  user_pool_id = aws_cognito_user_pool.pool.id
+
+  # CSSでHosted UIをカスタマイズ
+  css = var.ui_customization_css
+
+  # ロゴ画像（オプション）
+  image_file = var.ui_logo_file != null ? filebase64(var.ui_logo_file) : null
+
+  depends_on = [aws_cognito_user_pool_domain.domain]
 }

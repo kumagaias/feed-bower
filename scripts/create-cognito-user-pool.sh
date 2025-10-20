@@ -30,9 +30,10 @@ USER_POOL_ID=$(aws cognito-idp create-user-pool \
     --auto-verified-attributes email \
     --username-attributes email \
     --verification-message-template '{
-        "DefaultEmailOption": "CONFIRM_WITH_CODE",
+        "DefaultEmailOption": "CONFIRM_WITH_LINK",
         "EmailSubject": "Feed Bower - メールアドレスの確認",
-        "EmailMessage": "Feed Bowerへようこそ！確認コード: {####}"
+        "EmailMessage": "Feed Bowerへようこそ！以下のリンクをクリックしてメールアドレスを確認してください: {##Verify Email##}",
+        "EmailMessageByLink": "Feed Bowerへようこそ！以下のリンクをクリックしてメールアドレスを確認してください: {##Verify Email##}"
     }' \
     --admin-create-user-config '{
         "AllowAdminCreateUserOnly": false,

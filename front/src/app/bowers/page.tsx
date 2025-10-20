@@ -197,7 +197,7 @@ export default function BowersPage() {
     if (!editingBower) return
     
     try {
-      // Update bower using the hook
+      // Update bower using the hook (バックエンドが最新のフィードを含めて返す)
       await updateBower(editingBower.id, {
         name: bowerData.name,
         keywords: bowerData.keywords,
