@@ -59,8 +59,9 @@ func loadConfig() *Config {
 	}
 
 	// Validate required configuration
-	if config.JWTSecret == "default-secret-change-in-production" && config.Environment == "production" {
-		log.Fatal("JWT_SECRET must be set in production environment")
+	// JWT_SECRET is only required when not using Cognito
+	if !config.UseCognito && config.JWTSecret == "default-secret-change-in-production" && config.Environment == "production" {
+		log.Fatal("JWT_SECRET must be set in production environment when not using Cognito")
 	}
 
 	return config

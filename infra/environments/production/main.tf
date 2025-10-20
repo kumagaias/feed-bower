@@ -309,6 +309,10 @@ module "lambda" {
     DYNAMODB_TABLE_PREFIX = "${local.project_name}-"
     DYNAMODB_TABLE_SUFFIX = "-${local.environment}"
     LOG_LEVEL             = "INFO"
+    USE_COGNITO           = "true"
+    COGNITO_USER_POOL_ID  = module.cognito.user_pool_id
+    COGNITO_CLIENT_ID     = module.cognito.client_id
+    COGNITO_REGION        = var.aws_region
   }
 
   dynamodb_table_arns = [
