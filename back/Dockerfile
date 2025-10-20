@@ -31,11 +31,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # Stage 2: Use minimal Lambda runtime
 FROM public.ecr.aws/lambda/provided:al2-x86_64
 
-# Copy only the binary from builder stage
-COPY --from=builder /app/main ${LAMBDA_RUNTIME_DIR}/
+# Copy the binary as 'bootstrap' (required by Lambda custom runtime)
+COPY --from=builder /app/main ${LAMBDA_RUNTIME_DIR}/bootstrap
 
 # Copy only essential CA certificates
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-# Set the CMD to your handler
-CMD [ "main" ]
