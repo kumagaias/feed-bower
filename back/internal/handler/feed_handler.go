@@ -38,6 +38,7 @@ func (h *FeedHandler) RegisterRoutes(router *mux.Router) {
 	feedRouter.HandleFunc("/validate", h.ValidateFeedURL).Methods("POST", "OPTIONS")
 	feedRouter.HandleFunc("/recommendations", h.GetFeedRecommendations).Methods("POST", "OPTIONS")
 	feedRouter.HandleFunc("/auto-register", h.AutoRegisterFeeds).Methods("POST", "OPTIONS")
+	feedRouter.HandleFunc("/fetch-bower", h.FetchBowerFeeds).Methods("POST", "OPTIONS")
 }
 
 // AddFeedRequest represents the request to add a feed
@@ -491,4 +492,50 @@ func (h *FeedHandler) toArticleResponse(article *model.Article) ArticleResponse 
 		Liked:       article.Liked,
 		Read:        article.Read,
 	}
+}
+
+// FetchBowerFeedsRequest represents the request to fetch feeds for a bower
+type FetchBowerFeedsRequest struct {
+	BowerID string `json:"bower_id" validate:"required"`
+}
+
+// FetchBowerFeeds fetches articles from all feeds in a bower
+func (h *FeedHandler) FetchBowerFeeds(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get user ID from context
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok || userID == "" {
+		response.Error(w, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
+		return
+	}
+
+	// Parse request body
+	var req FetchBowerFeedsRequest
+	if !ParseJSONBodySecure(w, r, &req) {
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		response.ValidationError(w, err.Error())
+		return
+	}
+
+	// Fetch bower feeds
+	result, err := h.feedService.FetchBowerFeeds(ctx, userID, req.BowerID)
+	if err != nil {
+		if err.Error() == "bower not found: bower not found" {
+			response.NotFound(w, "Bower not found")
+			return
+		}
+		if err.Error() == "access denied: not bower owner" {
+			response.Forbidden(w, "Access denied")
+			return
+		}
+		response.InternalServerError(w, "Failed to fetch bower feeds")
+		return
+	}
+
+	response.Success(w, result)
 }

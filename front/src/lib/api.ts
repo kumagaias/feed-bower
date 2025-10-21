@@ -524,6 +524,19 @@ export const feedApi = {
   async getBowerArticles(bowerId: string, limit: number = 50) {
     return apiRequest<any[]>(`/articles?bower_id=${bowerId}&limit=${limit}`)
   },
+
+  // Fetch feeds for a bower (trigger article fetching)
+  async fetchBowerFeeds(bowerId: string) {
+    return apiRequest<{
+      total_feeds: number
+      total_articles: number
+      successful_feeds: number
+      failed_feeds: number
+    }>('/feeds/fetch-bower', {
+      method: 'POST',
+      body: JSON.stringify({ bower_id: bowerId }),
+    })
+  },
 }
 
 // Article API functions

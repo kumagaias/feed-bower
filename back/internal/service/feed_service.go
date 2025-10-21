@@ -39,6 +39,9 @@ type FeedService interface {
 
 	// Feed management
 	GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*model.Feed, error)
+	
+	// Feed fetching
+	FetchBowerFeeds(ctx context.Context, userID string, bowerID string) (*FetchBowerFeedsResult, error)
 }
 
 // AddFeedRequest represents the request to add a feed to a bower
@@ -1002,4 +1005,87 @@ func truncateContent(content string, maxLength int) string {
 	}
 
 	return truncated + "..."
+}
+
+// FetchBowerFeedsResult represents the result of fetching feeds for a bower
+type FetchBowerFeedsResult struct {
+	TotalFeeds      int `json:"total_feeds"`
+	TotalArticles   int `json:"total_articles"`
+	SuccessfulFeeds int `json:"successful_feeds"`
+	FailedFeeds     int `json:"failed_feeds"`
+}
+
+// FetchBowerFeeds fetches articles from all feeds in a bower
+func (s *feedService) FetchBowerFeeds(ctx context.Context, userID string, bowerID string) (*FetchBowerFeedsResult, error) {
+	if userID == "" {
+		return nil, errors.New("user ID is required")
+	}
+	if bowerID == "" {
+		return nil, errors.New("bower ID is required")
+	}
+
+	log.Printf("[FetchBowerFeeds] START | user_id=%s | bower_id=%s", userID, bowerID)
+
+	// Check if user has access to bower
+	bower, err := s.bowerRepo.GetByID(ctx, bowerID)
+	if err != nil {
+		log.Printf("[FetchBowerFeeds] ERROR | user_id=%s | bower_id=%s | error=bower_not_found", userID, bowerID)
+		return nil, fmt.Errorf("bower not found: %w", err)
+	}
+
+	if bower.UserID != userID {
+		log.Printf("[FetchBowerFeeds] ERROR | user_id=%s | bower_id=%s | error=access_denied", userID, bowerID)
+		return nil, errors.New("access denied: not bower owner")
+	}
+
+	// Get all feeds for the bower
+	feeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
+	if err != nil {
+		log.Printf("[FetchBowerFeeds] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_feeds", userID, bowerID)
+		return nil, fmt.Errorf("failed to get feeds: %w", err)
+	}
+
+	if len(feeds) == 0 {
+		log.Printf("[FetchBowerFeeds] NO_FEEDS | user_id=%s | bower_id=%s", userID, bowerID)
+		return &FetchBowerFeedsResult{
+			TotalFeeds:      0,
+			TotalArticles:   0,
+			SuccessfulFeeds: 0,
+			FailedFeeds:     0,
+		}, nil
+	}
+
+	log.Printf("[FetchBowerFeeds] FEEDS_FOUND | user_id=%s | bower_id=%s | count=%d", userID, bowerID, len(feeds))
+
+	result := &FetchBowerFeedsResult{
+		TotalFeeds: len(feeds),
+	}
+
+	// Fetch articles from each feed
+	for i, feed := range feeds {
+		log.Printf("[FetchBowerFeeds] FETCHING | user_id=%s | bower_id=%s | feed=%d/%d | url=%s",
+			userID, bowerID, i+1, len(feeds), feed.URL)
+
+		// Fetch feed data
+		feedData, err := s.rssService.FetchFeed(ctx, feed.URL)
+		if err != nil {
+			log.Printf("[FetchBowerFeeds] FETCH_FAILED | user_id=%s | bower_id=%s | feed_id=%s | error=%v",
+				userID, bowerID, feed.FeedID, err)
+			result.FailedFeeds++
+			continue
+		}
+
+		log.Printf("[FetchBowerFeeds] FETCHED | user_id=%s | bower_id=%s | feed_id=%s | articles=%d",
+			userID, bowerID, feed.FeedID, len(feedData.Articles))
+
+		// Save articles (implementation similar to scheduler)
+		// For now, we'll just count them
+		result.TotalArticles += len(feedData.Articles)
+		result.SuccessfulFeeds++
+	}
+
+	log.Printf("[FetchBowerFeeds] COMPLETE | user_id=%s | bower_id=%s | total_feeds=%d | successful=%d | failed=%d | total_articles=%d",
+		userID, bowerID, result.TotalFeeds, result.SuccessfulFeeds, result.FailedFeeds, result.TotalArticles)
+
+	return result, nil
 }

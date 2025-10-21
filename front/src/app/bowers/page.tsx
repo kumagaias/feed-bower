@@ -158,6 +158,17 @@ export default function BowersPage() {
           type: 'success'
         })
         
+        // Fetch articles for the newly created bower
+        if (result.bower && result.autoRegisteredFeeds > 0) {
+          try {
+            await feedApi.fetchBowerFeeds(result.bower.id)
+            console.log('✅ Articles fetched for bower:', result.bower.id)
+          } catch (error) {
+            console.error('Failed to fetch articles:', error)
+            // Don't show error to user, this is a background operation
+          }
+        }
+        
         // Show warnings if there were errors
         if (result.autoRegisterErrors.length > 0) {
           setTimeout(() => {
