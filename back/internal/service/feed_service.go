@@ -677,6 +677,18 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			{"https://realpython.com/atom.xml", "Real Python", "Python tutorials and guides", "Python"},
 			{"https://dev.to/feed/tag/python", "Dev.to Python", "Python community articles", "Python"},
 		},
+		"mobile": {
+			{"https://android-developers.googleblog.com/feeds/posts/default", "Android Developers Blog", "Android development news", "Mobile"},
+			{"https://developer.apple.com/news/rss/news.rss", "Apple Developer News", "iOS development news", "Mobile"},
+		},
+		"science": {
+			{"https://www.nature.com/nature.rss", "Nature", "Scientific research and news", "Science"},
+			{"https://www.sciencedaily.com/rss/all.xml", "Science Daily", "Latest science news", "Science"},
+		},
+		"app development": {
+			{"https://dev.to/feed/tag/mobile", "Dev.to Mobile", "Mobile app development", "App Development"},
+			{"https://www.raywenderlich.com/feed", "Ray Wenderlich", "Mobile development tutorials", "App Development"},
+		},
 
 		// Japanese keywords
 		"プログラミング": {
