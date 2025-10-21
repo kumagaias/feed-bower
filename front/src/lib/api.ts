@@ -657,6 +657,14 @@ export const authApi = {
     })
   },
 
+  // Update current user
+  async updateMe(data: { name?: string; language?: string }) {
+    return apiRequest<any>('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  },
+
   // Delete current user
   async deleteCurrentUser() {
     return apiRequest<void>('/auth/me', {

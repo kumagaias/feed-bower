@@ -38,7 +38,7 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [language, setLanguage] = useState<'ja' | 'en'>('ja')
+  const [language, setLanguageState] = useState<'ja' | 'en'>('ja')
   const [bowers, setBowers] = useState<any[]>([])
   const [chickStats, setChickStats] = useState<ChickStats>({
     totalLikes: 0,
@@ -49,6 +49,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   })
   const [likedArticles, setLikedArticles] = useState<any[]>([])
   const [isMobile, setIsMobile] = useState(false)
+
+  const setLanguage = async (lang: 'ja' | 'en') => {
+    // Update local state immediately for better UX
+    setLanguageState(lang)
+    
+    // Try to save to backend (only if user is logged in)
+    try {
+      const { authApi } = await import('@/lib/api')
+      await authApi.updateMe({ language: lang })
+    } catch (error) {
+      // Silently fail if not logged in or API error
+      // Language preference will still work locally
+      console.log('Language preference not saved to backend:', error)
+    }
+  }
 
   const value: AppContextType = {
     language,

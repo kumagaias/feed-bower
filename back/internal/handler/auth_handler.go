@@ -34,6 +34,7 @@ func (h *AuthHandler) RegisterRoutes(router *mux.Router) {
 	authRouter.HandleFunc("/login", h.Login).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/refresh", h.RefreshToken).Methods("POST", "OPTIONS")
 	authRouter.HandleFunc("/me", h.GetCurrentUser).Methods("GET", "OPTIONS")
+	authRouter.HandleFunc("/me", h.UpdateCurrentUser).Methods("PUT", "OPTIONS")
 	authRouter.HandleFunc("/me", h.DeleteCurrentUser).Methods("DELETE", "OPTIONS")
 	authRouter.HandleFunc("/change-password", h.ChangePassword).Methods("PUT", "OPTIONS")
 	authRouter.HandleFunc("/dev-user", h.GetDevUser).Methods("GET", "OPTIONS")
@@ -304,4 +305,58 @@ func (h *AuthHandler) GetDevUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Success(w, userInfo)
+}
+
+// UpdateUserRequest represents the request to update user information
+type UpdateUserRequest struct {
+	Name     *string `json:"name" validate:"omitempty,min=1,max=100"`
+	Language *string `json:"language" validate:"omitempty,oneof=ja en"`
+}
+
+// UpdateCurrentUser updates the current user's information
+func (h *AuthHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get user ID from context (set by auth middleware)
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok || userID == "" {
+		response.Error(w, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
+		return
+	}
+
+	// Parse request body
+	var req UpdateUserRequest
+	if !ParseJSONBodySecure(w, r, &req) {
+		return
+	}
+
+	// Validate request
+	if err := h.validator.Validate(&req); err != nil {
+		response.ValidationError(w, err.Error())
+		return
+	}
+
+	// Get current user
+	user, err := h.authService.GetUserByID(ctx, userID)
+	if err != nil {
+		response.NotFound(w, "User not found")
+		return
+	}
+
+	// Update fields if provided
+	if req.Name != nil {
+		user.Name = *req.Name
+	}
+	if req.Language != nil {
+		user.Language = *req.Language
+	}
+
+	// Update user
+	if err := h.authService.UpdateUser(ctx, user); err != nil {
+		response.InternalServerError(w, "Failed to update user")
+		return
+	}
+
+	// Return updated user
+	response.Success(w, h.toUserResponse(user))
 }
