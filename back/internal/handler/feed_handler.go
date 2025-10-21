@@ -37,6 +37,7 @@ func (h *FeedHandler) RegisterRoutes(router *mux.Router) {
 	feedRouter.HandleFunc("/preview-url", h.PreviewFeedByURL).Methods("GET", "OPTIONS")
 	feedRouter.HandleFunc("/validate", h.ValidateFeedURL).Methods("POST", "OPTIONS")
 	feedRouter.HandleFunc("/recommendations", h.GetFeedRecommendations).Methods("POST", "OPTIONS")
+	feedRouter.HandleFunc("/auto-register", h.AutoRegisterFeeds).Methods("POST", "OPTIONS")
 }
 
 // AddFeedRequest represents the request to add a feed
@@ -54,6 +55,34 @@ type ValidateFeedURLRequest struct {
 type FeedRecommendationsRequest struct {
 	Keywords []string `json:"keywords" validate:"required,min=1"`
 	BowerID  string   `json:"bower_id" validate:"required"`
+}
+
+// AutoRegisterFeedsRequest represents the request to auto-register feeds
+type AutoRegisterFeedsRequest struct {
+	BowerID  string   `json:"bower_id" validate:"required"`
+	Keywords []string `json:"keywords" validate:"required,min=1"`
+	MaxFeeds int      `json:"max_feeds" validate:"required,min=1,max=10"`
+}
+
+// AutoRegisterFeedsResponse represents the response from auto-registering feeds
+type AutoRegisterFeedsResponse struct {
+	AddedFeeds   []*FeedResponse `json:"added_feeds"`
+	SkippedFeeds []string        `json:"skipped_feeds"`
+	FailedFeeds  []FailedFeed    `json:"failed_feeds"`
+	Summary      Summary         `json:"summary"`
+}
+
+// FailedFeed represents a feed that failed to be added
+type FailedFeed struct {
+	URL    string `json:"url"`
+	Reason string `json:"reason"`
+}
+
+// Summary represents the summary of auto-registration results
+type Summary struct {
+	TotalAdded   int `json:"total_added"`
+	TotalSkipped int `json:"total_skipped"`
+	TotalFailed  int `json:"total_failed"`
 }
 
 // FeedPreviewResponse represents a feed preview
@@ -340,6 +369,66 @@ func (h *FeedHandler) GetFeedRecommendations(w http.ResponseWriter, r *http.Requ
 	}
 
 	response.Success(w, feedResponses)
+}
+
+// AutoRegisterFeeds automatically registers recommended feeds to a bower
+func (h *FeedHandler) AutoRegisterFeeds(w http.ResponseWriter, r *http.Request) {
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
+		return
+	}
+
+	var req AutoRegisterFeedsRequest
+	if !ParseJSONBodySecure(w, r, &req) {
+		return
+	}
+
+	if err := h.validator.Validate(&req); err != nil {
+		response.ValidationError(w, err.Error())
+		return
+	}
+
+	// Call the service to auto-register feeds
+	result, err := h.feedService.AutoRegisterFeeds(r.Context(), user.UserID, req.BowerID, req.Keywords, req.MaxFeeds)
+	if err != nil {
+		if err.Error() == "access denied: not bower owner" {
+			response.Forbidden(w, err.Error())
+			return
+		}
+		if err.Error() == "bower not found" {
+			response.NotFound(w, err.Error())
+			return
+		}
+		response.InternalServerError(w, "Failed to auto-register feeds: "+err.Error())
+		return
+	}
+
+	// Convert service result to API response
+	addedFeedResponses := make([]*FeedResponse, len(result.AddedFeeds))
+	for i, feed := range result.AddedFeeds {
+		addedFeedResponses[i] = h.toFeedResponse(feed)
+	}
+
+	apiResponse := &AutoRegisterFeedsResponse{
+		AddedFeeds:   addedFeedResponses,
+		SkippedFeeds: result.SkippedFeeds,
+		FailedFeeds:  make([]FailedFeed, len(result.FailedFeeds)),
+		Summary: Summary{
+			TotalAdded:   result.TotalAdded,
+			TotalSkipped: result.TotalSkipped,
+			TotalFailed:  result.TotalFailed,
+		},
+	}
+
+	// Copy failed feeds
+	for i, failed := range result.FailedFeeds {
+		apiResponse.FailedFeeds[i] = FailedFeed{
+			URL:    failed.URL,
+			Reason: failed.Reason,
+		}
+	}
+
+	response.Success(w, apiResponse)
 }
 
 // ValidateFeedURL validates if a URL is a valid RSS/Atom feed
