@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -32,6 +33,9 @@ type FeedService interface {
 
 	// Feed recommendations
 	GetFeedRecommendations(ctx context.Context, userID string, bowerID string, keywords []string) ([]*model.Feed, error)
+
+	// Feed auto-registration
+	AutoRegisterFeeds(ctx context.Context, userID string, bowerID string, keywords []string, maxFeeds int) (*AutoRegisterResult, error)
 
 	// Feed management
 	GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*model.Feed, error)
@@ -73,6 +77,22 @@ type ArticlePreview struct {
 	URL         string `json:"url"`
 	PublishedAt int64  `json:"published_at"`
 	ImageURL    string `json:"image_url,omitempty"`
+}
+
+// AutoRegisterResult represents the result of auto-registering feeds
+type AutoRegisterResult struct {
+	AddedFeeds   []*model.Feed `json:"added_feeds"`
+	SkippedFeeds []string      `json:"skipped_feeds"`
+	FailedFeeds  []FailedFeed  `json:"failed_feeds"`
+	TotalAdded   int           `json:"total_added"`
+	TotalSkipped int           `json:"total_skipped"`
+	TotalFailed  int           `json:"total_failed"`
+}
+
+// FailedFeed represents a feed that failed to be added
+type FailedFeed struct {
+	URL    string `json:"url"`
+	Reason string `json:"reason"`
 }
 
 // FeedServiceConfig holds configuration for Feed Service
@@ -743,6 +763,201 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 		bowerID, len(keywords), matchedKeywords, skippedDuplicates, len(recommendations))
 
 	return recommendations
+}
+
+// AutoRegisterFeeds automatically registers recommended feeds to a bower
+func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowerID string, keywords []string, maxFeeds int) (*AutoRegisterResult, error) {
+	if userID == "" {
+		return nil, errors.New("user ID is required")
+	}
+	if bowerID == "" {
+		return nil, errors.New("bower ID is required")
+	}
+	if len(keywords) == 0 {
+		return nil, errors.New("keywords are required")
+	}
+	if maxFeeds < 1 || maxFeeds > 10 {
+		return nil, errors.New("max_feeds must be between 1 and 10")
+	}
+
+	log.Printf("[AutoRegisterFeeds] START | user_id=%s | bower_id=%s | keywords=%v | max_feeds=%d",
+		userID, bowerID, keywords, maxFeeds)
+
+	// Check if user has access to bower
+	bower, err := s.bowerRepo.GetByID(ctx, bowerID)
+	if err != nil {
+		log.Printf("[AutoRegisterFeeds] ERROR | user_id=%s | bower_id=%s | error=bower_not_found | details=%v",
+			userID, bowerID, err)
+		return nil, fmt.Errorf("bower not found: %w", err)
+	}
+
+	if bower.UserID != userID {
+		log.Printf("[AutoRegisterFeeds] ERROR | user_id=%s | bower_id=%s | error=access_denied | reason=not_bower_owner",
+			userID, bowerID)
+		return nil, errors.New("access denied: not bower owner")
+	}
+
+	// Get feed recommendations
+	log.Printf("[AutoRegisterFeeds] GET_RECOMMENDATIONS | user_id=%s | bower_id=%s | keywords=%v",
+		userID, bowerID, keywords)
+
+	recommendations, err := s.GetFeedRecommendations(ctx, userID, bowerID, keywords)
+	if err != nil {
+		log.Printf("[AutoRegisterFeeds] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_recommendations | details=%v",
+			userID, bowerID, err)
+		return nil, fmt.Errorf("failed to get recommendations: %w", err)
+	}
+
+	log.Printf("[AutoRegisterFeeds] RECOMMENDATIONS_RECEIVED | user_id=%s | bower_id=%s | recommendation_count=%d",
+		userID, bowerID, len(recommendations))
+
+	// Limit recommendations to maxFeeds
+	if len(recommendations) > maxFeeds {
+		recommendations = recommendations[:maxFeeds]
+		log.Printf("[AutoRegisterFeeds] LIMIT_APPLIED | user_id=%s | bower_id=%s | limited_to=%d",
+			userID, bowerID, maxFeeds)
+	}
+
+	// Get existing feeds to check for duplicates
+	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
+	if err != nil {
+		log.Printf("[AutoRegisterFeeds] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_existing_feeds | details=%v",
+			userID, bowerID, err)
+		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
+	}
+
+	existingURLs := make(map[string]bool)
+	for _, feed := range existingFeeds {
+		existingURLs[feed.URL] = true
+	}
+
+	log.Printf("[AutoRegisterFeeds] EXISTING_FEEDS | user_id=%s | bower_id=%s | existing_count=%d",
+		userID, bowerID, len(existingFeeds))
+
+	// Process feeds in parallel with controlled concurrency
+	type feedResult struct {
+		feed   *model.Feed
+		url    string
+		status string // "added", "skipped", "failed"
+		reason string
+	}
+
+	resultChan := make(chan feedResult, len(recommendations))
+
+	// Create context with timeout for the entire operation
+	processCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// Use a wait group to track goroutine completion
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 5) // Limit to 5 concurrent operations
+
+	// Process each recommendation
+	for _, rec := range recommendations {
+		wg.Add(1)
+		semaphore <- struct{}{} // Acquire semaphore
+
+		go func(recommendation *model.Feed) {
+			defer wg.Done()
+			defer func() { <-semaphore }() // Release semaphore
+
+			// Create individual timeout for each feed validation
+			feedCtx, feedCancel := context.WithTimeout(processCtx, 5*time.Second)
+			defer feedCancel()
+
+			result := feedResult{
+				url: recommendation.URL,
+			}
+
+			// Check if URL already exists
+			if existingURLs[recommendation.URL] {
+				result.status = "skipped"
+				result.reason = "feed URL already exists in this bower"
+				log.Printf("[AutoRegisterFeeds] SKIP_DUPLICATE | user_id=%s | bower_id=%s | url=%s",
+					userID, bowerID, recommendation.URL)
+				resultChan <- result
+				return
+			}
+
+			// Validate feed URL
+			if err := s.ValidateFeedURL(recommendation.URL); err != nil {
+				result.status = "failed"
+				result.reason = fmt.Sprintf("invalid feed URL: %v", err)
+				log.Printf("[AutoRegisterFeeds] VALIDATION_FAILED | user_id=%s | bower_id=%s | url=%s | error=%v",
+					userID, bowerID, recommendation.URL, err)
+				resultChan <- result
+				return
+			}
+
+			// Fetch feed information to verify it's a valid RSS/Atom feed
+			feedInfo, err := s.rssService.FetchFeedInfo(feedCtx, recommendation.URL)
+			if err != nil {
+				result.status = "failed"
+				result.reason = fmt.Sprintf("failed to fetch feed: %v", err)
+				log.Printf("[AutoRegisterFeeds] FETCH_FAILED | user_id=%s | bower_id=%s | url=%s | error=%v",
+					userID, bowerID, recommendation.URL, err)
+				resultChan <- result
+				return
+			}
+
+			// Update feed with fetched information
+			feed := model.NewFeed(bowerID, recommendation.URL, feedInfo.Title, feedInfo.Description, feedInfo.Category)
+
+			// Create feed in repository
+			if err := s.feedRepo.Create(feedCtx, feed); err != nil {
+				result.status = "failed"
+				result.reason = fmt.Sprintf("failed to create feed: %v", err)
+				log.Printf("[AutoRegisterFeeds] CREATE_FAILED | user_id=%s | bower_id=%s | url=%s | error=%v",
+					userID, bowerID, recommendation.URL, err)
+				resultChan <- result
+				return
+			}
+
+			result.status = "added"
+			result.feed = feed
+			log.Printf("[AutoRegisterFeeds] FEED_ADDED | user_id=%s | bower_id=%s | feed_id=%s | url=%s | title=%s",
+				userID, bowerID, feed.FeedID, feed.URL, feed.Title)
+			resultChan <- result
+
+			// Add small delay between operations to avoid overwhelming external services
+			time.Sleep(100 * time.Millisecond)
+		}(rec)
+	}
+
+	// Wait for all goroutines to complete, then close the channel
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Collect results
+	result := &AutoRegisterResult{
+		AddedFeeds:   make([]*model.Feed, 0),
+		SkippedFeeds: make([]string, 0),
+		FailedFeeds:  make([]FailedFeed, 0),
+	}
+
+	for res := range resultChan {
+		switch res.status {
+		case "added":
+			result.AddedFeeds = append(result.AddedFeeds, res.feed)
+			result.TotalAdded++
+		case "skipped":
+			result.SkippedFeeds = append(result.SkippedFeeds, res.url)
+			result.TotalSkipped++
+		case "failed":
+			result.FailedFeeds = append(result.FailedFeeds, FailedFeed{
+				URL:    res.url,
+				Reason: res.reason,
+			})
+			result.TotalFailed++
+		}
+	}
+
+	log.Printf("[AutoRegisterFeeds] COMPLETE | user_id=%s | bower_id=%s | total_added=%d | total_skipped=%d | total_failed=%d",
+		userID, bowerID, result.TotalAdded, result.TotalSkipped, result.TotalFailed)
+
+	return result, nil
 }
 
 // GetStaleFeeds retrieves feeds that haven't been updated recently

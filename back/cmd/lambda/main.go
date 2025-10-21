@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
@@ -312,7 +313,11 @@ func main() {
 
 			// Otherwise, treat as API Gateway event
 			adapter := httpadapter.New(router)
-			return adapter.ProxyWithContext(ctx, event)
+			apiGatewayEvent, ok := event.(events.APIGatewayProxyRequest)
+			if !ok {
+				return nil, fmt.Errorf("unexpected event type: %T", event)
+			}
+			return adapter.ProxyWithContext(ctx, apiGatewayEvent)
 		}
 
 		// Start Lambda handler
