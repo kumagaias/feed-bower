@@ -38,7 +38,7 @@
   - **確認**: `terraform plan`で Bedrock Agent リソースが正しく定義されていることを確認
   - _要件: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 4. 本番環境への Bedrock Agent 統合
+- [x] 4. 本番環境への Bedrock Agent 統合
 
   - 本番 Terraform に Bedrock Agent モジュールを追加
   - Lambda 用の環境変数を設定

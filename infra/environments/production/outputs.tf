@@ -86,3 +86,23 @@ output "cognito_user_pool_arn" {
   description = "Cognito User Pool ARN"
   value       = module.cognito.user_pool_arn
 }
+
+output "bedrock_agent_id" {
+  description = "Bedrock Agent ID"
+  value       = module.bedrock_agent.bedrock_agent_id
+}
+
+output "bedrock_agent_alias_id" {
+  description = "Bedrock Agent Alias ID (production)"
+  value       = module.bedrock_agent.bedrock_agent_alias_id
+}
+
+output "bedrock_agent_arn" {
+  description = "Bedrock Agent ARN"
+  value       = module.bedrock_agent.bedrock_agent_arn
+}
+
+output "bedrock_lambda_function_name" {
+  description = "Bedrock Lambda 関数名"
+  value       = module.bedrock_agent.lambda_function_name
+}

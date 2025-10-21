@@ -85,6 +85,13 @@ resource "aws_iam_role_policy" "bedrock_policy" {
           "bedrock:InvokeModelWithResponseStream"
         ]
         Resource = "arn:aws:bedrock:*::foundation-model/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock-agent-runtime:InvokeAgent"
+        ]
+        Resource = "arn:aws:bedrock:*:*:agent/*"
       }
     ]
   })
