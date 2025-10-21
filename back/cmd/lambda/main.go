@@ -305,9 +305,6 @@ func main() {
 
 		// Create a handler that can handle both API Gateway and EventBridge events
 		handler := func(ctx context.Context, event interface{}) (interface{}, error) {
-			// Log the event type for debugging
-			log.Printf("🔍 Received event type: %T", event)
-			
 			// Check if this is an EventBridge event (scheduler mode)
 			if eventMap, ok := event.(map[string]interface{}); ok {
 				if mode, exists := eventMap["mode"]; exists && mode == "scheduler" {
@@ -321,16 +318,9 @@ func main() {
 			}
 
 			// Otherwise, treat as API Gateway event
+			// httpadapter can handle both events.APIGatewayProxyRequest and map[string]interface{}
 			adapter := httpadapter.New(router)
-			
-			// Try to convert to APIGatewayProxyRequest
-			if apiGatewayEvent, ok := event.(events.APIGatewayProxyRequest); ok {
-				log.Println("✅ Successfully converted to APIGatewayProxyRequest")
-				return adapter.ProxyWithContext(ctx, apiGatewayEvent)
-			}
-			
-			log.Printf("❌ Failed to convert event. Type: %T, Value: %+v", event, event)
-			return nil, fmt.Errorf("unexpected event type: %T", event)
+			return adapter.ProxyWithContext(ctx, event)
 		}
 
 		// Start Lambda handler
