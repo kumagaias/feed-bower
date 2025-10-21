@@ -25,7 +25,11 @@ export default function BowerPreviewModal({ isOpen, onClose, bower }: BowerPrevi
   const [error, setError] = useState<string | null>(null)
 
   const fetchBowerArticles = useCallback(async () => {
-    if (!bower?.id) return
+    if (!bower?.id || bower.id === 'preview') {
+      // Skip fetching for preview/unsaved bowers
+      setIsLoading(false)
+      return
+    }
 
     setIsLoading(true)
     setError(null)
@@ -67,8 +71,10 @@ export default function BowerPreviewModal({ isOpen, onClose, bower }: BowerPrevi
 
   // Group articles by feed and limit to 5 per feed
   const groupedArticles: GroupedArticles = {}
-  if (bower?.feeds) {
+  if (bower?.feeds && Array.isArray(bower.feeds)) {
     bower.feeds.forEach(feed => {
+      if (!feed || !feed.id) return // Skip invalid feeds
+      
       const feedArticles = articles
         .filter(article => article.feedId === feed.id)
         .slice(0, 5) // Limit to 5 articles per feed
@@ -156,19 +162,48 @@ export default function BowerPreviewModal({ isOpen, onClose, bower }: BowerPrevi
             </div>
           )}
 
-          {/* Empty State */}
+          {/* Empty State or Feed List for Preview */}
           {!isLoading && !error && articles.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-4xl mb-4">📰</div>
-              <p className="text-gray-600 text-lg">
-                {language === 'ja' ? '記事が見つかりません' : 'No articles found'}
-              </p>
-              <p className="text-gray-500 text-sm mt-2">
-                {language === 'ja' 
-                  ? 'フィードに記事がないか、まだ取得されていません' 
-                  : 'The feeds may not have articles yet or they haven\'t been fetched'
-                }
-              </p>
+              {bower?.feeds && bower.feeds.length > 0 ? (
+                <div>
+                  <div className="text-4xl mb-4">🪺</div>
+                  <p className="text-gray-600 text-lg mb-4">
+                    {language === 'ja' ? 'フィード一覧' : 'Feed List'}
+                  </p>
+                  <div className="space-y-2 max-w-2xl mx-auto">
+                    {bower.feeds.map((feed: any, index: number) => (
+                      <div key={feed.id || index} className="p-3 bg-gray-50 rounded-lg text-left">
+                        <div className="font-medium text-sm text-gray-800">
+                          {feed.title || feed.url}
+                        </div>
+                        <div className="text-xs text-gray-500 break-all">
+                          {feed.url}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-gray-500 text-sm mt-4">
+                    {language === 'ja' 
+                      ? 'バウアーを保存すると記事が取得されます' 
+                      : 'Articles will be fetched after saving the bower'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-4xl mb-4">📰</div>
+                  <p className="text-gray-600 text-lg">
+                    {language === 'ja' ? 'フィードが登録されていません' : 'No feeds registered'}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    {language === 'ja' 
+                      ? 'キーワードを設定してフィードを追加してください' 
+                      : 'Please set keywords and add feeds'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
