@@ -22,6 +22,8 @@ export default function BowerCreatorModal({ isOpen, onClose, onSave }: BowerCrea
   const [isEditingName, setIsEditingName] = useState(false)
   const [tempBowerName, setTempBowerName] = useState('')
   const [hasUserEditedName, setHasUserEditedName] = useState(false)
+  const [autoRegisterFeeds, setAutoRegisterFeeds] = useState(true)
+  const [maxAutoFeeds, setMaxAutoFeeds] = useState(5)
 
   // Reset when modal closes
   useEffect(() => {
@@ -31,6 +33,8 @@ export default function BowerCreatorModal({ isOpen, onClose, onSave }: BowerCrea
       setIsEditingName(false)
       setTempBowerName('')
       setHasUserEditedName(false)
+      setAutoRegisterFeeds(true)
+      setMaxAutoFeeds(5)
     }
   }, [isOpen])
 
@@ -43,7 +47,9 @@ export default function BowerCreatorModal({ isOpen, onClose, onSave }: BowerCrea
     const bower = {
       name: bowerName || keywords.join(', '),
       keywords,
-      color: '#f59e0b' // Use accent color
+      color: '#f59e0b', // Use accent color
+      auto_register_feeds: autoRegisterFeeds,
+      max_auto_feeds: maxAutoFeeds
     }
 
     onSave(bower)
@@ -185,39 +191,55 @@ export default function BowerCreatorModal({ isOpen, onClose, onSave }: BowerCrea
               )}
             </div>
 
-            {/* Feeds Preview Section */}
+            {/* Auto-Register Feeds Section */}
             {keywords.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-base font-medium text-gray-700 mb-2">
-                  {language === 'ja' ? 'フィード（プレビュー）' : 'Feeds (Preview)'}
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">
-                  {language === 'ja' 
-                    ? 'バウアー作成後、キーワードに関連するフィードがバックエンドAPIから自動で取得されます。'
-                    : 'After bower creation, feeds related to keywords will be automatically fetched from backend API.'
-                  }
-                </p>
-                
-                {/* Preview Feeds */}
-                <div className="space-y-2">
-                  {keywords.map((keyword, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="text-sm text-gray-600">
-                          {language === 'ja' ? `${keyword}関連のフィード` : `${keyword}-related feeds`}
+                <div className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="auto-register-feeds"
+                      checked={autoRegisterFeeds}
+                      onChange={(e) => setAutoRegisterFeeds(e.target.checked)}
+                      className="mt-1 w-5 h-5 text-[#14b8a6] border-gray-300 rounded focus:ring-[#14b8a6] cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <label 
+                        htmlFor="auto-register-feeds" 
+                        className="text-base font-medium text-gray-800 cursor-pointer block mb-1"
+                      >
+                        {language === 'ja' ? '🤖 フィードを自動登録' : '🤖 Auto-register feeds'}
+                      </label>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {language === 'ja' 
+                          ? 'キーワードに基づいて、AI が関連するフィードを自動的に検索して登録します。'
+                          : 'AI will automatically search and register relevant feeds based on your keywords.'
+                        }
+                      </p>
+                      
+                      {autoRegisterFeeds && (
+                        <div className="mt-3 flex items-center gap-3">
+                          <label className="text-sm text-gray-700 font-medium">
+                            {language === 'ja' ? '最大登録数:' : 'Max feeds:'}
+                          </label>
+                          <select
+                            value={maxAutoFeeds}
+                            onChange={(e) => setMaxAutoFeeds(Number(e.target.value))}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#14b8a6] focus:border-transparent"
+                          >
+                            {[3, 5, 7, 10].map(num => (
+                              <option key={num} value={num}>
+                                {num} {language === 'ja' ? '件' : 'feeds'}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="text-xs text-gray-500">
+                            {language === 'ja' ? '(推奨: 5件)' : '(recommended: 5)'}
+                          </span>
                         </div>
-                        <span 
-                          className="px-2 py-1 text-xs text-white rounded-full"
-                          style={{ backgroundColor: getKeywordColor(keyword) }}
-                        >
-                          {keyword}
-                        </span>
-                      </div>
-                      <div className="text-xs text-blue-600">
-                        {language === 'ja' ? 'API取得予定' : 'API fetch'}
-                      </div>
+                      )}
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             )}

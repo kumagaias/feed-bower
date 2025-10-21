@@ -93,29 +93,50 @@ export default function BowersPage() {
   }
 
   // Handle save bower from modal
-  const handleSaveBower = async (bowerData: { name: string; keywords: string[]; color: string }) => {
+  const handleSaveBower = async (bowerData: { 
+    name: string
+    keywords: string[]
+    color: string
+    auto_register_feeds?: boolean
+    max_auto_feeds?: number
+  }) => {
     setIsCreating(true)
     try {
-      const newBower = await createBower({
+      const result = await createBower({
         name: bowerData.name,
         keywords: bowerData.keywords,
-        is_public: false
+        is_public: false,
+        auto_register_feeds: bowerData.auto_register_feeds,
+        max_auto_feeds: bowerData.max_auto_feeds
       })
 
-      // Auto-add feeds based on keywords
-      if (newBower && newBower.id && bowerData.keywords.length > 0) {
-        const addedFeeds = await autoAddFeedsForBower(newBower.id, bowerData.keywords)
+      if (result) {
+        // Show success message with auto-registration info
+        let message = language === 'ja' ? 'バウアーを作成しました' : 'Bower created successfully'
         
-        // Update bower object with added feeds
-        if (addedFeeds && addedFeeds.length > 0) {
-          newBower.feeds = addedFeeds
+        if (result.autoRegisteredFeeds > 0) {
+          message += language === 'ja' 
+            ? ` (${result.autoRegisteredFeeds}件のフィードを自動登録)` 
+            : ` (${result.autoRegisteredFeeds} feeds auto-registered)`
+        }
+        
+        setToast({
+          message,
+          type: 'success'
+        })
+        
+        // Show warnings if there were errors
+        if (result.autoRegisterErrors.length > 0) {
+          setTimeout(() => {
+            setToast({
+              message: language === 'ja' 
+                ? `一部のフィードの登録に失敗しました (${result.autoRegisterErrors.length}件)` 
+                : `Some feeds failed to register (${result.autoRegisterErrors.length})`,
+              type: 'warning'
+            })
+          }, 2000)
         }
       }
-
-      setToast({
-        message: language === 'ja' ? 'バウアーを作成しました' : 'Bower created successfully',
-        type: 'success'
-      })
     } catch (error) {
       console.error('Failed to create bower:', error)
       setToast({

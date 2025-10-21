@@ -1,8 +1,8 @@
 {
-  "task_name": "bedrock-task-10",
-  "branch_name": "feature/bedrock-task-10",
+  "task_name": "bedrcok-task-11",
+  "branch_name": "feature/bedrcok-task-11",
   "base_branch": "main",
-  "created_at": "2025-10-21T20:40:32Z",
-  "commit_sha": "cd2263720ba093530e520ae8a866c2dee9c57998",
-  "pr_url": "https://github.com/kumagaias/feed-bower/pull/56"
+  "created_at": "2025-10-21T21:01:33Z",
+  "commit_sha": "ca97b4c7d396473e50a12b75134ff86561fdfcdd",
+  "pr_url": "https://github.com/kumagaias/feed-bower/pull/57"
 }
