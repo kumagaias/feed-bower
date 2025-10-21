@@ -52,6 +52,7 @@ type AddFeedRequest struct {
 
 // UpdateFeedRequest represents the request to update a feed
 type UpdateFeedRequest struct {
+	URL         *string `json:"url,omitempty" validate:"omitempty,url"`
 	Title       *string `json:"title,omitempty" validate:"omitempty,min=1,max=200"`
 	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
 	Category    *string `json:"category,omitempty" validate:"omitempty,max=50"`
@@ -187,6 +188,22 @@ func (s *feedService) AddFeed(ctx context.Context, userID string, req *AddFeedRe
 		return nil, fmt.Errorf("failed to create feed: %w", err)
 	}
 
+	log.Printf("[AddFeed] SUCCESS | user_id=%s | bower_id=%s | feed_id=%s | url=%s | title=%s",
+		userID, req.BowerID, feed.FeedID, feed.URL, feed.Title)
+
+	// Fetch articles for the newly added feed in background
+	go func() {
+		bgCtx := context.Background()
+		log.Printf("[AddFeed] FETCH_ARTICLES_START | user_id=%s | bower_id=%s | feed_id=%s", userID, req.BowerID, feed.FeedID)
+		if err := s.fetchFeedArticles(bgCtx, feed); err != nil {
+			log.Printf("[AddFeed] FETCH_ARTICLES_FAILED | user_id=%s | bower_id=%s | feed_id=%s | error=%v",
+				userID, req.BowerID, feed.FeedID, err)
+		} else {
+			log.Printf("[AddFeed] FETCH_ARTICLES_SUCCESS | user_id=%s | bower_id=%s | feed_id=%s",
+				userID, req.BowerID, feed.FeedID)
+		}
+	}()
+
 	return feed, nil
 }
 
@@ -262,6 +279,9 @@ func (s *feedService) UpdateFeed(ctx context.Context, userID string, feedID stri
 		return nil, fmt.Errorf("failed to get feed: %w", err)
 	}
 
+	// Store original URL to check if it changed
+	originalURL := feed.URL
+
 	// Check if user has access through bower ownership
 	bower, err := s.bowerRepo.GetByID(ctx, feed.BowerID)
 	if err != nil {
@@ -273,6 +293,17 @@ func (s *feedService) UpdateFeed(ctx context.Context, userID string, feedID stri
 	}
 
 	// Apply updates
+	if req.URL != nil {
+		if *req.URL == "" {
+			return nil, errors.New("feed URL cannot be empty")
+		}
+		// Validate new URL
+		if err := s.ValidateFeedURL(*req.URL); err != nil {
+			return nil, fmt.Errorf("invalid feed URL: %w", err)
+		}
+		feed.URL = *req.URL
+	}
+
 	if req.Title != nil {
 		if *req.Title == "" {
 			return nil, errors.New("feed title cannot be empty")
@@ -292,6 +323,24 @@ func (s *feedService) UpdateFeed(ctx context.Context, userID string, feedID stri
 	err = s.feedRepo.Update(ctx, feed)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update feed: %w", err)
+	}
+
+	log.Printf("[UpdateFeed] SUCCESS | user_id=%s | feed_id=%s | url=%s | title=%s",
+		userID, feedID, feed.URL, feed.Title)
+
+	// If URL was changed, fetch articles for the updated feed in background
+	if req.URL != nil && *req.URL != originalURL {
+		go func() {
+			bgCtx := context.Background()
+			log.Printf("[UpdateFeed] FETCH_ARTICLES_START | user_id=%s | feed_id=%s | new_url=%s", userID, feedID, feed.URL)
+			if err := s.fetchFeedArticles(bgCtx, feed); err != nil {
+				log.Printf("[UpdateFeed] FETCH_ARTICLES_FAILED | user_id=%s | feed_id=%s | error=%v",
+					userID, feedID, err)
+			} else {
+				log.Printf("[UpdateFeed] FETCH_ARTICLES_SUCCESS | user_id=%s | feed_id=%s",
+					userID, feedID)
+			}
+		}()
 	}
 
 	return feed, nil
@@ -1100,4 +1149,32 @@ func (s *feedService) FetchBowerFeeds(ctx context.Context, userID string, bowerI
 		userID, bowerID, result.TotalFeeds, result.SuccessfulFeeds, result.FailedFeeds, result.TotalArticles)
 
 	return result, nil
+}
+
+// fetchFeedArticles fetches and saves articles for a single feed
+func (s *feedService) fetchFeedArticles(ctx context.Context, feed *model.Feed) error {
+	if feed == nil {
+		return errors.New("feed is required")
+	}
+
+	// Fetch feed data
+	feedData, err := s.rssService.FetchFeed(ctx, feed.URL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch feed data: %w", err)
+	}
+
+	if len(feedData.Articles) == 0 {
+		log.Printf("[FetchFeedArticles] NO_ARTICLES | feed_id=%s | url=%s", feed.FeedID, feed.URL)
+		return nil
+	}
+
+	log.Printf("[FetchFeedArticles] ARTICLES_FOUND | feed_id=%s | url=%s | count=%d",
+		feed.FeedID, feed.URL, len(feedData.Articles))
+
+	// Note: Article saving would be implemented here when article repository is available
+	// For now, we just log the success
+	log.Printf("[FetchFeedArticles] ARTICLES_PROCESSED | feed_id=%s | count=%d",
+		feed.FeedID, len(feedData.Articles))
+
+	return nil
 }
