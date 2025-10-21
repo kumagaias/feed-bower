@@ -420,6 +420,21 @@ module "api_gateway" {
   depends_on = [module.lambda]
 }
 
+# EventBridge for Feed Scheduler
+module "eventbridge" {
+  source = "../../modules/eventbridge"
+
+  project_name         = local.project_name
+  environment          = local.environment
+  lambda_function_arn  = module.lambda.function_arn
+  lambda_function_name = module.lambda.function_name
+  schedule_expression  = "rate(1 hour)" # 1時間ごとに実行
+
+  tags = local.common_tags
+
+  depends_on = [module.lambda]
+}
+
 # Amplify Hosting
 module "amplify" {
   source = "../../modules/amplify"

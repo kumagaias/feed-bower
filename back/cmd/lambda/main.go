@@ -296,11 +296,27 @@ func main() {
 	if isLambdaEnvironment() {
 		log.Println("Running in AWS Lambda environment")
 
-		// Create Lambda adapter for API Gateway events
-		adapter := httpadapter.New(router)
+		// Create a handler that can handle both API Gateway and EventBridge events
+		handler := func(ctx context.Context, event interface{}) (interface{}, error) {
+			// Check if this is an EventBridge event (scheduler mode)
+			if eventMap, ok := event.(map[string]interface{}); ok {
+				if mode, exists := eventMap["mode"]; exists && mode == "scheduler" {
+					log.Println("🕐 EventBridge scheduler event detected")
+					if err := runScheduler(config); err != nil {
+						log.Printf("❌ Scheduler error: %v", err)
+						return nil, err
+					}
+					return map[string]string{"status": "success", "message": "Scheduler completed"}, nil
+				}
+			}
+
+			// Otherwise, treat as API Gateway event
+			adapter := httpadapter.New(router)
+			return adapter.ProxyWithContext(ctx, event)
+		}
 
 		// Start Lambda handler
-		lambda.Start(adapter.ProxyWithContext)
+		lambda.Start(handler)
 	} else {
 		// Running locally
 		log.Printf("🚀 Running locally on port %s", config.Port)
