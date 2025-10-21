@@ -39,7 +39,7 @@ type FeedService interface {
 
 	// Feed management
 	GetStaleFeeds(ctx context.Context, maxAgeHours int) ([]*model.Feed, error)
-	
+
 	// Feed fetching
 	FetchBowerFeeds(ctx context.Context, userID string, bowerID string) (*FetchBowerFeedsResult, error)
 }

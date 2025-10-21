@@ -17,7 +17,7 @@ describe('Toast', () => {
     jest.useRealTimers()
   })
 
-  it('should render success toast with primary color', () => {
+  it('should render success toast with white background and primary color text', () => {
     render(
       <Toast
         message="Success message"
@@ -29,12 +29,16 @@ describe('Toast', () => {
     const toast = screen.getByText('Success message')
     expect(toast).toBeInTheDocument()
     
-    // Check if the toast has the correct styling
+    // Check if the toast has the correct styling (white background, colored border and text)
     const toastContainer = toast.closest('div')
-    expect(toastContainer).toHaveStyle({ backgroundColor: '#14b8a6' })
+    expect(toastContainer).toHaveStyle({ 
+      backgroundColor: 'white',
+      color: '#14b8a6',
+      borderColor: '#14b8a6'
+    })
   })
 
-  it('should render error toast with red color', () => {
+  it('should render error toast with white background and red color text', () => {
     render(
       <Toast
         message="Error message"
@@ -47,10 +51,14 @@ describe('Toast', () => {
     expect(toast).toBeInTheDocument()
     
     const toastContainer = toast.closest('div')
-    expect(toastContainer).toHaveStyle({ backgroundColor: '#ef4444' })
+    expect(toastContainer).toHaveStyle({ 
+      backgroundColor: 'white',
+      color: '#ef4444',
+      borderColor: '#ef4444'
+    })
   })
 
-  it('should render warning toast with yellow color', () => {
+  it('should render warning toast with white background and yellow color text', () => {
     render(
       <Toast
         message="Warning message"
@@ -63,7 +71,11 @@ describe('Toast', () => {
     expect(toast).toBeInTheDocument()
     
     const toastContainer = toast.closest('div')
-    expect(toastContainer).toHaveStyle({ backgroundColor: '#f59e0b' })
+    expect(toastContainer).toHaveStyle({ 
+      backgroundColor: 'white',
+      color: '#f59e0b',
+      borderColor: '#f59e0b'
+    })
   })
 
   it('should call onClose when close button is clicked', async () => {
