@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -15,7 +16,7 @@ import (
 // BowerService defines the interface for bower operations
 type BowerService interface {
 	// Bower CRUD operations
-	CreateBower(ctx context.Context, userID string, req *CreateBowerRequest) (*model.Bower, error)
+	CreateBower(ctx context.Context, userID string, req *CreateBowerRequest) (*CreateBowerResult, error)
 	GetBowerByID(ctx context.Context, bowerID string, userID string) (*model.Bower, error)
 	GetBowersByUserID(ctx context.Context, userID string, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error)
 	UpdateBower(ctx context.Context, userID string, bowerID string, req *UpdateBowerRequest) (*model.Bower, error)
@@ -33,11 +34,20 @@ type BowerService interface {
 
 // CreateBowerRequest represents the request to create a bower
 type CreateBowerRequest struct {
-	Name      string   `json:"name" validate:"required,min=1,max=50"`
-	Keywords  []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
-	EggColors []string `json:"egg_colors"`
-	Color     string   `json:"color" validate:"omitempty,hexcolor"`
-	IsPublic  bool     `json:"is_public"`
+	Name              string   `json:"name" validate:"required,min=1,max=50"`
+	Keywords          []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	EggColors         []string `json:"egg_colors"`
+	Color             string   `json:"color" validate:"omitempty,hexcolor"`
+	IsPublic          bool     `json:"is_public"`
+	AutoRegisterFeeds bool     `json:"auto_register_feeds"`
+	MaxAutoFeeds      int      `json:"max_auto_feeds" validate:"omitempty,min=1,max=10"`
+}
+
+// CreateBowerResult represents the result of creating a bower
+type CreateBowerResult struct {
+	Bower               *model.Bower `json:"bower"`
+	AutoRegisteredFeeds int          `json:"auto_registered_feeds"`
+	AutoRegisterErrors  []string     `json:"auto_register_errors,omitempty"`
 }
 
 // UpdateBowerRequest represents the request to update a bower
@@ -51,16 +61,23 @@ type UpdateBowerRequest struct {
 
 // bowerService implements BowerService interface
 type bowerService struct {
-	bowerRepo repository.BowerRepository
-	feedRepo  repository.FeedRepository
+	bowerRepo   repository.BowerRepository
+	feedRepo    repository.FeedRepository
+	feedService FeedService
 }
 
 // NewBowerService creates a new bower service
 func NewBowerService(bowerRepo repository.BowerRepository, feedRepo repository.FeedRepository) BowerService {
 	return &bowerService{
-		bowerRepo: bowerRepo,
-		feedRepo:  feedRepo,
+		bowerRepo:   bowerRepo,
+		feedRepo:    feedRepo,
+		feedService: nil, // Will be set via SetFeedService to avoid circular dependency
 	}
+}
+
+// SetFeedService sets the feed service (used to avoid circular dependency)
+func (s *bowerService) SetFeedService(feedService FeedService) {
+	s.feedService = feedService
 }
 
 // Default colors for bowers
@@ -76,7 +93,7 @@ var defaultColors = []string{
 }
 
 // CreateBower creates a new bower for a user
-func (s *bowerService) CreateBower(ctx context.Context, userID string, req *CreateBowerRequest) (*model.Bower, error) {
+func (s *bowerService) CreateBower(ctx context.Context, userID string, req *CreateBowerRequest) (*CreateBowerResult, error) {
 	if userID == "" {
 		return nil, errors.New("user ID is required")
 	}
@@ -111,7 +128,54 @@ func (s *bowerService) CreateBower(ctx context.Context, userID string, req *Crea
 		return nil, fmt.Errorf("failed to create bower: %w", err)
 	}
 
-	return bower, nil
+	log.Printf("[CreateBower] SUCCESS | user_id=%s | bower_id=%s | name=%s | keywords=%v",
+		userID, bower.BowerID, bower.Name, bower.Keywords)
+
+	// Initialize result
+	result := &CreateBowerResult{
+		Bower:               bower,
+		AutoRegisteredFeeds: 0,
+		AutoRegisterErrors:  make([]string, 0),
+	}
+
+	// Auto-register feeds if requested
+	if req.AutoRegisterFeeds && s.feedService != nil {
+		log.Printf("[CreateBower] AUTO_REGISTER_START | user_id=%s | bower_id=%s | keywords=%v | max_feeds=%d",
+			userID, bower.BowerID, bower.Keywords, req.MaxAutoFeeds)
+
+		// Set default max_auto_feeds if not provided
+		maxAutoFeeds := req.MaxAutoFeeds
+		if maxAutoFeeds == 0 {
+			maxAutoFeeds = 5 // Default to 5 feeds
+		}
+
+		// Call AutoRegisterFeeds (non-blocking error handling)
+		autoRegisterResult, err := s.feedService.AutoRegisterFeeds(ctx, userID, bower.BowerID, bower.Keywords, maxAutoFeeds)
+		if err != nil {
+			// Log error but don't fail bower creation
+			errMsg := fmt.Sprintf("Failed to auto-register feeds: %v", err)
+			log.Printf("[CreateBower] AUTO_REGISTER_ERROR | user_id=%s | bower_id=%s | error=%v",
+				userID, bower.BowerID, err)
+			result.AutoRegisterErrors = append(result.AutoRegisterErrors, errMsg)
+		} else {
+			// Success - update result with auto-registered feed count
+			result.AutoRegisteredFeeds = autoRegisterResult.TotalAdded
+			log.Printf("[CreateBower] AUTO_REGISTER_SUCCESS | user_id=%s | bower_id=%s | added=%d | skipped=%d | failed=%d",
+				userID, bower.BowerID, autoRegisterResult.TotalAdded, autoRegisterResult.TotalSkipped, autoRegisterResult.TotalFailed)
+
+			// Add any failed feed errors to the result
+			for _, failedFeed := range autoRegisterResult.FailedFeeds {
+				errMsg := fmt.Sprintf("Failed to add feed %s: %s", failedFeed.URL, failedFeed.Reason)
+				result.AutoRegisterErrors = append(result.AutoRegisterErrors, errMsg)
+			}
+		}
+	} else if req.AutoRegisterFeeds && s.feedService == nil {
+		log.Printf("[CreateBower] AUTO_REGISTER_SKIPPED | user_id=%s | bower_id=%s | reason=feed_service_not_configured",
+			userID, bower.BowerID)
+		result.AutoRegisterErrors = append(result.AutoRegisterErrors, "Feed service not configured for auto-registration")
+	}
+
+	return result, nil
 }
 
 // GetBowerByID retrieves a bower by ID, ensuring user has access

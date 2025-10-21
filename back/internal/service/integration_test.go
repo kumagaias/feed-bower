@@ -418,14 +418,16 @@ func TestServiceIntegration(t *testing.T) {
 		IsPublic: false,
 	}
 
-	bower, err := bowerService.CreateBower(ctx, user.UserID, createBowerReq)
+	result, err := bowerService.CreateBower(ctx, user.UserID, createBowerReq)
 	if err != nil {
 		t.Fatalf("Failed to create bower: %v", err)
 	}
 
-	if bower.Name != "Test Bower" {
-		t.Errorf("Expected bower name 'Test Bower', got %s", bower.Name)
+	if result.Bower.Name != "Test Bower" {
+		t.Errorf("Expected bower name 'Test Bower', got %s", result.Bower.Name)
 	}
+
+	bower := result.Bower
 
 	// 4. Get chick stats
 	stats, err := chickService.GetStats(ctx, user.UserID)

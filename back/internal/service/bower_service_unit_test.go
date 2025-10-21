@@ -92,7 +92,7 @@ func TestBowerService_CreateBower_Unit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bower, err := service.CreateBower(context.Background(), tt.userID, tt.req)
+			result, err := service.CreateBower(context.Background(), tt.userID, tt.req)
 
 			if tt.wantErr {
 				if err == nil {
@@ -106,10 +106,17 @@ func TestBowerService_CreateBower_Unit(t *testing.T) {
 				return
 			}
 
-			if bower == nil {
+			if result == nil {
+				t.Errorf("CreateBower() returned nil result")
+				return
+			}
+
+			if result.Bower == nil {
 				t.Errorf("CreateBower() returned nil bower")
 				return
 			}
+
+			bower := result.Bower
 
 			// Check name - if request name is empty, it should be auto-generated
 			if tt.req.Name != "" && bower.Name != tt.req.Name {
@@ -128,6 +135,11 @@ func TestBowerService_CreateBower_Unit(t *testing.T) {
 
 			if bower.IsPublic != tt.req.IsPublic {
 				t.Errorf("CreateBower() isPublic = %v, want %v", bower.IsPublic, tt.req.IsPublic)
+			}
+
+			// Check auto-registration fields (should be 0 when not requested)
+			if result.AutoRegisteredFeeds != 0 {
+				t.Errorf("CreateBower() auto_registered_feeds = %v, want 0", result.AutoRegisteredFeeds)
 			}
 		})
 	}

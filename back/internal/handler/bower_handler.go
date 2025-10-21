@@ -41,11 +41,13 @@ func (h *BowerHandler) RegisterRoutes(router *mux.Router) {
 
 // CreateBowerRequest represents the request to create a bower
 type CreateBowerRequest struct {
-	Name      string   `json:"name" validate:"omitempty,min=1,max=50"`
-	Keywords  []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
-	EggColors []string `json:"egg_colors"`
-	Color     string   `json:"color" validate:"omitempty,hexcolor"`
-	IsPublic  bool     `json:"is_public"`
+	Name              string   `json:"name" validate:"omitempty,min=1,max=50"`
+	Keywords          []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	EggColors         []string `json:"egg_colors"`
+	Color             string   `json:"color" validate:"omitempty,hexcolor"`
+	IsPublic          bool     `json:"is_public"`
+	AutoRegisterFeeds bool     `json:"auto_register_feeds"`
+	MaxAutoFeeds      int      `json:"max_auto_feeds" validate:"omitempty,min=1,max=10"`
 }
 
 // UpdateBowerRequest represents the request to update a bower
@@ -69,6 +71,13 @@ type BowerResponse struct {
 	CreatedAt int64          `json:"created_at"`
 	UpdatedAt int64          `json:"updated_at"`
 	Feeds     []FeedResponse `json:"feeds"`
+}
+
+// CreateBowerResponse represents the response when creating a bower
+type CreateBowerResponse struct {
+	Bower               *BowerResponse `json:"bower"`
+	AutoRegisteredFeeds int            `json:"auto_registered_feeds"`
+	AutoRegisterErrors  []string       `json:"auto_register_errors,omitempty"`
 }
 
 // FeedResponse represents a feed in API responses
@@ -111,22 +120,33 @@ func (h *BowerHandler) CreateBower(w http.ResponseWriter, r *http.Request) {
 
 	// Convert to service request
 	serviceReq := &service.CreateBowerRequest{
-		Name:      req.Name,
-		Keywords:  req.Keywords,
-		EggColors: req.EggColors,
-		Color:     req.Color,
-		IsPublic:  req.IsPublic,
+		Name:              req.Name,
+		Keywords:          req.Keywords,
+		EggColors:         req.EggColors,
+		Color:             req.Color,
+		IsPublic:          req.IsPublic,
+		AutoRegisterFeeds: req.AutoRegisterFeeds,
+		MaxAutoFeeds:      req.MaxAutoFeeds,
 	}
 
-	bower, err := h.bowerService.CreateBower(r.Context(), user.UserID, serviceReq)
+	result, err := h.bowerService.CreateBower(r.Context(), user.UserID, serviceReq)
 	if err != nil {
 		log.Printf("CreateBower: Service error: %v", err)
 		response.InternalServerErrorWithErr(w, "Failed to create bower", err)
 		return
 	}
 
-	log.Printf("CreateBower: Successfully created bower: %s", bower.BowerID)
-	response.Created(w, h.toBowerResponse(bower))
+	log.Printf("CreateBower: Successfully created bower: %s (auto_registered_feeds=%d)",
+		result.Bower.BowerID, result.AutoRegisteredFeeds)
+
+	// Create response
+	createResponse := &CreateBowerResponse{
+		Bower:               h.toBowerResponse(result.Bower),
+		AutoRegisteredFeeds: result.AutoRegisteredFeeds,
+		AutoRegisterErrors:  result.AutoRegisterErrors,
+	}
+
+	response.Created(w, createResponse)
 }
 
 // GetBower retrieves a bower by ID

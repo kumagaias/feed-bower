@@ -144,6 +144,12 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	}
 	feedService := service.NewFeedService(feedRepo, bowerRepo, rssService, feedServiceConfig)
 
+	// Set FeedService on BowerService to enable auto-registration (avoid circular dependency)
+	if bs, ok := bowerService.(interface{ SetFeedService(service.FeedService) }); ok {
+		bs.SetFeedService(feedService)
+		log.Println("✅ FeedService linked to BowerService for auto-registration")
+	}
+
 	articleService := service.NewArticleService(articleRepo, feedRepo, bowerRepo, chickRepo)
 	chickService := service.NewChickService(chickRepo, articleRepo, feedRepo, bowerRepo)
 
