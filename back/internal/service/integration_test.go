@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -31,6 +32,7 @@ func NewMockRepositories() *MockRepositories {
 
 // MockBowerRepository
 type MockBowerRepository struct {
+	mu     sync.Mutex
 	bowers map[string]*model.Bower
 }
 
@@ -41,6 +43,9 @@ func NewMockBowerRepository() *MockBowerRepository {
 }
 
 func (m *MockBowerRepository) Create(ctx context.Context, bower *model.Bower) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if bower.BowerID == "" {
 		bower.BowerID = "test-bower-id"
 	}
@@ -49,6 +54,9 @@ func (m *MockBowerRepository) Create(ctx context.Context, bower *model.Bower) er
 }
 
 func (m *MockBowerRepository) GetByID(ctx context.Context, bowerID string) (*model.Bower, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if bower, exists := m.bowers[bowerID]; exists {
 		return bower, nil
 	}
@@ -56,6 +64,9 @@ func (m *MockBowerRepository) GetByID(ctx context.Context, bowerID string) (*mod
 }
 
 func (m *MockBowerRepository) GetByUserID(ctx context.Context, userID string, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	bowers := make([]*model.Bower, 0)
 	for _, bower := range m.bowers {
 		if bower.UserID == userID {
@@ -66,16 +77,25 @@ func (m *MockBowerRepository) GetByUserID(ctx context.Context, userID string, li
 }
 
 func (m *MockBowerRepository) Update(ctx context.Context, bower *model.Bower) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.bowers[bower.BowerID] = bower
 	return nil
 }
 
 func (m *MockBowerRepository) Delete(ctx context.Context, bowerID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	delete(m.bowers, bowerID)
 	return nil
 }
 
 func (m *MockBowerRepository) ListPublic(ctx context.Context, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Bower, map[string]types.AttributeValue, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	bowers := make([]*model.Bower, 0)
 	for _, bower := range m.bowers {
 		if bower.IsPublic {
@@ -86,11 +106,15 @@ func (m *MockBowerRepository) ListPublic(ctx context.Context, limit int32, lastK
 }
 
 func (m *MockBowerRepository) Search(ctx context.Context, userID string, query string, limit int32) ([]*model.Bower, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	return []*model.Bower{}, nil
 }
 
 // MockFeedRepository
 type MockFeedRepository struct {
+	mu    sync.Mutex
 	feeds map[string]*model.Feed
 }
 
@@ -101,6 +125,9 @@ func NewMockFeedRepository() *MockFeedRepository {
 }
 
 func (m *MockFeedRepository) Create(ctx context.Context, feed *model.Feed) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if feed.FeedID == "" {
 		feed.FeedID = "test-feed-id"
 	}
@@ -109,6 +136,9 @@ func (m *MockFeedRepository) Create(ctx context.Context, feed *model.Feed) error
 }
 
 func (m *MockFeedRepository) GetByID(ctx context.Context, feedID string) (*model.Feed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if feed, exists := m.feeds[feedID]; exists {
 		return feed, nil
 	}
@@ -116,6 +146,9 @@ func (m *MockFeedRepository) GetByID(ctx context.Context, feedID string) (*model
 }
 
 func (m *MockFeedRepository) GetByBowerID(ctx context.Context, bowerID string) ([]*model.Feed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	feeds := make([]*model.Feed, 0)
 	for _, feed := range m.feeds {
 		if feed.BowerID == bowerID {
@@ -126,20 +159,32 @@ func (m *MockFeedRepository) GetByBowerID(ctx context.Context, bowerID string) (
 }
 
 func (m *MockFeedRepository) GetByURL(ctx context.Context, url string) (*model.Feed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	return nil, nil
 }
 
 func (m *MockFeedRepository) Update(ctx context.Context, feed *model.Feed) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.feeds[feed.FeedID] = feed
 	return nil
 }
 
 func (m *MockFeedRepository) Delete(ctx context.Context, feedID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	delete(m.feeds, feedID)
 	return nil
 }
 
 func (m *MockFeedRepository) List(ctx context.Context, limit int32, lastKey map[string]types.AttributeValue) ([]*model.Feed, map[string]types.AttributeValue, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	feeds := make([]*model.Feed, 0, len(m.feeds))
 	for _, feed := range m.feeds {
 		feeds = append(feeds, feed)
@@ -148,6 +193,9 @@ func (m *MockFeedRepository) List(ctx context.Context, limit int32, lastKey map[
 }
 
 func (m *MockFeedRepository) GetStaleFeeds(ctx context.Context, maxAgeSeconds int64, limit int32) ([]*model.Feed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	return []*model.Feed{}, nil
 }
 
