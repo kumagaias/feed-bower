@@ -328,6 +328,9 @@ module "lambda" {
     COGNITO_USER_POOL_ID  = module.cognito.user_pool_id
     COGNITO_CLIENT_ID     = module.cognito.client_id
     COGNITO_REGION        = "ap-northeast-1"
+    BEDROCK_AGENT_ID      = module.bedrock_agent.bedrock_agent_id
+    BEDROCK_AGENT_ALIAS   = "production"
+    BEDROCK_REGION        = "ap-northeast-1"
   }
 
   dynamodb_table_arns = [
@@ -352,8 +355,25 @@ module "lambda" {
     module.dynamodb_feeds,
     module.dynamodb_articles,
     module.dynamodb_liked_articles,
-    module.dynamodb_chick_stats
+    module.dynamodb_chick_stats,
+    module.bedrock_agent
   ]
+}
+
+# Bedrock Agent for Feed Discovery
+module "bedrock_agent" {
+  source = "../../modules/bedrock-agent"
+
+  environment        = local.environment
+  project_name       = local.project_name
+  image_uri          = "${module.ecr.repository_url}:latest"
+  lambda_timeout     = 30
+  lambda_memory      = 256
+  log_retention_days = 30
+
+  tags = local.common_tags
+
+  depends_on = [module.ecr]
 }
 
 # API Gateway
