@@ -22,23 +22,27 @@ export default function Toast({ message, type, onClose }: ToastProps) {
     switch (type) {
       case 'success':
         return {
-          backgroundColor: colors.primary,
-          color: 'white'
+          backgroundColor: 'white',
+          color: colors.primary,
+          borderColor: colors.primary
         }
       case 'error':
         return {
-          backgroundColor: '#ef4444', // red-500
-          color: 'white'
+          backgroundColor: 'white',
+          color: '#ef4444', // red-500
+          borderColor: '#ef4444'
         }
       case 'warning':
         return {
-          backgroundColor: '#f59e0b', // yellow-500
-          color: 'white'
+          backgroundColor: 'white',
+          color: '#f59e0b', // yellow-500
+          borderColor: '#f59e0b'
         }
       default:
         return {
-          backgroundColor: colors.primary,
-          color: 'white'
+          backgroundColor: 'white',
+          color: colors.primary,
+          borderColor: colors.primary
         }
     }
   }
@@ -48,8 +52,12 @@ export default function Toast({ message, type, onClose }: ToastProps) {
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
       <div 
-        className="px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-[300px] justify-center"
-        style={toastStyle}
+        className="px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 min-w-[300px] justify-center border-2"
+        style={{
+          backgroundColor: toastStyle.backgroundColor,
+          color: toastStyle.color,
+          borderColor: toastStyle.borderColor
+        }}
       >
         <span className="font-medium">{message}</span>
         <button
