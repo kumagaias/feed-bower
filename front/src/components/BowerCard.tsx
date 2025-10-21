@@ -145,7 +145,20 @@ export default function BowerCard({
             </div>
           </div>
 
-          {!isOwnBower && (
+          {!isOwnBower && bower.isPreset && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onLike(e)
+              }}
+              className="w-full py-2.5 rounded-lg transition-all font-medium text-sm shadow-sm hover:shadow-md bg-white border-2 border-teal-500 text-teal-600 hover:bg-teal-50"
+            >
+              <span className="text-lg">💾</span>
+              <span className="ml-1">{language === 'ja' ? '保存' : 'Save'}</span>
+            </button>
+          )}
+          
+          {!isOwnBower && !bower.isPreset && (
             <button
               onClick={(e) => {
                 e.stopPropagation()

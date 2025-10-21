@@ -43,46 +43,79 @@ export default function BowersPage() {
     
     return [
       {
-        id: 'mock-1',
+        id: 'preset-1',
         name: language === 'ja' ? 'テクノロジーニュース' : 'Tech News',
         keywords: ['AI', 'Programming', 'Web Dev', 'Cloud', 'Security'],
         feeds: [],
         color: mockColors[0],
         createdAt: new Date('2024-09-15'),
         isPublic: true,
-        creatorId: 'user-mock-1',
-        creatorName: language === 'ja' ? '田中太郎' : 'John Doe',
-        likes: 42,
+        creatorId: 'preset',
+        creatorName: undefined,
+        likes: 0,
         likedBy: [],
-        eggColors: ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD']
+        eggColors: ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD'],
+        isPreset: true
       },
       {
-        id: 'mock-2',
+        id: 'preset-2',
         name: language === 'ja' ? 'デザイン＆UI' : 'Design & UI',
         keywords: ['Design', 'UI/UX', 'Figma', 'Typography', 'Color'],
         feeds: [],
         color: mockColors[1],
         createdAt: new Date('2024-09-20'),
         isPublic: true,
-        creatorId: 'user-mock-2',
-        creatorName: language === 'ja' ? '佐藤花子' : 'Jane Smith',
-        likes: 38,
+        creatorId: 'preset',
+        creatorName: undefined,
+        likes: 0,
         likedBy: [],
-        eggColors: ['#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8']
+        eggColors: ['#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8'],
+        isPreset: true
       },
       {
-        id: 'mock-3',
+        id: 'preset-3',
         name: language === 'ja' ? 'スタートアップ情報' : 'Startup News',
         keywords: ['Startup', 'Business', 'Innovation', 'Funding', 'Growth'],
         feeds: [],
         color: mockColors[2],
         createdAt: new Date('2024-09-25'),
         isPublic: true,
-        creatorId: 'user-mock-3',
-        creatorName: language === 'ja' ? '鈴木一郎' : 'Mike Johnson',
-        likes: 35,
+        creatorId: 'preset',
+        creatorName: undefined,
+        likes: 0,
         likedBy: [],
-        eggColors: ['#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460']
+        eggColors: ['#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460'],
+        isPreset: true
+      },
+      {
+        id: 'preset-4',
+        name: language === 'ja' ? 'データサイエンス' : 'Data Science',
+        keywords: ['Data Science', 'Machine Learning', 'Python', 'Statistics', 'Analytics'],
+        feeds: [],
+        color: mockColors[3],
+        createdAt: new Date('2024-09-30'),
+        isPublic: true,
+        creatorId: 'preset',
+        creatorName: undefined,
+        likes: 0,
+        likedBy: [],
+        eggColors: ['#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460', '#14b8a6'],
+        isPreset: true
+      },
+      {
+        id: 'preset-5',
+        name: language === 'ja' ? 'マーケティング' : 'Marketing',
+        keywords: ['Marketing', 'SEO', 'Content', 'Social Media', 'Growth Hacking'],
+        feeds: [],
+        color: mockColors[4],
+        createdAt: new Date('2024-10-05'),
+        isPublic: true,
+        creatorId: 'preset',
+        creatorName: undefined,
+        likes: 0,
+        likedBy: [],
+        eggColors: ['#DDA0DD', '#98D8C8', '#F4A460', '#14b8a6', '#4ECDC4'],
+        isPreset: true
       }
     ]
   }
@@ -265,14 +298,46 @@ export default function BowersPage() {
     setBowerToDelete(null)
   }
 
-  // Handle like bower (for public bowers)
-  const handleLikeBower = (bowerId: string, e: React.MouseEvent) => {
+  // Handle like bower (for public bowers) or save preset
+  const handleLikeBower = async (bower: any, e: React.MouseEvent) => {
     e.stopPropagation()
-    // For now, just show a toast. In a full implementation, this would call an API
-    setToast({
-      message: language === 'ja' ? 'いいね機能は開発中です' : 'Like feature is under development',
-      type: 'warning'
-    })
+    
+    // If it's a preset, save it as a new bower
+    if (bower.isPreset) {
+      try {
+        const result = await createBower({
+          name: bower.name,
+          keywords: bower.keywords,
+          is_public: false,
+          auto_register_feeds: true,
+          max_auto_feeds: 5
+        })
+
+        if (result) {
+          setToast({
+            message: language === 'ja' 
+              ? `「${bower.name}」を保存しました` 
+              : `Saved "${bower.name}"`,
+            type: 'success'
+          })
+          
+          // Switch to "my" tab to show the saved bower
+          setActiveTab('my')
+        }
+      } catch (error) {
+        console.error('Failed to save preset:', error)
+        setToast({
+          message: language === 'ja' ? 'プリセットの保存に失敗しました' : 'Failed to save preset',
+          type: 'error'
+        })
+      }
+    } else {
+      // For now, just show a toast for non-preset public bowers
+      setToast({
+        message: language === 'ja' ? 'いいね機能は開発中です' : 'Like feature is under development',
+        type: 'warning'
+      })
+    }
   }
 
   // Redirect to home if not logged in
@@ -511,7 +576,7 @@ export default function BowersPage() {
                       language={language}
                       onEdit={() => handleEditBower(bower)}
                       onDelete={() => handleDeleteBower(bower)}
-                      onLike={(e) => handleLikeBower(bower.id, e)}
+                      onLike={(e) => handleLikeBower(bower, e)}
                     />
                   )
                 })}
