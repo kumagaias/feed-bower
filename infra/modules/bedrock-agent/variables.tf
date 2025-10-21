@@ -14,6 +14,11 @@ variable "image_uri" {
   type        = string
 }
 
+variable "ecr_repository_arn" {
+  description = "ECR リポジトリの ARN（Lambda が イメージをプルするため）"
+  type        = string
+}
+
 variable "lambda_timeout" {
   description = "Lambda 関数タイムアウト (秒)"
   type        = number

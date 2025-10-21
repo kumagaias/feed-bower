@@ -49,6 +49,34 @@ resource "aws_iam_role_policy" "lambda_logging" {
   })
 }
 
+# ECR 読み取り権限ポリシー（コンテナイメージのプル用）
+resource "aws_iam_role_policy" "lambda_ecr" {
+  name = "${var.project_name}-${var.environment}-feed-search-ecr"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = var.ecr_repository_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # CloudWatch Logs グループ
 resource "aws_cloudwatch_log_group" "lambda_logs" {
   name              = "/aws/lambda/${var.project_name}-${var.environment}-feed-search"
@@ -78,7 +106,8 @@ resource "aws_lambda_function" "feed_search" {
 
   depends_on = [
     aws_cloudwatch_log_group.lambda_logs,
-    aws_iam_role_policy.lambda_logging
+    aws_iam_role_policy.lambda_logging,
+    aws_iam_role_policy.lambda_ecr
   ]
 }
 
