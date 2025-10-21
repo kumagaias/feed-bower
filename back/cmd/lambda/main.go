@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -35,6 +36,11 @@ type Config struct {
 	CognitoEndpoint   string
 	UseCognito        bool
 
+	// Bedrock
+	BedrockAgentID    string
+	BedrockAgentAlias string
+	BedrockRegion     string
+
 	// Server
 	Port        string
 	Environment string
@@ -55,6 +61,9 @@ func loadConfig() *Config {
 		CognitoClientID:   getEnv("COGNITO_CLIENT_ID", ""),
 		CognitoEndpoint:   getEnv("COGNITO_ENDPOINT", ""),
 		UseCognito:        getEnv("USE_COGNITO", "false") == "true",
+		BedrockAgentID:    getEnv("BEDROCK_AGENT_ID", ""),
+		BedrockAgentAlias: getEnv("BEDROCK_AGENT_ALIAS", "production"),
+		BedrockRegion:     getEnv("BEDROCK_REGION", "ap-northeast-1"),
 		Port:              getEnv("PORT", "8080"),
 		Environment:       getEnv("ENVIRONMENT", "development"),
 		LogLevel:          getEnv("LOG_LEVEL", "info"),
@@ -64,6 +73,13 @@ func loadConfig() *Config {
 	// JWT_SECRET is only required when not using Cognito
 	if !config.UseCognito && config.JWTSecret == "default-secret-change-in-production" && config.Environment == "production" {
 		log.Fatal("JWT_SECRET must be set in production environment when not using Cognito")
+	}
+
+	// Log Bedrock configuration status
+	if config.BedrockAgentID != "" {
+		log.Printf("✅ Bedrock Agent configured: ID=%s, Alias=%s, Region=%s", config.BedrockAgentID, config.BedrockAgentAlias, config.BedrockRegion)
+	} else {
+		log.Println("⚠️  Bedrock Agent not configured, will use static feed mapping")
 	}
 
 	return config
@@ -79,6 +95,8 @@ func getEnv(key, defaultValue string) string {
 
 // setupRouter creates and configures the HTTP router
 func setupRouter(config *Config) (*mux.Router, error) {
+	ctx := context.Background()
+
 	// Initialize DynamoDB client
 	dbConfig := &dynamodbpkg.Config{
 		EndpointURL: config.DynamoDBEndpoint,
@@ -86,9 +104,15 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		TableSuffix: config.TableSuffix,
 	}
 
-	dbClient, err := dynamodbpkg.NewClient(context.Background(), dbConfig)
+	dbClient, err := dynamodbpkg.NewClient(ctx, dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create DynamoDB client: %w", err)
+	}
+
+	// Load AWS config for Bedrock
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(config.BedrockRegion))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
 	// Initialize repositories
@@ -109,7 +133,16 @@ func setupRouter(config *Config) (*mux.Router, error) {
 	}
 	rssService := service.NewRSSService()
 	bowerService := service.NewBowerService(bowerRepo, feedRepo)
-	feedService := service.NewFeedService(feedRepo, bowerRepo, rssService)
+
+	// Initialize Feed Service with Bedrock configuration
+	feedServiceConfig := &service.FeedServiceConfig{
+		AWSConfig:         awsCfg,
+		BedrockAgentID:    config.BedrockAgentID,
+		BedrockAgentAlias: config.BedrockAgentAlias,
+		BedrockRegion:     config.BedrockRegion,
+	}
+	feedService := service.NewFeedService(feedRepo, bowerRepo, rssService, feedServiceConfig)
+
 	articleService := service.NewArticleService(articleRepo, feedRepo, bowerRepo, chickRepo)
 	chickService := service.NewChickService(chickRepo, articleRepo, feedRepo, bowerRepo)
 

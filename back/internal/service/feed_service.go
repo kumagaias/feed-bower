@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 
 	"feed-bower-api/internal/model"
 	"feed-bower-api/internal/repository"
+	"feed-bower-api/pkg/bedrock"
 	"feed-bower-api/pkg/httpclient"
 )
 
@@ -70,19 +75,37 @@ type ArticlePreview struct {
 	ImageURL    string `json:"image_url,omitempty"`
 }
 
+// FeedServiceConfig holds configuration for Feed Service
+type FeedServiceConfig struct {
+	AWSConfig         aws.Config
+	BedrockAgentID    string
+	BedrockAgentAlias string
+	BedrockRegion     string
+}
+
 // feedService implements FeedService interface
 type feedService struct {
-	feedRepo   repository.FeedRepository
-	bowerRepo  repository.BowerRepository
-	rssService RSSService
+	feedRepo      repository.FeedRepository
+	bowerRepo     repository.BowerRepository
+	rssService    RSSService
+	bedrockClient *bedrock.Client
 }
 
 // NewFeedService creates a new feed service
-func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, rssService RSSService) FeedService {
+func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, rssService RSSService, config *FeedServiceConfig) FeedService {
+	var bedrockClient *bedrock.Client
+
+	// Initialize Bedrock client if configured
+	if config != nil && config.BedrockAgentID != "" {
+		bedrockClient = bedrock.NewClient(config.AWSConfig, config.BedrockAgentID, config.BedrockAgentAlias)
+		log.Printf("✅ Bedrock client initialized for feed recommendations")
+	}
+
 	return &feedService{
-		feedRepo:   feedRepo,
-		bowerRepo:  bowerRepo,
-		rssService: rssService,
+		feedRepo:      feedRepo,
+		bowerRepo:     bowerRepo,
+		rssService:    rssService,
+		bedrockClient: bedrockClient,
 	}
 }
 
@@ -438,13 +461,90 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		return nil, errors.New("access denied: not bower owner")
 	}
 
-	// TODO: Integrate with Bedrock Agent Core for AI-powered feed recommendations
-	// For now, use static keyword mapping as fallback
+	// Get existing feeds to avoid duplicates
+	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
+	}
 
-	// Generate mock feed recommendations based on keywords
+	existingURLs := make(map[string]bool)
+	for _, feed := range existingFeeds {
+		existingURLs[feed.URL] = true
+	}
+
+	// Try Bedrock Agent first if configured
+	if s.bedrockClient != nil {
+		log.Printf("🤖 Attempting Bedrock Agent for keywords: %v", keywords)
+		startTime := time.Now()
+
+		recommendations, err := s.getFeedRecommendationsFromBedrock(ctx, bowerID, keywords, existingURLs)
+		latency := time.Since(startTime).Milliseconds()
+
+		if err == nil && len(recommendations) > 0 {
+			log.Printf("✅ Bedrock returned %d recommendations in %dms", len(recommendations), latency)
+			return recommendations, nil
+		}
+
+		// Log error and fallback
+		if err != nil {
+			log.Printf("⚠️  Bedrock error after %dms: %v, using static mapping fallback", latency, err)
+		} else {
+			log.Printf("⚠️  Bedrock returned no feeds after %dms, using static mapping fallback", latency)
+		}
+	} else {
+		log.Printf("ℹ️  Bedrock not configured, using static mapping for keywords: %v", keywords)
+	}
+
+	// Fallback to static keyword mapping
+	startTime := time.Now()
+	recommendations := s.getStaticFeedRecommendations(bowerID, keywords, existingURLs)
+	latency := time.Since(startTime).Milliseconds()
+
+	log.Printf("📊 Static mapping returned %d recommendations in %dms", len(recommendations), latency)
+	return recommendations, nil
+}
+
+// getFeedRecommendationsFromBedrock gets feed recommendations from Bedrock Agent
+func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, bowerID string, keywords []string, existingURLs map[string]bool) ([]*model.Feed, error) {
+	// Create context with timeout
+	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	// Call Bedrock Agent
+	bedrockRecommendations, err := s.bedrockClient.GetFeedRecommendations(timeoutCtx, keywords)
+	if err != nil {
+		return nil, fmt.Errorf("bedrock agent failed: %w", err)
+	}
+
+	// Convert Bedrock recommendations to model.Feed
+	recommendations := make([]*model.Feed, 0)
+	for _, rec := range bedrockRecommendations {
+		// Skip if URL already exists
+		if existingURLs[rec.URL] {
+			continue
+		}
+
+		// Create feed from recommendation
+		feed := model.NewFeed(bowerID, rec.URL, rec.Title, rec.Description, rec.Category)
+		recommendations = append(recommendations, feed)
+
+		// Mark as existing to avoid duplicates in this batch
+		existingURLs[rec.URL] = true
+
+		// Limit to 10 recommendations
+		if len(recommendations) >= 10 {
+			break
+		}
+	}
+
+	return recommendations, nil
+}
+
+// getStaticFeedRecommendations returns feed recommendations using static keyword mapping
+func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []string, existingURLs map[string]bool) []*model.Feed {
 	recommendations := make([]*model.Feed, 0)
 
-	// Keyword to feed URL mapping (mock data)
+	// Keyword to feed URL mapping (static fallback data)
 	keywordFeedMap := map[string][]struct {
 		URL         string
 		Title       string
@@ -508,17 +608,6 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		},
 	}
 
-	// Get existing feeds to avoid duplicates
-	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
-	}
-
-	existingURLs := make(map[string]bool)
-	for _, feed := range existingFeeds {
-		existingURLs[feed.URL] = true
-	}
-
 	// Generate recommendations based on keywords
 	for _, keyword := range keywords {
 		keywordLower := strings.ToLower(keyword)
@@ -536,7 +625,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 				continue // Skip if already exists
 			}
 
-			// Create mock feed
+			// Create feed from static mapping
 			feed := model.NewFeed(bowerID, feedOption.URL, feedOption.Title, feedOption.Description, feedOption.Category)
 			recommendations = append(recommendations, feed)
 			existingURLs[feedOption.URL] = true
@@ -553,7 +642,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		}
 	}
 
-	return recommendations, nil
+	return recommendations
 }
 
 // GetStaleFeeds retrieves feeds that haven't been updated recently
