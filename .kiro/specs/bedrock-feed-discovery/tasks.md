@@ -49,7 +49,7 @@
   - **確認**: `terraform output`で Agent ID と Alias ID が出力されることを確認
   - _要件: 3.1, 3.2, 7.1, 7.2, 7.3_
 
-- [ ] 5. Bedrock 統合で Feed Service を更新
+- [x] 5. Bedrock 統合で Feed Service を更新
 
   - サービス設定に Bedrock 設定を追加
   - getFeedRecommendationsFromBedrock メソッドを実装

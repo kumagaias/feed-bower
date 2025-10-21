@@ -317,7 +317,8 @@ resource "aws_bedrockagent_agent_action_group" "feed_search" {
   agent_version        = "DRAFT"
   action_group_name    = "feed-search"
   description          = "Search for RSS/Atom feeds based on keywords"
-  skip_resource_in_use_check = false
+  skip_resource_in_use_check = true
+  prepare_agent        = true
 
   action_group_executor {
     lambda = aws_lambda_function.feed_search.arn
@@ -337,6 +338,10 @@ resource "aws_bedrockagent_agent_alias" "production" {
   agent_id         = aws_bedrockagent_agent.feed_bower_agent.agent_id
   agent_alias_name = "production"
   description      = "Production alias for Feed Bower agent"
+
+  depends_on = [
+    aws_bedrockagent_agent_action_group.feed_search
+  ]
 
   tags = var.tags
 }
