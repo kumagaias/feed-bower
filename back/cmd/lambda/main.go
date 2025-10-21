@@ -319,11 +319,13 @@ func main() {
 
 			// Otherwise, treat as API Gateway event
 			adapter := httpadapter.New(router)
-			apiGatewayEvent, ok := event.(events.APIGatewayProxyRequest)
-			if !ok {
-				return nil, fmt.Errorf("unexpected event type: %T", event)
+			
+			// Try to convert to APIGatewayProxyRequest
+			if apiGatewayEvent, ok := event.(events.APIGatewayProxyRequest); ok {
+				return adapter.ProxyWithContext(ctx, apiGatewayEvent)
 			}
-			return adapter.ProxyWithContext(ctx, apiGatewayEvent)
+			
+			return nil, fmt.Errorf("unexpected event type: %T", event)
 		}
 
 		// Start Lambda handler
