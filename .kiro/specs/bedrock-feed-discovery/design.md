@@ -661,3 +661,332 @@ variable "lambda_memory" {
 4. **Multi-language**: Expand to more languages
 5. **Real-time Updates**: Periodically refresh feed database
 6. **A/B Testing**: Compare Bedrock vs static mapping quality
+
+
+## 新機能: フィード自動登録
+
+### 3. Feed Auto-Registration Service
+
+**Location**: `back/internal/service/feed_service.go`
+
+**New Method**:
+```go
+func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowerID string, keywords []string, maxFeeds int) (*AutoRegisterResult, error)
+```
+
+**Responsibilities**:
+- キーワードからフィード推奨を取得
+- 各推奨フィードのURLを検証
+- 既存フィードとの重複をチェック
+- 有効なフィードをBowerに自動追加
+- 結果サマリーを返す
+
+**Data Structure**:
+```go
+type AutoRegisterResult struct {
+    AddedFeeds    []*model.Feed  // 追加されたフィード
+    SkippedFeeds  []string       // スキップされたフィードURL（重複）
+    FailedFeeds   []FailedFeed   // 失敗したフィード
+    TotalAdded    int            // 追加された総数
+    TotalSkipped  int            // スキップされた総数
+    TotalFailed   int            // 失敗した総数
+}
+
+type FailedFeed struct {
+    URL    string
+    Reason string
+}
+```
+
+### 4. Bower Service Integration
+
+**Location**: `back/internal/service/bower_service.go`
+
+**Updated Method**:
+```go
+type CreateBowerRequest struct {
+    Name              string   `json:"name"`
+    Keywords          []string `json:"keywords"`
+    AutoRegisterFeeds bool     `json:"auto_register_feeds"` // 新規追加
+    MaxAutoFeeds      int      `json:"max_auto_feeds"`      // 新規追加（デフォルト5）
+}
+
+func (s *bowerService) CreateBower(ctx context.Context, userID string, req *CreateBowerRequest) (*CreateBowerResult, error)
+```
+
+**Updated Response**:
+```go
+type CreateBowerResult struct {
+    Bower              *model.Bower
+    AutoRegisteredFeeds int              // 自動登録されたフィード数
+    AutoRegisterErrors  []string         // 自動登録エラー（あれば）
+}
+```
+
+### 5. API Endpoints
+
+#### 5.1 フィード自動登録エンドポイント
+
+**Endpoint**: `POST /api/feeds/auto-register`
+
+**Request**:
+```json
+{
+  "bower_id": "bower-123",
+  "keywords": ["AI", "machine learning"],
+  "max_feeds": 5
+}
+```
+
+**Response**:
+```json
+{
+  "added_feeds": [
+    {
+      "feed_id": "feed-1",
+      "url": "https://ai.googleblog.com/feeds/posts/default",
+      "title": "Google AI Blog",
+      "description": "Latest AI research",
+      "category": "AI Research"
+    }
+  ],
+  "skipped_feeds": [
+    "https://existing-feed.com/rss"
+  ],
+  "failed_feeds": [
+    {
+      "url": "https://invalid-feed.com/rss",
+      "reason": "Invalid RSS format"
+    }
+  ],
+  "summary": {
+    "total_added": 4,
+    "total_skipped": 1,
+    "total_failed": 1
+  }
+}
+```
+
+#### 5.2 Bower作成エンドポイント（更新）
+
+**Endpoint**: `POST /api/bowers`
+
+**Request**:
+```json
+{
+  "name": "My AI Bower",
+  "keywords": ["AI", "machine learning"],
+  "auto_register_feeds": true,
+  "max_auto_feeds": 5
+}
+```
+
+**Response**:
+```json
+{
+  "bower": {
+    "bower_id": "bower-123",
+    "name": "My AI Bower",
+    "keywords": ["AI", "machine learning"],
+    "created_at": 1234567890
+  },
+  "auto_registered_feeds": 4,
+  "auto_register_errors": []
+}
+```
+
+## フロー図
+
+### フィード自動登録フロー
+
+```
+User Request
+    │
+    ▼
+┌─────────────────────────────────────┐
+│ POST /api/feeds/auto-register       │
+│ - bower_id                          │
+│ - keywords                          │
+│ - max_feeds                         │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Feed Service                        │
+│ AutoRegisterFeeds()                 │
+└────────────┬────────────────────────┘
+             │
+             ├─────────────────────────┐
+             │                         │
+             ▼                         ▼
+┌──────────────────────┐    ┌──────────────────────┐
+│ 1. Get Recommendations│    │ 2. Get Existing Feeds│
+│    (Bedrock/Fallback) │    │    (Check Duplicates)│
+└──────────┬───────────┘    └──────────┬───────────┘
+           │                           │
+           └───────────┬───────────────┘
+                       │
+                       ▼
+           ┌───────────────────────┐
+           │ 3. For Each Feed:     │
+           │  - Validate URL       │
+           │  - Check Duplicate    │
+           │  - Fetch Feed Info    │
+           │  - Add to Bower       │
+           └───────────┬───────────┘
+                       │
+                       ▼
+           ┌───────────────────────┐
+           │ 4. Return Summary     │
+           │  - Added: 4           │
+           │  - Skipped: 1         │
+           │  - Failed: 1          │
+           └───────────────────────┘
+```
+
+### Bower作成時の自動登録フロー
+
+```
+User Request
+    │
+    ▼
+┌─────────────────────────────────────┐
+│ POST /api/bowers                    │
+│ - name                              │
+│ - keywords                          │
+│ - auto_register_feeds: true         │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ Bower Service                       │
+│ CreateBower()                       │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 1. Create Bower                     │
+│    - Validate keywords              │
+│    - Save to DynamoDB               │
+└────────────┬────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────┐
+│ 2. If auto_register_feeds == true  │
+│    Call Feed Service                │
+│    AutoRegisterFeeds()              │
+└────────────┬────────────────────────┘
+             │
+             ├─── Success ────┐
+             │                │
+             ▼                ▼
+┌──────────────────┐  ┌──────────────────┐
+│ Return Bower +   │  │ Log Errors       │
+│ Feed Count       │  │ (Non-blocking)   │
+└──────────────────┘  └──────────────────┘
+```
+
+## エラーハンドリング
+
+### フィード自動登録のエラー
+
+1. **Bower Not Found**: 404エラーを返す
+2. **Access Denied**: 403エラーを返す（Bowerの所有者でない）
+3. **Invalid Feed URL**: スキップして次のフィードへ（failed_feedsに記録）
+4. **Feed Fetch Error**: スキップして次のフィードへ（failed_feedsに記録）
+5. **Duplicate Feed**: スキップして次のフィードへ（skipped_feedsに記録）
+6. **Bedrock Error**: フォールバックを使用（既存の動作）
+
+### Bower作成時の自動登録エラー
+
+- **原則**: フィード自動登録の失敗はBower作成を失敗させない
+- **動作**: エラーをログに記録し、`auto_register_errors`に含める
+- **ユーザー体験**: Bowerは作成され、後で手動でフィードを追加可能
+
+## パフォーマンス考慮事項
+
+### 並列処理
+
+フィード検証と追加を並列化して高速化：
+
+```go
+// 並列でフィードを検証・追加
+var wg sync.WaitGroup
+results := make(chan FeedResult, len(recommendations))
+
+for _, rec := range recommendations {
+    wg.Add(1)
+    go func(feed FeedRecommendation) {
+        defer wg.Done()
+        // Validate and add feed
+        result := s.validateAndAddFeed(ctx, bowerID, feed)
+        results <- result
+    }(rec)
+}
+
+wg.Wait()
+close(results)
+```
+
+### タイムアウト
+
+- 各フィード検証: 5秒
+- 全体のタイムアウト: 30秒
+- Bedrock呼び出し: 10秒（既存）
+
+### レート制限
+
+- 最大同時フィード検証: 5件
+- フィード追加間の遅延: 100ms
+
+## セキュリティ
+
+### 認証・認可
+
+1. ユーザー認証が必要（既存のAuth middleware）
+2. Bower所有者のみが自動登録可能
+3. フィードURL検証（既存のValidateFeedURL）
+
+### 入力検証
+
+1. `max_feeds`: 1-10の範囲
+2. `keywords`: 1-8個の範囲（既存）
+3. `bower_id`: 必須、存在確認
+
+## テスト戦略
+
+### ユニットテスト
+
+1. `AutoRegisterFeeds()` - 正常系、エラー系
+2. `CreateBower()` with auto_register - 正常系、エラー系
+3. フィード検証ロジック
+4. 重複チェックロジック
+
+### 統合テスト
+
+1. Bedrock → 自動登録の完全フロー
+2. フォールバック → 自動登録の完全フロー
+3. Bower作成 → 自動登録の完全フロー
+
+## Bedrockの現在の制限
+
+**重要**: 現在のBedrock実装は**静的なフィードデータベース（25件）から検索**しています。
+
+### 現在の動作
+
+1. Lambda関数が`feed-database.json`を読み込み
+2. キーワードに基づいて関連度スコアを計算
+3. 既存の25件のフィードから最適なものを返す
+
+### 制限事項
+
+- ❌ 新しいフィードを自動的に発見しない
+- ❌ インターネット上のフィードを検索しない
+- ✅ 厳選された高品質なフィードのみを推奨
+
+### 将来の拡張
+
+フィードデータベースを拡張する方法：
+1. `feed-database.json`に新しいフィードを追加
+2. Lambda関数を再デプロイ
+3. または、外部フィード検索APIを統合（将来の機能）

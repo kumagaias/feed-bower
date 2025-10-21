@@ -285,13 +285,13 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
               <p className="font-medium">{t.passwordRequirements}</p>
               <ul className="list-disc list-inside space-y-0.5 ml-2">
                 <li className={formData.password.length >= 8 ? "text-green-600" : ""}>
-                  8文字以上
+                  {t.minLength}
                 </li>
                 <li className={/[a-zA-Z]/.test(formData.password) ? "text-green-600" : ""}>
-                  英字を含む
+                  {t.includeLetters}
                 </li>
                 <li className={/[0-9]/.test(formData.password) ? "text-green-600" : ""}>
-                  数字を含む
+                  {t.includeNumbers}
                 </li>
               </ul>
             </div>
