@@ -53,17 +53,8 @@ export default function BowerEditModal({
       // 既存のバウアーの場合、名前が存在すればユーザーが設定したものとみなす
       setHasUserEditedName(!!bower.name);
 
-      // Use feeds from bower object if available, otherwise load from API
-      if (bower.feeds && bower.feeds.length > 0) {
-        // 既存のフィードにカスタムフラグを設定（デフォルトはfalse、手動追加されたものはtrue）
-        const feedsWithCustomFlag = bower.feeds.map((feed: any) => ({
-          ...feed,
-          isCustom: feed.isCustom || false, // 既存のフラグを保持、なければfalse
-        }));
-        setFeeds(feedsWithCustomFlag);
-      } else {
-        loadFeeds(bower.id);
-      }
+      // Always load feeds from API to ensure we have the latest data
+      loadFeeds(bower.id);
     }
   }, [isOpen, bower]);
 
