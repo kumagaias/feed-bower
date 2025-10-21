@@ -412,8 +412,14 @@ export const bowerApi = {
     name: string
     keywords: string[]
     is_public?: boolean
+    auto_register_feeds?: boolean
+    max_auto_feeds?: number
   }) {
-    return apiRequest<any>('/bowers', {
+    return apiRequest<{
+      bower: any
+      auto_registered_feeds: number
+      auto_register_errors: string[]
+    }>('/bowers', {
       method: 'POST',
       body: JSON.stringify(bower),
     })
@@ -489,6 +495,27 @@ export const feedApi = {
       body: JSON.stringify({
         bower_id: bowerID,
         keywords: keywords
+      }),
+    })
+  },
+
+  // Auto-register feeds to a bower based on keywords
+  async autoRegisterFeeds(bowerId: string, keywords: string[], maxFeeds: number = 5) {
+    return apiRequest<{
+      added_feeds: any[]
+      skipped_feeds: string[]
+      failed_feeds: Array<{ url: string; reason: string }>
+      summary: {
+        total_added: number
+        total_skipped: number
+        total_failed: number
+      }
+    }>('/feeds/auto-register', {
+      method: 'POST',
+      body: JSON.stringify({
+        bower_id: bowerId,
+        keywords: keywords,
+        max_feeds: maxFeeds
       }),
     })
   },

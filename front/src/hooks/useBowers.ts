@@ -4,11 +4,23 @@ import { useState, useEffect } from 'react'
 import { bowerApi, ApiError } from '@/lib/api'
 import { Bower } from '@/types'
 
+interface CreateBowerResult {
+  bower: Bower
+  autoRegisteredFeeds: number
+  autoRegisterErrors: string[]
+}
+
 interface UseBowersReturn {
   bowers: Bower[]
   loading: boolean
   error: string | null
-  createBower: (bower: { name: string; keywords: string[]; is_public?: boolean }) => Promise<Bower | null>
+  createBower: (bower: { 
+    name: string
+    keywords: string[]
+    is_public?: boolean
+    auto_register_feeds?: boolean
+    max_auto_feeds?: number
+  }) => Promise<CreateBowerResult | null>
   updateBower: (id: string, bower: { name?: string; keywords?: string[]; is_public?: boolean }) => Promise<Bower | null>
   deleteBower: (id: string) => Promise<boolean>
   refreshBowers: () => Promise<void>
@@ -67,32 +79,50 @@ export function useBowers(): UseBowersReturn {
   }
 
   // Create a new bower
-  const createBower = async (bowerData: { name: string; keywords: string[]; is_public?: boolean }): Promise<Bower | null> => {
+  const createBower = async (bowerData: { 
+    name: string
+    keywords: string[]
+    is_public?: boolean
+    auto_register_feeds?: boolean
+    max_auto_feeds?: number
+  }): Promise<CreateBowerResult | null> => {
     try {
       setError(null)
-      const data = await bowerApi.createBower(bowerData)
+      const response = await bowerApi.createBower(bowerData)
+      
+      if (!response) {
+        throw new Error('No response from API')
+      }
+      
+      // Handle new response format with auto-registration results
+      const bowerInfo = response.bower || response
       
       // Transform API response to match our Bower interface
       const newBower: Bower = {
-        id: data.bower_id || data.id,
-        name: data.name,
-        keywords: data.keywords || [],
-        feeds: data.feeds || [],
-        color: data.color || '#14b8a6',
-        createdAt: new Date(data.created_at || data.createdAt || Date.now()),
-        isPublic: data.is_public || data.isPublic || false,
-        creatorId: data.user_id || data.creatorId,
-        creatorName: data.creatorName,
-        likes: data.likes || 0,
-        likedBy: data.likedBy || [],
-        eggColors: data.eggColors || data.keywords?.map((_: string, i: number) => {
+        id: bowerInfo.bower_id || bowerInfo.id,
+        name: bowerInfo.name,
+        keywords: bowerInfo.keywords || [],
+        feeds: bowerInfo.feeds || [],
+        color: bowerInfo.color || '#14b8a6',
+        createdAt: new Date(bowerInfo.created_at || bowerInfo.createdAt || Date.now()),
+        isPublic: bowerInfo.is_public || bowerInfo.isPublic || false,
+        creatorId: bowerInfo.user_id || bowerInfo.creatorId,
+        creatorName: bowerInfo.creatorName,
+        likes: bowerInfo.likes || 0,
+        likedBy: bowerInfo.likedBy || [],
+        eggColors: bowerInfo.eggColors || bowerInfo.keywords?.map((_: string, i: number) => {
           const colors = ['#14b8a6', '#4ECDC4', '#45B7D1', '#96CEB4', '#DDA0DD', '#98D8C8', '#F4A460']
           return colors[i % colors.length]
         }) || []
       }
       
       setBowers(prev => [newBower, ...prev])
-      return newBower
+      
+      return {
+        bower: newBower,
+        autoRegisteredFeeds: response.auto_registered_feeds || 0,
+        autoRegisterErrors: response.auto_register_errors || []
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message)
