@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -317,10 +318,20 @@ func main() {
 				}
 			}
 
-			// Otherwise, treat as API Gateway event
-			// httpadapter can handle both events.APIGatewayProxyRequest and map[string]interface{}
+			// Convert event to APIGatewayProxyRequest
+			// Lambda may send the event as map[string]interface{}, so we need to marshal/unmarshal
+			var apiGatewayEvent events.APIGatewayProxyRequest
+			eventBytes, err := json.Marshal(event)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal event: %w", err)
+			}
+			if err := json.Unmarshal(eventBytes, &apiGatewayEvent); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal event to APIGatewayProxyRequest: %w", err)
+			}
+
+			// Handle API Gateway event
 			adapter := httpadapter.New(router)
-			return adapter.ProxyWithContext(ctx, event)
+			return adapter.ProxyWithContext(ctx, apiGatewayEvent)
 		}
 
 		// Start Lambda handler
