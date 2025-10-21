@@ -116,3 +116,13 @@ output "bedrock_ecr_repository_arn" {
   description = "Bedrock Lambda 用 ECR リポジトリ ARN"
   value       = module.ecr_bedrock_lambda.repository_arn
 }
+
+output "eventbridge_rule_name" {
+  description = "EventBridge スケジューラールール名"
+  value       = module.eventbridge.rule_name
+}
+
+output "eventbridge_rule_arn" {
+  description = "EventBridge スケジューラールール ARN"
+  value       = module.eventbridge.rule_arn
+}
