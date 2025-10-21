@@ -52,7 +52,7 @@ locals {
   }
 }
 
-# ECR リポジトリ
+# ECR リポジトリ（メインAPI用）
 module "ecr" {
   source = "../../modules/ecr"
 
@@ -61,6 +61,20 @@ module "ecr" {
   scan_on_push                  = true
   enable_lifecycle_policy       = true
   max_image_count               = 5
+  untagged_image_retention_days = 7
+
+  tags = local.common_tags
+}
+
+# ECR リポジトリ（Bedrock Lambda用）
+module "ecr_bedrock_lambda" {
+  source = "../../modules/ecr"
+
+  repository_name               = "${local.project_name}-bedrock-lambda-${local.environment}"
+  image_tag_mutability          = "MUTABLE"
+  scan_on_push                  = true
+  enable_lifecycle_policy       = true
+  max_image_count               = 3
   untagged_image_retention_days = 7
 
   tags = local.common_tags
@@ -366,14 +380,15 @@ module "bedrock_agent" {
 
   environment        = local.environment
   project_name       = local.project_name
-  image_uri          = "${module.ecr.repository_url}:latest"
+  image_uri          = "${module.ecr_bedrock_lambda.repository_url}:latest"
+  ecr_repository_arn = module.ecr_bedrock_lambda.repository_arn
   lambda_timeout     = 30
   lambda_memory      = 256
   log_retention_days = 30
 
   tags = local.common_tags
 
-  depends_on = [module.ecr]
+  depends_on = [module.ecr_bedrock_lambda]
 }
 
 # API Gateway
@@ -419,27 +434,27 @@ module "amplify" {
       enable_auto_build           = true
       enable_pull_request_preview = false
       environment_variables = {
-        NEXT_PUBLIC_API_URL                    = "${module.api_gateway.invoke_url}/api"
-        NEXT_PUBLIC_ENV                        = local.environment
-        NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
+        NEXT_PUBLIC_API_URL                     = "${module.api_gateway.invoke_url}/api"
+        NEXT_PUBLIC_ENV                         = local.environment
+        NEXT_PUBLIC_COGNITO_USER_POOL_ID        = module.cognito.user_pool_id
         NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
-        NEXT_PUBLIC_AWS_REGION                 = var.aws_region
-        _CUSTOM_IMAGE                          = "amplify:al2023"
+        NEXT_PUBLIC_AWS_REGION                  = var.aws_region
+        _CUSTOM_IMAGE                           = "amplify:al2023"
       }
     }
   }
 
-  build_spec       = file("${path.module}/../../../amplify.yml")  # モノレポ対応の buildSpec
+  build_spec       = file("${path.module}/../../../amplify.yml") # モノレポ対応の buildSpec
   node_version     = "24"
   build_command    = "npm run build"
   output_directory = ".next"
 
   environment_variables = {
-    NEXT_PUBLIC_API_URL                    = "${module.api_gateway.invoke_url}/api"
-    NEXT_PUBLIC_ENV                        = local.environment
-    NEXT_PUBLIC_COGNITO_USER_POOL_ID       = module.cognito.user_pool_id
+    NEXT_PUBLIC_API_URL                     = "${module.api_gateway.invoke_url}/api"
+    NEXT_PUBLIC_ENV                         = local.environment
+    NEXT_PUBLIC_COGNITO_USER_POOL_ID        = module.cognito.user_pool_id
     NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID = module.cognito.client_id
-    NEXT_PUBLIC_AWS_REGION                 = var.aws_region
+    NEXT_PUBLIC_AWS_REGION                  = var.aws_region
     _LIVE_UPDATES = jsonencode([{
       pkg     = "node"
       type    = "nvm"

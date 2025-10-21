@@ -106,3 +106,13 @@ output "bedrock_lambda_function_name" {
   description = "Bedrock Lambda 関数名"
   value       = module.bedrock_agent.lambda_function_name
 }
+
+output "bedrock_ecr_repository_url" {
+  description = "Bedrock Lambda 用 ECR リポジトリ URL"
+  value       = module.ecr_bedrock_lambda.repository_url
+}
+
+output "bedrock_ecr_repository_arn" {
+  description = "Bedrock Lambda 用 ECR リポジトリ ARN"
+  value       = module.ecr_bedrock_lambda.repository_arn
+}
