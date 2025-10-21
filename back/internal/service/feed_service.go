@@ -451,19 +451,29 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		return nil, errors.New("keywords are required")
 	}
 
+	// Log request start with structured information
+	log.Printf("[FeedRecommendations] START | user_id=%s | bower_id=%s | keywords=%v | keyword_count=%d",
+		userID, bowerID, keywords, len(keywords))
+
 	// Check if user has access to bower
 	bower, err := s.bowerRepo.GetByID(ctx, bowerID)
 	if err != nil {
+		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=bower_not_found | details=%v",
+			userID, bowerID, err)
 		return nil, fmt.Errorf("bower not found: %w", err)
 	}
 
 	if bower.UserID != userID {
+		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=access_denied | reason=not_bower_owner",
+			userID, bowerID)
 		return nil, errors.New("access denied: not bower owner")
 	}
 
 	// Get existing feeds to avoid duplicates
 	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
 	if err != nil {
+		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_existing_feeds | details=%v",
+			userID, bowerID, err)
 		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
 	}
 
@@ -472,57 +482,113 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 		existingURLs[feed.URL] = true
 	}
 
+	log.Printf("[FeedRecommendations] INFO | user_id=%s | bower_id=%s | existing_feeds_count=%d",
+		userID, bowerID, len(existingFeeds))
+
 	// Try Bedrock Agent first if configured
 	if s.bedrockClient != nil {
-		log.Printf("🤖 Attempting Bedrock Agent for keywords: %v", keywords)
+		log.Printf("[FeedRecommendations] BEDROCK_START | user_id=%s | bower_id=%s | keywords=%v | method=bedrock_agent",
+			userID, bowerID, keywords)
 		startTime := time.Now()
 
 		recommendations, err := s.getFeedRecommendationsFromBedrock(ctx, bowerID, keywords, existingURLs)
 		latency := time.Since(startTime).Milliseconds()
 
 		if err == nil && len(recommendations) > 0 {
-			log.Printf("✅ Bedrock returned %d recommendations in %dms", len(recommendations), latency)
+			log.Printf("[FeedRecommendations] BEDROCK_SUCCESS | user_id=%s | bower_id=%s | keywords=%v | feed_count=%d | latency_ms=%d | method=bedrock_agent",
+				userID, bowerID, keywords, len(recommendations), latency)
+
+			// Log performance metrics
+			s.logPerformanceMetrics("bedrock_agent", latency, len(recommendations), true, "")
+
 			return recommendations, nil
 		}
 
 		// Log error and fallback
 		if err != nil {
-			log.Printf("⚠️  Bedrock error after %dms: %v, using static mapping fallback", latency, err)
+			log.Printf("[FeedRecommendations] BEDROCK_ERROR | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | error=%v | fallback=static_mapping",
+				userID, bowerID, keywords, latency, err)
+
+			// Log performance metrics for failed attempt
+			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, err.Error())
 		} else {
-			log.Printf("⚠️  Bedrock returned no feeds after %dms, using static mapping fallback", latency)
+			log.Printf("[FeedRecommendations] BEDROCK_EMPTY | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | feed_count=0 | fallback=static_mapping",
+				userID, bowerID, keywords, latency)
+
+			// Log performance metrics for empty result
+			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, "no_feeds_returned")
 		}
 	} else {
-		log.Printf("ℹ️  Bedrock not configured, using static mapping for keywords: %v", keywords)
+		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured | fallback=static_mapping",
+			userID, bowerID, keywords)
 	}
 
 	// Fallback to static keyword mapping
+	log.Printf("[FeedRecommendations] FALLBACK_START | user_id=%s | bower_id=%s | keywords=%v | method=static_mapping",
+		userID, bowerID, keywords)
 	startTime := time.Now()
 	recommendations := s.getStaticFeedRecommendations(bowerID, keywords, existingURLs)
 	latency := time.Since(startTime).Milliseconds()
 
-	log.Printf("📊 Static mapping returned %d recommendations in %dms", len(recommendations), latency)
+	log.Printf("[FeedRecommendations] FALLBACK_SUCCESS | user_id=%s | bower_id=%s | keywords=%v | feed_count=%d | latency_ms=%d | method=static_mapping",
+		userID, bowerID, keywords, len(recommendations), latency)
+
+	// Log performance metrics for fallback
+	s.logPerformanceMetrics("static_mapping", latency, len(recommendations), true, "")
+
 	return recommendations, nil
+}
+
+// logPerformanceMetrics logs structured performance metrics for monitoring
+func (s *feedService) logPerformanceMetrics(method string, latencyMs int64, feedCount int, success bool, errorMsg string) {
+	status := "success"
+	if !success {
+		status = "failure"
+	}
+
+	log.Printf("[PerformanceMetrics] method=%s | latency_ms=%d | feed_count=%d | status=%s | error=%s",
+		method, latencyMs, feedCount, status, errorMsg)
 }
 
 // getFeedRecommendationsFromBedrock gets feed recommendations from Bedrock Agent
 func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, bowerID string, keywords []string, existingURLs map[string]bool) ([]*model.Feed, error) {
+	log.Printf("[BedrockIntegration] INVOKE_START | bower_id=%s | keywords=%v | timeout=10s",
+		bowerID, keywords)
+
 	// Create context with timeout
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	// Call Bedrock Agent
+	invokeStart := time.Now()
 	bedrockRecommendations, err := s.bedrockClient.GetFeedRecommendations(timeoutCtx, keywords)
+	invokeLatency := time.Since(invokeStart).Milliseconds()
+
 	if err != nil {
+		log.Printf("[BedrockIntegration] INVOKE_ERROR | bower_id=%s | keywords=%v | latency_ms=%d | error=%v",
+			bowerID, keywords, invokeLatency, err)
 		return nil, fmt.Errorf("bedrock agent failed: %w", err)
 	}
 
+	log.Printf("[BedrockIntegration] INVOKE_SUCCESS | bower_id=%s | keywords=%v | latency_ms=%d | raw_feed_count=%d",
+		bowerID, keywords, invokeLatency, len(bedrockRecommendations))
+
 	// Convert Bedrock recommendations to model.Feed
 	recommendations := make([]*model.Feed, 0)
-	for _, rec := range bedrockRecommendations {
+	duplicateCount := 0
+
+	for i, rec := range bedrockRecommendations {
 		// Skip if URL already exists
 		if existingURLs[rec.URL] {
+			log.Printf("[BedrockIntegration] SKIP_DUPLICATE | bower_id=%s | url=%s | reason=already_exists",
+				bowerID, rec.URL)
+			duplicateCount++
 			continue
 		}
+
+		// Log each recommendation details
+		log.Printf("[BedrockIntegration] FEED_RECOMMENDATION | bower_id=%s | index=%d | url=%s | title=%s | category=%s | relevance=%.2f",
+			bowerID, i, rec.URL, rec.Title, rec.Category, rec.Relevance)
 
 		// Create feed from recommendation
 		feed := model.NewFeed(bowerID, rec.URL, rec.Title, rec.Description, rec.Category)
@@ -533,15 +599,23 @@ func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, bow
 
 		// Limit to 10 recommendations
 		if len(recommendations) >= 10 {
+			log.Printf("[BedrockIntegration] LIMIT_REACHED | bower_id=%s | max_recommendations=10",
+				bowerID)
 			break
 		}
 	}
+
+	log.Printf("[BedrockIntegration] CONVERSION_COMPLETE | bower_id=%s | raw_count=%d | duplicate_count=%d | final_count=%d",
+		bowerID, len(bedrockRecommendations), duplicateCount, len(recommendations))
 
 	return recommendations, nil
 }
 
 // getStaticFeedRecommendations returns feed recommendations using static keyword mapping
 func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []string, existingURLs map[string]bool) []*model.Feed {
+	log.Printf("[StaticMapping] START | bower_id=%s | keywords=%v | keyword_count=%d",
+		bowerID, keywords, len(keywords))
+
 	recommendations := make([]*model.Feed, 0)
 
 	// Keyword to feed URL mapping (static fallback data)
@@ -609,7 +683,10 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 	}
 
 	// Generate recommendations based on keywords
-	for _, keyword := range keywords {
+	matchedKeywords := 0
+	skippedDuplicates := 0
+
+	for keywordIdx, keyword := range keywords {
 		keywordLower := strings.ToLower(keyword)
 
 		// Try both original and lowercase
@@ -618,10 +695,23 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			feedOptions = keywordFeedMap[keywordLower]
 		}
 
+		if len(feedOptions) == 0 {
+			log.Printf("[StaticMapping] KEYWORD_NO_MATCH | bower_id=%s | keyword=%s | keyword_index=%d",
+				bowerID, keyword, keywordIdx)
+			continue
+		}
+
+		matchedKeywords++
+		log.Printf("[StaticMapping] KEYWORD_MATCHED | bower_id=%s | keyword=%s | keyword_index=%d | available_feeds=%d",
+			bowerID, keyword, keywordIdx, len(feedOptions))
+
 		// Add up to 2 feeds per keyword
 		added := 0
-		for _, feedOption := range feedOptions {
+		for feedIdx, feedOption := range feedOptions {
 			if existingURLs[feedOption.URL] {
+				log.Printf("[StaticMapping] SKIP_DUPLICATE | bower_id=%s | keyword=%s | url=%s | reason=already_exists",
+					bowerID, keyword, feedOption.URL)
+				skippedDuplicates++
 				continue // Skip if already exists
 			}
 
@@ -630,17 +720,27 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			recommendations = append(recommendations, feed)
 			existingURLs[feedOption.URL] = true
 
+			log.Printf("[StaticMapping] FEED_ADDED | bower_id=%s | keyword=%s | feed_index=%d | url=%s | title=%s | category=%s",
+				bowerID, keyword, feedIdx, feedOption.URL, feedOption.Title, feedOption.Category)
+
 			added++
 			if added >= 2 {
+				log.Printf("[StaticMapping] KEYWORD_LIMIT_REACHED | bower_id=%s | keyword=%s | max_per_keyword=2",
+					bowerID, keyword)
 				break // Limit to 2 feeds per keyword
 			}
 		}
 
 		// Limit total recommendations
 		if len(recommendations) >= 6 {
+			log.Printf("[StaticMapping] TOTAL_LIMIT_REACHED | bower_id=%s | max_total=6",
+				bowerID)
 			break
 		}
 	}
+
+	log.Printf("[StaticMapping] COMPLETE | bower_id=%s | total_keywords=%d | matched_keywords=%d | skipped_duplicates=%d | final_count=%d",
+		bowerID, len(keywords), matchedKeywords, skippedDuplicates, len(recommendations))
 
 	return recommendations
 }
