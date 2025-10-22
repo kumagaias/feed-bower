@@ -45,7 +45,10 @@ export default function BowerEditModal({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempBowerName, setTempBowerName] = useState("");
   const [hasUserEditedName, setHasUserEditedName] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   // Initialize with bower data and load feeds
   useEffect(() => {
@@ -392,13 +395,18 @@ export default function BowerEditModal({
     const existingUrls = feeds.map((feed) => feed.url);
     // 並列処理用: 全てのフィードURLを収集
     const allFeedUrls: string[] = [];
-    
+
     for (const keyword of keywords) {
       const keywordLower = keyword.toLowerCase();
-      const feedUrls = keywordFeedMap[keyword] || keywordFeedMap[keywordLower] || [];
-      
-      console.log(`Checking keyword "${keyword}" (${keywordLower}):`, feedUrls.length, "feeds found");
-      
+      const feedUrls =
+        keywordFeedMap[keyword] || keywordFeedMap[keywordLower] || [];
+
+      console.log(
+        `Checking keyword "${keyword}" (${keywordLower}):`,
+        feedUrls.length,
+        "feeds found"
+      );
+
       for (const url of feedUrls) {
         if (!existingUrls.includes(url) && !allFeedUrls.includes(url)) {
           allFeedUrls.push(url);
@@ -408,7 +416,10 @@ export default function BowerEditModal({
 
     // 最大2つのフィードに制限
     const feedsToAdd = allFeedUrls.slice(0, 2);
-    console.log(`🚀 Adding ${feedsToAdd.length} feeds in parallel:`, feedsToAdd);
+    console.log(
+      `🚀 Adding ${feedsToAdd.length} feeds in parallel:`,
+      feedsToAdd
+    );
 
     // Promise.allで並列実行
     const startTime = Date.now();
@@ -431,15 +442,19 @@ export default function BowerEditModal({
 
     const results = await Promise.all(feedPromises);
     const endTime = Date.now();
-    
+
     // 結果の集計
-    const newFeeds = results.filter(r => r.success).map(r => r.feed);
-    const successCount = results.filter(r => r.success).length;
-    const errorCount = results.filter(r => !r.success).length;
+    const newFeeds = results.filter((r) => r.success).map((r) => r.feed);
+    const successCount = results.filter((r) => r.success).length;
+    const errorCount = results.filter((r) => !r.success).length;
     const totalAttempts = results.length;
-    
-    console.log(`⏱️ Parallel feed addition completed in ${endTime - startTime}ms`);
-    console.log(`📊 Results: ${successCount} success, ${errorCount} failed out of ${totalAttempts} attempts`);
+
+    console.log(
+      `⏱️ Parallel feed addition completed in ${endTime - startTime}ms`
+    );
+    console.log(
+      `📊 Results: ${successCount} success, ${errorCount} failed out of ${totalAttempts} attempts`
+    );
 
     console.log(
       `Auto-add feeds summary: ${successCount} success, ${errorCount} errors, ${totalAttempts} total attempts`
@@ -472,7 +487,8 @@ export default function BowerEditModal({
   };
 
   const handleNameSave = () => {
-    const newName = tempBowerName.trim() || generateBowerName(keywords, language);
+    const newName =
+      tempBowerName.trim() || generateBowerName(keywords, language);
     setBowerName(newName);
     setIsEditingName(false);
     // ユーザーが手動で名前を編集したことを記録（空でない場合のみ）
@@ -620,29 +636,47 @@ export default function BowerEditModal({
                     try {
                       await feedApi.fetchBowerFeeds(bower.id);
                       setToast({
-                        message: language === "ja" ? "記事を更新しました" : "Articles refreshed",
-                        type: "success"
+                        message:
+                          language === "ja"
+                            ? "記事を更新しました"
+                            : "Articles refreshed",
+                        type: "success",
                       });
                     } catch (error) {
                       console.error("Failed to refresh feeds:", error);
                       setToast({
-                        message: language === "ja" ? "記事の更新に失敗しました" : "Failed to refresh articles",
-                        type: "error"
+                        message:
+                          language === "ja"
+                            ? "記事の更新に失敗しました"
+                            : "Failed to refresh articles",
+                        type: "error",
                       });
                     } finally {
                       setIsLoadingFeeds(false);
                     }
                   }}
                   disabled={!bower?.id || isLoadingFeeds || feeds.length === 0}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
-                  title={language === "ja" ? "フィードの記事を更新" : "Refresh feed articles"}
+                  className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  title={
+                    language === "ja"
+                      ? "フィードの記事を更新"
+                      : "Refresh feed articles"
+                  }
                 >
-                  {isLoadingFeeds ? (
-                    <div className="animate-spin">🔄</div>
-                  ) : (
-                    "🔄"
-                  )}
-                  {language === "ja" ? "更新" : "Refresh"}
+                  <svg
+                    className={`w-5 h-5 ${isLoadingFeeds ? "animate-spin" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
                 </button>
               </div>
               <p className="text-base text-gray-600 mb-4">
