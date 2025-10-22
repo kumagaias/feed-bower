@@ -89,12 +89,10 @@ resource "aws_iam_role_policy" "bedrock_policy" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock-agent-runtime:InvokeAgent"
+          "bedrock-agent-runtime:InvokeAgent",
+          "bedrock:InvokeAgent"
         ]
-        Resource = [
-          "arn:aws:bedrock:*:*:agent/*",
-          "arn:aws:bedrock:*:*:agent-alias/*/*"
-        ]
+        Resource = "*"
       }
     ]
   })

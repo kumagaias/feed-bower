@@ -223,5 +223,95 @@
     "language": "en",
     "tags": ["machine learning", "ai", "tutorial", "deep learning", "practical"],
     "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.fashionsnap.com/rss/all/",
+    "title": "Fashionsnap.com",
+    "description": "日本のファッション業界ニュース、トレンド、ブランド情報",
+    "category": "Fashion",
+    "language": "ja",
+    "tags": ["ファッション", "fashion", "トレンド", "ブランド", "スタイル"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.vogue.co.jp/rss",
+    "title": "VOGUE JAPAN",
+    "description": "ファッション、ビューティー、カルチャーの最新情報",
+    "category": "Fashion",
+    "language": "ja",
+    "tags": ["ファッション", "fashion", "ビューティー", "カルチャー", "ライフスタイル"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.wwdjapan.com/rss/all.rss",
+    "title": "WWD JAPAN",
+    "description": "ファッション業界の最新ニュースとビジネス情報",
+    "category": "Fashion",
+    "language": "ja",
+    "tags": ["ファッション", "fashion", "ビジネス", "業界", "トレンド"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://ai-scholar.tech/feed/",
+    "title": "AI-SCHOLAR",
+    "description": "日本の機械学習・AI研究の最新情報",
+    "category": "AI Research",
+    "language": "ja",
+    "tags": ["機械学習", "machine learning", "ai", "研究", "ディープラーニング"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://ainow.ai/feed/",
+    "title": "AINOW",
+    "description": "日本のAI・機械学習ニュースメディア",
+    "category": "AI News",
+    "language": "ja",
+    "tags": ["機械学習", "machine learning", "ai", "ニュース", "テクノロジー"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://ledge.ai/feed/",
+    "title": "Ledge.ai",
+    "description": "日本のAI・機械学習の実践的な情報",
+    "category": "AI Development",
+    "language": "ja",
+    "tags": ["機械学習", "machine learning", "ai", "実践", "ビジネス"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.itmedia.co.jp/aiplus/rss/rss2.xml",
+    "title": "ITmedia AI+",
+    "description": "AI・機械学習の最新技術とビジネス活用",
+    "category": "AI Business",
+    "language": "ja",
+    "tags": ["機械学習", "machine learning", "ai", "ビジネス", "技術"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.itmedia.co.jp/mobile/rss/rss2.xml",
+    "title": "ITmedia Mobile",
+    "description": "スマートフォン、SNS、モバイルアプリの最新情報",
+    "category": "Mobile & SNS",
+    "language": "ja",
+    "tags": ["sns", "モバイル", "スマートフォン", "アプリ", "ソーシャルメディア"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://netgeek.biz/feed",
+    "title": "netgeek",
+    "description": "SNS、ネット文化、バイラルニュース",
+    "category": "Social Media",
+    "language": "ja",
+    "tags": ["sns", "ソーシャルメディア", "ネット", "バイラル", "トレンド"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://gaiax-socialmedialab.jp/feed",
+    "title": "ガイアックス ソーシャルメディアラボ",
+    "description": "SNSマーケティング、ソーシャルメディア活用の情報",
+    "category": "Social Media Marketing",
+    "language": "ja",
+    "tags": ["sns", "ソーシャルメディア", "マーケティング", "ビジネス", "活用"],
+    "lastUpdated": "2024-10-20T10:00:00Z"
   }
 ]
