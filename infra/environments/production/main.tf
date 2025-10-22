@@ -343,7 +343,7 @@ module "lambda" {
     COGNITO_CLIENT_ID     = module.cognito.client_id
     COGNITO_REGION        = "ap-northeast-1"
     BEDROCK_AGENT_ID      = module.bedrock_agent.bedrock_agent_id
-    BEDROCK_AGENT_ALIAS   = "production"
+    BEDROCK_AGENT_ALIAS   = module.bedrock_agent.bedrock_agent_alias_id
     BEDROCK_REGION        = "ap-northeast-1"
   }
 
