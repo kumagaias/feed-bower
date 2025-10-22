@@ -12,9 +12,9 @@ USER_POOL_ID=""
 
 # 環境に応じたUser Pool IDを取得
 if [ "$ENVIRONMENT" = "production" ]; then
-    USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 10 --query "UserPools[?Name=='feed-bower-users-production'].Id" --output text)
+    USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 10 --query "UserPools[?Name=='feed-bower-production'].Id" --output text)
 elif [ "$ENVIRONMENT" = "development" ]; then
-    USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 10 --query "UserPools[?Name=='feed-bower-users-development'].Id" --output text)
+    USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 10 --query "UserPools[?Name=='feed-bower-development'].Id" --output text)
 else
     echo "Invalid environment: $ENVIRONMENT"
     echo "Usage: $0 [production|development]"
