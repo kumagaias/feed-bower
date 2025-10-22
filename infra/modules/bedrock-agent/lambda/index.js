@@ -225,11 +225,29 @@ exports.handler = async (event) => {
       // Convert properties array to parameters object
       properties.forEach(prop => {
         if (prop.name === 'keywords') {
-          // Parse keywords - can be comma-separated string or array
+          // Parse keywords - can be comma-separated string, JSON array string, or array
           if (typeof prop.value === 'string') {
-            parameters.keywords = prop.value.split(',').map(k => k.trim()).filter(k => k);
-          } else {
+            // Try to parse as JSON array first
+            try {
+              const parsed = JSON.parse(prop.value);
+              if (Array.isArray(parsed)) {
+                parameters.keywords = parsed;
+              } else {
+                // Fallback to comma-separated
+                parameters.keywords = prop.value.split(',').map(k => k.trim()).filter(k => k);
+              }
+            } catch (e) {
+              // Not JSON, treat as comma-separated or space-separated
+              if (prop.value.includes(',')) {
+                parameters.keywords = prop.value.split(',').map(k => k.trim()).filter(k => k);
+              } else {
+                parameters.keywords = prop.value.split(/\s+/).map(k => k.trim()).filter(k => k);
+              }
+            }
+          } else if (Array.isArray(prop.value)) {
             parameters.keywords = prop.value;
+          } else {
+            parameters.keywords = [prop.value];
           }
         } else if (prop.name === 'limit') {
           parameters.limit = parseInt(prop.value);
