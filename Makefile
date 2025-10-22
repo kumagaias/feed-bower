@@ -38,8 +38,14 @@ test:
 	cd front && npm test -- --watchAll=false
 	@echo "4. Backend linting..."
 	cd back && go vet ./...
-	cd back && gofmt -s -l . | (! grep .)
-	@echo "5. Backend tests..."
+	@echo "5. Backend formatting check..."
+	@cd back && if [ "$$(gofmt -s -l . | wc -l)" -gt 0 ]; then \
+		echo "❌ Go code is not formatted properly:"; \
+		gofmt -s -l .; \
+		echo "Run 'make format' to fix formatting issues"; \
+		exit 1; \
+	fi
+	@echo "6. Backend tests..."
 	cd back && go test -v -race ./internal/service ./internal/handler ./internal/middleware ./pkg/...
 	@echo "✅ All tests, type-checking, and linting completed"
 

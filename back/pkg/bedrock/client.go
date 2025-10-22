@@ -81,7 +81,7 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 	// Process event stream
 	for event := range output.GetStream().Events() {
 		fmt.Printf("[BedrockClient] EVENT_RECEIVED | session_id=%s | event_type=%T\n", sessionID, event)
-		
+
 		switch v := event.(type) {
 		case *types.ResponseStreamMemberChunk:
 			chunkCount++

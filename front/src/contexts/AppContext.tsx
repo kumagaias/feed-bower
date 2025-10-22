@@ -16,11 +16,13 @@ interface AppContextType {
   chickStats: ChickStats
   likedArticles: any[]
   isMobile: boolean
+  demoMode: boolean
   setLanguage: (lang: 'ja' | 'en') => void
   setBowers: (bowers: any[]) => void
   setChickStats: (stats: ChickStats) => void
   setLikedArticles: (articles: any[]) => void
   setIsMobile: (mobile: boolean) => void
+  setDemoMode: (demo: boolean) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -48,6 +50,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     checkedDays: 0
   })
   const [likedArticles, setLikedArticles] = useState<any[]>([])
+  const [demoMode, setDemoMode] = useState<boolean>(false)
   const [isMobile, setIsMobile] = useState(false)
 
   // Load user's language preference from backend on mount
@@ -95,11 +98,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     chickStats,
     likedArticles,
     isMobile,
+    demoMode,
     setLanguage,
     setBowers,
     setChickStats,
     setLikedArticles,
-    setIsMobile
+    setIsMobile,
+    setDemoMode
   }
 
   return (

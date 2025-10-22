@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApp } from '@/contexts/AppContext'
 import { useTranslation } from '@/lib/i18n'
@@ -9,9 +9,20 @@ import LandingHeader from '@/components/LandingHeader'
 
 export default function Home() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { isAuthenticated, isLoading } = useAuth()
-  const { language } = useApp()
+  const { language, setDemoMode } = useApp()
   const t = useTranslation(language)
+  const [isDemoMode, setIsDemoMode] = useState(false)
+
+  // Check for demo mode
+  useEffect(() => {
+    const demoParam = searchParams.get('demo')
+    if (demoParam === 'true') {
+      setIsDemoMode(true)
+      setDemoMode(true)
+    }
+  }, [searchParams, setDemoMode])
 
   // Redirect authenticated users to bowers page
   useEffect(() => {
