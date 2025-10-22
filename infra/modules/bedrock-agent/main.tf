@@ -188,9 +188,9 @@ resource "aws_iam_role_policy" "bedrock_agent_lambda" {
 
 # Bedrock Agent リソース
 resource "aws_bedrockagent_agent" "feed_bower_agent" {
-  agent_name              = "${var.project_name}-${var.environment}-agent"
-  agent_resource_role_arn = aws_iam_role.bedrock_agent_role.arn
-  foundation_model        = "anthropic.claude-3-haiku-20240307-v1:0"
+  agent_name                  = "${var.project_name}-${var.environment}-agent"
+  agent_resource_role_arn     = aws_iam_role.bedrock_agent_role.arn
+  foundation_model            = "anthropic.claude-3-haiku-20240307-v1:0"
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
@@ -198,36 +198,30 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     
     Your role is to help users find high-quality, relevant RSS and Atom feeds based on their interests and keywords.
     
-    IMPORTANT: You have two methods to find feeds:
+    IMPORTANT INSTRUCTIONS:
     
-    METHOD 1 - Your Knowledge (Primary):
-    Based on your training data, you know many popular RSS/Atom feed URLs. When users provide keywords:
-    1. Think of well-known, reputable websites and blogs related to those keywords
-    2. Generate likely RSS/Atom feed URLs using common patterns:
-       - https://example.com/feed
-       - https://example.com/rss
-       - https://example.com/atom.xml
-       - https://example.com/feed.xml
-       - https://example.com/rss.xml
-    3. Prioritize feeds that match the user's language preference (Japanese or English)
-    4. Return 5-10 feed URLs with estimated titles and descriptions
+    1. ALWAYS use the search-feeds action to find feeds from the curated database
+    2. Pass the user's keywords directly to the search-feeds action
+    3. If the user specifies a language preference (Japanese or English), include it in the search
+    4. Return ALL feeds found by the search-feeds action
+    5. Do NOT try to generate feed URLs from your own knowledge
+    6. Do NOT filter or modify the results from search-feeds
     
-    METHOD 2 - Curated Database (Fallback):
-    If you're unsure, use the search-feeds action to find feeds from the curated database.
-    
-    VALIDATION:
-    After generating feed URLs from your knowledge, you MUST validate them using the validate-feeds action.
-    Only return feeds that pass validation.
+    WORKFLOW:
+    When a user provides keywords:
+    1. Call search-feeds with the keywords and language preference
+    2. Return the feeds exactly as provided by search-feeds
+    3. If search-feeds returns 0 feeds, inform the user that no feeds were found for those keywords
     
     OUTPUT FORMAT:
-    Return validated feeds in this format:
-    - Feed URL (validated and working)
+    Return feeds in this format:
+    - Feed URL
     - Title
     - Description
-    - Language (ja or en)
     - Category
+    - Relevance score
     
-    Always prioritize quality over quantity. Return only feeds you're confident about.
+    Always use the search-feeds action. Never skip this step.
   EOT
 
   tags = var.tags
@@ -243,8 +237,8 @@ locals {
   api_schema = {
     openapi = "3.0.0"
     info = {
-      title   = "Feed Search API"
-      version = "1.0.0"
+      title       = "Feed Search API"
+      version     = "1.0.0"
       description = "API for searching RSS/Atom feeds based on keywords"
     }
     paths = {
@@ -394,11 +388,11 @@ locals {
                         items = {
                           type = "object"
                           properties = {
-                            url = { type = "string", format = "uri" }
-                            valid = { type = "boolean" }
-                            title = { type = "string" }
+                            url         = { type = "string", format = "uri" }
+                            valid       = { type = "boolean" }
+                            title       = { type = "string" }
                             description = { type = "string" }
-                            statusCode = { type = "integer" }
+                            statusCode  = { type = "integer" }
                           }
                         }
                       }
@@ -407,13 +401,13 @@ locals {
                         items = {
                           type = "object"
                           properties = {
-                            url = { type = "string", format = "uri" }
+                            url   = { type = "string", format = "uri" }
                             valid = { type = "boolean" }
                             error = { type = "string" }
                           }
                         }
                       }
-                      validCount = { type = "integer" }
+                      validCount   = { type = "integer" }
                       invalidCount = { type = "integer" }
                     }
                   }
@@ -429,12 +423,12 @@ locals {
 
 # Action Group
 resource "aws_bedrockagent_agent_action_group" "feed_search" {
-  agent_id             = aws_bedrockagent_agent.feed_bower_agent.agent_id
-  agent_version        = "DRAFT"
-  action_group_name    = "feed-search"
-  description          = "Search for RSS/Atom feeds based on keywords"
+  agent_id                   = aws_bedrockagent_agent.feed_bower_agent.agent_id
+  agent_version              = "DRAFT"
+  action_group_name          = "feed-search"
+  description                = "Search for RSS/Atom feeds based on keywords"
   skip_resource_in_use_check = true
-  prepare_agent        = true
+  prepare_agent              = true
 
   action_group_executor {
     lambda = aws_lambda_function.feed_search.arn
