@@ -305,6 +305,15 @@ export default function KeywordEditModal({
 
     keywords.forEach(keyword => {
       const trimmedKeyword = keyword.trim()
+      
+      // Check if already at max limit
+      if (eggs.length >= 5) {
+        alert(language === 'ja' ? 
+          'キーワードは最大5個までです' : 
+          'Maximum 5 keywords allowed')
+        return
+      }
+      
       // Check character length (20 characters max)
       if (trimmedKeyword.length > 20) {
         alert(language === 'ja' ? 
@@ -313,7 +322,7 @@ export default function KeywordEditModal({
         return
       }
       
-      if (eggs.length < 8 && trimmedKeyword && !existingKeywords.includes(trimmedKeyword.toLowerCase())) {
+      if (eggs.length < 5 && trimmedKeyword && !existingKeywords.includes(trimmedKeyword.toLowerCase())) {
         const newEgg: Egg = {
           id: `user-${Date.now()}-${Math.random()}`,
           keyword: trimmedKeyword,
@@ -328,7 +337,12 @@ export default function KeywordEditModal({
   }
 
   const handleKeywordClick = (keyword: FloatingKeyword) => {
-    if (eggs.length >= 8) return
+    if (eggs.length >= 5) {
+      alert(language === 'ja' ? 
+        'キーワードは最大5個までです' : 
+        'Maximum 5 keywords allowed')
+      return
+    }
 
     const existingKeywords = eggs.map(egg => egg.keyword.toLowerCase())
     if (existingKeywords.includes(keyword.text.toLowerCase())) return

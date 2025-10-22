@@ -315,12 +315,9 @@ type UpdateUserRequest struct {
 
 // UpdateCurrentUser updates the current user's information
 func (h *AuthHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Get user ID from context (set by auth middleware)
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok || userID == "" {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
+	// Get user from context using the helper function
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
 		return
 	}
 
@@ -336,13 +333,6 @@ func (h *AuthHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Get current user
-	user, err := h.authService.GetUserByID(ctx, userID)
-	if err != nil {
-		response.NotFound(w, "User not found")
-		return
-	}
-
 	// Update fields if provided
 	if req.Name != nil {
 		user.Name = *req.Name
@@ -352,7 +342,7 @@ func (h *AuthHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Update user
-	if err := h.authService.UpdateUser(ctx, user); err != nil {
+	if err := h.authService.UpdateUser(r.Context(), user); err != nil {
 		response.InternalServerError(w, "Failed to update user")
 		return
 	}

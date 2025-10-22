@@ -60,8 +60,8 @@ func TestBower_AddKeyword(t *testing.T) {
 		t.Errorf("Expected 2 keywords after duplicate attempt, got %d", len(bower.Keywords))
 	}
 
-	// Test adding keywords up to limit
-	for i := 0; i < 6; i++ {
+	// Test adding keywords up to limit (max 5 total, already have 2)
+	for i := 0; i < 3; i++ {
 		bower.AddKeyword("Keyword" + string(rune('A'+i)))
 	}
 
@@ -70,8 +70,8 @@ func TestBower_AddKeyword(t *testing.T) {
 	if result {
 		t.Error("Should not be able to add keyword beyond limit")
 	}
-	if len(bower.Keywords) != 8 {
-		t.Errorf("Expected 8 keywords at limit, got %d", len(bower.Keywords))
+	if len(bower.Keywords) != 5 {
+		t.Errorf("Expected 5 keywords at limit, got %d", len(bower.Keywords))
 	}
 }
 

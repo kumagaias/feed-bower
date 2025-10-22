@@ -480,6 +480,7 @@ module "amplify" {
   enable_auto_branch_creation = false
   enable_pull_request_preview = false
   enable_basic_auth           = false
+  enable_spa_redirect         = true  # SPAリダイレクトを有効化
 
   custom_domain = "feed-bower.net"
   domain_config = [

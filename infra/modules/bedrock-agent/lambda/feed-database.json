@@ -167,7 +167,13 @@
     "description": "Updates and tutorials from the TensorFlow team",
     "category": "AI Development",
     "language": "en",
-    "tags": ["ai", "machine learning", "tensorflow", "deep learning", "tutorial"],
+    "tags": [
+      "ai",
+      "machine learning",
+      "tensorflow",
+      "deep learning",
+      "tutorial"
+    ],
     "lastUpdated": "2024-10-20T10:00:00Z"
   },
   {
@@ -221,7 +227,13 @@
     "description": "Practical machine learning tutorials",
     "category": "AI Development",
     "language": "en",
-    "tags": ["machine learning", "ai", "tutorial", "deep learning", "practical"],
+    "tags": [
+      "machine learning",
+      "ai",
+      "tutorial",
+      "deep learning",
+      "practical"
+    ],
     "lastUpdated": "2024-10-20T10:00:00Z"
   },
   {
@@ -239,7 +251,13 @@
     "description": "ファッション、ビューティー、カルチャーの最新情報",
     "category": "Fashion",
     "language": "ja",
-    "tags": ["ファッション", "fashion", "ビューティー", "カルチャー", "ライフスタイル"],
+    "tags": [
+      "ファッション",
+      "fashion",
+      "ビューティー",
+      "カルチャー",
+      "ライフスタイル"
+    ],
     "lastUpdated": "2024-10-20T10:00:00Z"
   },
   {
@@ -257,7 +275,13 @@
     "description": "日本の機械学習・AI研究の最新情報",
     "category": "AI Research",
     "language": "ja",
-    "tags": ["機械学習", "machine learning", "ai", "研究", "ディープラーニング"],
+    "tags": [
+      "機械学習",
+      "machine learning",
+      "ai",
+      "研究",
+      "ディープラーニング"
+    ],
     "lastUpdated": "2024-10-20T10:00:00Z"
   },
   {
@@ -293,7 +317,13 @@
     "description": "スマートフォン、SNS、モバイルアプリの最新情報",
     "category": "Mobile & SNS",
     "language": "ja",
-    "tags": ["sns", "モバイル", "スマートフォン", "アプリ", "ソーシャルメディア"],
+    "tags": [
+      "sns",
+      "モバイル",
+      "スマートフォン",
+      "アプリ",
+      "ソーシャルメディア"
+    ],
     "lastUpdated": "2024-10-20T10:00:00Z"
   },
   {
