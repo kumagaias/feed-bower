@@ -622,63 +622,12 @@ export default function BowerEditModal({
 
             {/* Feeds Section */}
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-base font-medium text-gray-700">
-                  {language === "ja" ? "フィード" : "Feeds"}
-                  <span className="ml-2 text-sm text-gray-500">
-                    ({feeds.length} feeds)
-                  </span>
-                </label>
-                <button
-                  onClick={async () => {
-                    if (!bower?.id) return;
-                    setIsLoadingFeeds(true);
-                    try {
-                      await feedApi.fetchBowerFeeds(bower.id);
-                      setToast({
-                        message:
-                          language === "ja"
-                            ? "記事を更新しました"
-                            : "Articles refreshed",
-                        type: "success",
-                      });
-                    } catch (error) {
-                      console.error("Failed to refresh feeds:", error);
-                      setToast({
-                        message:
-                          language === "ja"
-                            ? "記事の更新に失敗しました"
-                            : "Failed to refresh articles",
-                        type: "error",
-                      });
-                    } finally {
-                      setIsLoadingFeeds(false);
-                    }
-                  }}
-                  disabled={!bower?.id || isLoadingFeeds || feeds.length === 0}
-                  className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  title={
-                    language === "ja"
-                      ? "フィードの記事を更新"
-                      : "Refresh feed articles"
-                  }
-                >
-                  <svg
-                    className={`w-5 h-5 ${isLoadingFeeds ? "animate-spin" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <label className="block text-base font-medium text-gray-700 mb-3">
+                {language === "ja" ? "フィード" : "Feeds"}
+                <span className="ml-2 text-sm text-gray-500">
+                  ({feeds.length} feeds)
+                </span>
+              </label>
               <p className="text-base text-gray-600 mb-4">
                 {language === "ja"
                   ? "キーワードに関連するフィードが自動で登録されます。追加・削除できます。"
