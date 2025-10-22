@@ -240,3 +240,8 @@ func TestAuthHandler_Login(t *testing.T) {
 		t.Error("Expected token to be present")
 	}
 }
+
+// Helper function for string pointer
+func stringPtr(s string) *string {
+	return &s
+}

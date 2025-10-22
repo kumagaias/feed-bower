@@ -231,9 +231,64 @@ export default function BowerEditModal({
       setBowerName(generatedName);
     }
 
-    // キーワード変更時は既存のフィードをそのまま保持
-    // フィードの追加・削除はユーザーが手動で行う
-    console.log("✅ Keywords updated, keeping existing feeds:", feeds.length);
+    // キーワード変更時にフィード推奨を取得して自動的にデータベースに保存
+    if (bower?.id && newKeywords.length > 0) {
+      console.log("🔍 Auto-registering feeds for keywords:", newKeywords);
+      setIsLoadingFeeds(true);
+
+      try {
+        // バックエンドのauto-register APIを使用（推奨フィードを自動的にDBに保存）
+        const result = await feedApi.autoRegisterFeeds(bower.id, newKeywords, 5);
+
+        console.log("📥 Auto-register result:", result);
+
+        if (result && result.added_feeds && result.added_feeds.length > 0) {
+          // 追加されたフィードをUIに反映
+          setFeeds(prev => [...prev, ...result.added_feeds]);
+          console.log(`✅ Auto-registered ${result.added_feeds.length} feeds`);
+          
+          // 成功メッセージを表示
+          setToast({
+            message: language === 'ja' 
+              ? `${result.added_feeds.length}件のフィードを自動登録しました` 
+              : `Auto-registered ${result.added_feeds.length} feeds`,
+            type: 'success'
+          });
+
+          // フィードの記事を取得（バックグラウンドで実行）
+          try {
+            console.log("📡 Fetching articles for newly registered feeds...");
+            await feedApi.fetchBowerFeeds(bower.id);
+            console.log("✅ Articles fetched successfully");
+          } catch (fetchError) {
+            console.error("⚠️ Failed to fetch articles:", fetchError);
+            // エラーは無視（バックグラウンド処理のため）
+          }
+        } else {
+          console.log("ℹ️ No new feeds to register");
+        }
+
+        // スキップされたフィードがある場合
+        if (result && result.skipped_feeds && result.skipped_feeds.length > 0) {
+          console.log(`ℹ️ Skipped ${result.skipped_feeds.length} duplicate feeds`);
+        }
+
+        // 失敗したフィードがある場合
+        if (result && result.failed_feeds && result.failed_feeds.length > 0) {
+          console.log(`⚠️ Failed to register ${result.failed_feeds.length} feeds`);
+        }
+      } catch (error) {
+        console.error("❌ Failed to auto-register feeds:", error);
+        setToast({
+          message: language === 'ja' 
+            ? 'フィードの自動登録に失敗しました' 
+            : 'Failed to auto-register feeds',
+          type: 'error'
+        });
+      } finally {
+        setIsLoadingFeeds(false);
+      }
+    }
 
     // Real API-based auto-add (commented out for now)
     /*

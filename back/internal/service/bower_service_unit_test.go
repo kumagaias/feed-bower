@@ -202,6 +202,213 @@ func TestBowerService_GetBowerByID_Unit(t *testing.T) {
 	}
 }
 
+func TestBowerService_UpdateBower_Unit(t *testing.T) {
+	mockBowerRepo := NewMockBowerRepository()
+	mockFeedRepo := NewMockFeedRepository()
+	service := NewBowerService(mockBowerRepo, mockFeedRepo)
+
+	// Create a test bower
+	bower := &model.Bower{
+		BowerID:  "bower123",
+		UserID:   "user123",
+		Name:     "Original Name",
+		Keywords: []string{"AI", "Programming"},
+		Color:    "#14b8a6",
+		IsPublic: false,
+	}
+	mockBowerRepo.bowers[bower.BowerID] = bower
+
+	tests := []struct {
+		name    string
+		bowerID string
+		userID  string
+		req     *UpdateBowerRequest
+		wantErr bool
+		check   func(*testing.T, *model.Bower)
+	}{
+		{
+			name:    "update name only",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Name: stringPtr("Updated Name"),
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if b.Name != "Updated Name" {
+					t.Errorf("Name = %v, want Updated Name", b.Name)
+				}
+				if len(b.Keywords) != 2 {
+					t.Errorf("Keywords should remain unchanged")
+				}
+			},
+		},
+		{
+			name:    "update keywords only",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Keywords: &[]string{"ML", "Data Science", "Python"},
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if len(b.Keywords) != 3 {
+					t.Errorf("Keywords length = %v, want 3", len(b.Keywords))
+				}
+				if b.Keywords[0] != "ML" {
+					t.Errorf("First keyword = %v, want ML", b.Keywords[0])
+				}
+			},
+		},
+		{
+			name:    "update with 5 keywords (max allowed)",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Keywords: &[]string{"K1", "K2", "K3", "K4", "K5"},
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if len(b.Keywords) != 5 {
+					t.Errorf("Keywords length = %v, want 5", len(b.Keywords))
+				}
+			},
+		},
+		{
+			name:    "update with too many keywords should fail",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Keywords: &[]string{"K1", "K2", "K3", "K4", "K5", "K6"},
+			},
+			wantErr: true,
+		},
+		{
+			name:    "update with empty keywords should fail",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Keywords: &[]string{},
+			},
+			wantErr: true,
+		},
+		{
+			name:    "update with empty name should fail",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Name: stringPtr(""),
+			},
+			wantErr: true,
+		},
+		{
+			name:    "update is_public flag",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				IsPublic: boolPtr(true),
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if !b.IsPublic {
+					t.Errorf("IsPublic = false, want true")
+				}
+			},
+		},
+		{
+			name:    "update color",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Color: stringPtr("#ff0000"),
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if b.Color != "#ff0000" {
+					t.Errorf("Color = %v, want #ff0000", b.Color)
+				}
+			},
+		},
+		{
+			name:    "unauthorized user should fail",
+			bowerID: "bower123",
+			userID:  "otheruser",
+			req: &UpdateBowerRequest{
+				Name: stringPtr("Hacked Name"),
+			},
+			wantErr: true,
+		},
+		{
+			name:    "non-existing bower should fail",
+			bowerID: "nonexistent",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Name: stringPtr("New Name"),
+			},
+			wantErr: true,
+		},
+		{
+			name:    "update multiple fields",
+			bowerID: "bower123",
+			userID:  "user123",
+			req: &UpdateBowerRequest{
+				Name:     stringPtr("Multi Update"),
+				Keywords: &[]string{"New", "Keywords"},
+				IsPublic: boolPtr(true),
+			},
+			wantErr: false,
+			check: func(t *testing.T, b *model.Bower) {
+				if b.Name != "Multi Update" {
+					t.Errorf("Name = %v, want Multi Update", b.Name)
+				}
+				if len(b.Keywords) != 2 {
+					t.Errorf("Keywords length = %v, want 2", len(b.Keywords))
+				}
+				if !b.IsPublic {
+					t.Errorf("IsPublic = false, want true")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset bower state before each test
+			mockBowerRepo.bowers["bower123"] = &model.Bower{
+				BowerID:  "bower123",
+				UserID:   "user123",
+				Name:     "Original Name",
+				Keywords: []string{"AI", "Programming"},
+				Color:    "#14b8a6",
+				IsPublic: false,
+			}
+
+			result, err := service.UpdateBower(context.Background(), tt.userID, tt.bowerID, tt.req)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("UpdateBower() expected error, got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("UpdateBower() unexpected error: %v", err)
+				return
+			}
+
+			if result == nil {
+				t.Errorf("UpdateBower() returned nil result")
+				return
+			}
+
+			if tt.check != nil {
+				tt.check(t, result)
+			}
+		})
+	}
+}
+
 func TestBowerService_DeleteBower_Unit(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
@@ -264,4 +471,13 @@ func TestBowerService_DeleteBower_Unit(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Helper functions for pointer types
+func stringPtr(s string) *string {
+	return &s
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

@@ -263,7 +263,7 @@ export default function BowersPage() {
     
     try {
       // Update bower using the hook (バックエンドが最新のフィードを含めて返す)
-      await updateBower(editingBower.id, {
+      const updatedBower = await updateBower(editingBower.id, {
         name: bowerData.name,
         keywords: bowerData.keywords,
         is_public: editingBower.is_public
@@ -273,6 +273,18 @@ export default function BowersPage() {
         message: language === 'ja' ? 'バウアーを更新しました' : 'Bower updated successfully',
         type: 'success'
       })
+
+      // フィードが追加された場合、記事を取得（バックグラウンドで実行）
+      if (updatedBower && bowerData.feeds.length > 0) {
+        try {
+          console.log("📡 Fetching articles for updated bower...");
+          await feedApi.fetchBowerFeeds(editingBower.id);
+          console.log("✅ Articles fetched successfully");
+        } catch (fetchError) {
+          console.error("⚠️ Failed to fetch articles:", fetchError);
+          // エラーは無視（バックグラウンド処理のため）
+        }
+      }
     } catch (error) {
       console.error('Failed to update bower:', error)
       setToast({

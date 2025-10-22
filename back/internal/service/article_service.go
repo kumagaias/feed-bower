@@ -416,13 +416,17 @@ func (s *articleService) getAllArticles(ctx context.Context, userID string, req 
 	}
 
 	if len(feedIDs) == 0 {
+		log.Printf("⚠️ No feed IDs found for user %s", userID)
 		return []*model.Article{}, nil, nil
 	}
 
+	log.Printf("📡 Fetching articles for %d feeds", len(feedIDs))
 	articles, nextKey, err := s.articleRepo.GetByFeedIDs(ctx, feedIDs, req.Limit, req.LastKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get articles: %w", err)
 	}
+
+	log.Printf("📥 Retrieved %d articles from repository", len(articles))
 
 	// Sort articles by published date (DynamoDB scan doesn't guarantee order)
 	sort.Slice(articles, func(i, j int) bool {

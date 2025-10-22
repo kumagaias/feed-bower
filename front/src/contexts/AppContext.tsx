@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 interface ChickStats {
   totalLikes: number
@@ -50,6 +50,29 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [likedArticles, setLikedArticles] = useState<any[]>([])
   const [isMobile, setIsMobile] = useState(false)
 
+  // Load user's language preference from backend on mount
+  useEffect(() => {
+    const loadUserLanguage = async () => {
+      try {
+        const { authApi } = await import('@/lib/api')
+        console.log('🌐 Loading user language preference...')
+        const userData = await authApi.getMe()
+        console.log('📥 User data received:', userData)
+        if (userData && userData.language) {
+          setLanguageState(userData.language as 'ja' | 'en')
+          console.log('✅ Language set to:', userData.language)
+        } else {
+          console.log('⚠️ No language in user data, using default (ja)')
+        }
+      } catch (error) {
+        // User not logged in or API error - keep default 'ja'
+        console.log('⚠️ Failed to load language, using default (ja):', error)
+      }
+    }
+
+    loadUserLanguage()
+  }, [])
+
   const setLanguage = async (lang: 'ja' | 'en') => {
     // Update local state immediately for better UX
     setLanguageState(lang)
@@ -58,6 +81,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     try {
       const { authApi } = await import('@/lib/api')
       await authApi.updateMe({ language: lang })
+      console.log('✅ Language preference saved to backend:', lang)
     } catch (error) {
       // Silently fail if not logged in or API error
       // Language preference will still work locally

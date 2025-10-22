@@ -276,8 +276,8 @@ func (s *bowerService) UpdateBower(ctx context.Context, userID string, bowerID s
 		if len(*req.Keywords) == 0 {
 			return nil, errors.New("bower must have at least one keyword")
 		}
-		if len(*req.Keywords) > 8 {
-			return nil, errors.New("bower cannot have more than 8 keywords")
+		if len(*req.Keywords) > 5 {
+			return nil, errors.New("bower cannot have more than 5 keywords")
 		}
 		bower.Keywords = *req.Keywords
 	}
