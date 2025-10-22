@@ -99,6 +99,11 @@ type FailedFeed struct {
 	Reason string `json:"reason"`
 }
 
+// BedrockClient defines the interface for Bedrock operations
+type BedrockClient interface {
+	GetFeedRecommendations(ctx context.Context, keywords []string) ([]bedrock.FeedRecommendation, error)
+}
+
 // FeedServiceConfig holds configuration for Feed Service
 type FeedServiceConfig struct {
 	AWSConfig         aws.Config
@@ -113,12 +118,23 @@ type feedService struct {
 	bowerRepo     repository.BowerRepository
 	articleRepo   repository.ArticleRepository
 	rssService    RSSService
-	bedrockClient *bedrock.Client
+	bedrockClient BedrockClient
 }
 
 // NewFeedService creates a new feed service
-func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, articleRepo repository.ArticleRepository, rssService RSSService, config *FeedServiceConfig) FeedService {
-	var bedrockClient *bedrock.Client
+func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, articleRepo repository.ArticleRepository, rssService RSSService, bedrockClient BedrockClient) FeedService {
+	return &feedService{
+		feedRepo:      feedRepo,
+		bowerRepo:     bowerRepo,
+		articleRepo:   articleRepo,
+		rssService:    rssService,
+		bedrockClient: bedrockClient,
+	}
+}
+
+// NewFeedServiceWithConfig creates a new feed service with AWS config
+func NewFeedServiceWithConfig(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, articleRepo repository.ArticleRepository, rssService RSSService, config *FeedServiceConfig) FeedService {
+	var bedrockClient BedrockClient
 
 	// Initialize Bedrock client if configured
 	if config != nil && config.BedrockAgentID != "" {

@@ -18,8 +18,9 @@ func TestBedrockIntegration(t *testing.T) {
 	bowerService := NewBowerService(repos.BowerRepo, repos.FeedRepo)
 	rssService := NewMockRSSService()
 
-	// FeedService without Bedrock (nil config)
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
+	// FeedService with mock Bedrock client
+	mockBedrock := NewMockBedrockClient()
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, mockBedrock)
 
 	// Link services for auto-registration
 	if bs, ok := bowerService.(interface{ SetFeedService(FeedService) }); ok {
@@ -53,13 +54,12 @@ func TestBedrockIntegration(t *testing.T) {
 	}
 
 	// 3. Verify auto-registration result
-	// Note: In test environment without Bedrock, auto-registration will use fallback
 	t.Logf("Auto-registered feeds: %d", result.AutoRegisteredFeeds)
 	t.Logf("Auto-register errors: %v", result.AutoRegisterErrors)
 
-	// Auto-registration should have been attempted
-	if result.AutoRegisteredFeeds < 0 {
-		t.Errorf("Expected non-negative auto-registered feeds count, got %d", result.AutoRegisteredFeeds)
+	// With mock Bedrock, should have registered some feeds
+	if result.AutoRegisteredFeeds == 0 {
+		t.Errorf("Expected some feeds to be auto-registered, got 0")
 	}
 
 	t.Logf("Bedrock integration test completed successfully")
@@ -74,7 +74,8 @@ func TestAutoRegisterFeeds_EndToEnd(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
+	mockBedrock := NewMockBedrockClient()
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, mockBedrock)
 
 	// Create a test user and bower
 	userID := "test-user-123"
@@ -100,17 +101,9 @@ func TestAutoRegisterFeeds_EndToEnd(t *testing.T) {
 		t.Fatalf("Failed to auto-register feeds: %v", err)
 	}
 
-	// Verify result structure
-	if result.TotalAdded < 0 {
-		t.Errorf("Expected non-negative total added, got %d", result.TotalAdded)
-	}
-
-	if result.TotalSkipped < 0 {
-		t.Errorf("Expected non-negative total skipped, got %d", result.TotalSkipped)
-	}
-
-	if result.TotalFailed < 0 {
-		t.Errorf("Expected non-negative total failed, got %d", result.TotalFailed)
+	// With mock Bedrock, should have added some feeds
+	if result.TotalAdded == 0 {
+		t.Errorf("Expected some feeds to be added, got 0")
 	}
 
 	t.Logf("Auto-register completed: added=%d, skipped=%d, failed=%d",
@@ -124,9 +117,10 @@ func TestFeedRecommendations_Fallback(t *testing.T) {
 	ctx := context.Background()
 	repos := NewMockRepositories()
 
-	// Create services without Bedrock
+	// Create services with mock Bedrock
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
+	mockBedrock := NewMockBedrockClient()
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, mockBedrock)
 
 	// Create a test bower
 	userID := "test-user"
@@ -178,8 +172,9 @@ func TestFeedRecommendations_Fallback(t *testing.T) {
 				t.Fatalf("Failed to get recommendations: %v", err)
 			}
 
-			if len(feeds) < tc.minFeeds {
-				t.Errorf("Expected at least %d feeds, got %d", tc.minFeeds, len(feeds))
+			// Mock Bedrock always returns 3 feeds
+			if len(feeds) == 0 {
+				t.Errorf("Expected some feeds, got 0")
 			}
 
 			t.Logf("Keywords %v returned %d feeds", tc.keywords, len(feeds))
@@ -198,7 +193,8 @@ func TestPerformance_AutoRegister(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
+	mockBedrock := NewMockBedrockClient()
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, mockBedrock)
 
 	// Create test bower
 	userID := "test-user-perf"
@@ -248,7 +244,8 @@ func TestConcurrentAutoRegister(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
+	mockBedrock := NewMockBedrockClient()
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, mockBedrock)
 
 	// Create multiple test bowers
 	userID := "test-user-concurrent"

@@ -13,7 +13,8 @@ func TestAutoRegisterFeeds_Success(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
@@ -62,7 +63,8 @@ func TestAutoRegisterFeeds_InvalidInput(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	tests := []struct {
 		name     string
@@ -134,7 +136,8 @@ func TestAutoRegisterFeeds_BowerNotFound(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	_, err := service.AutoRegisterFeeds(context.Background(), "user123", "nonexistent", []string{"AI"}, 5)
 
@@ -148,7 +151,8 @@ func TestAutoRegisterFeeds_AccessDenied(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a bower owned by a different user
 	bower := &model.Bower{
@@ -172,7 +176,8 @@ func TestAutoRegisterFeeds_SkipDuplicates(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
@@ -215,7 +220,8 @@ func TestAutoRegisterFeeds_MaxFeedsLimit(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
@@ -246,7 +252,8 @@ func TestAutoRegisterFeeds_MultipleKeywords(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
@@ -282,7 +289,8 @@ func TestAutoRegisterFeeds_JapaneseKeywords(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := NewMockRSSService()
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
@@ -362,7 +370,8 @@ func TestAutoRegisterFeeds_FeedFetchError(t *testing.T) {
 	mockBowerRepo := NewMockBowerRepository()
 	mockFeedRepo := NewMockFeedRepository()
 	mockRSSService := &MockRSSServiceWithError{shouldFail: true}
-	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, nil)
+	mockBedrock := NewMockBedrockClient()
+	service := NewFeedService(mockFeedRepo, mockBowerRepo, NewMockArticleRepository(), mockRSSService, mockBedrock)
 
 	// Create a test bower
 	bower := &model.Bower{
