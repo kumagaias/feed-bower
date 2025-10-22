@@ -12,6 +12,7 @@ import {
 } from "@/lib/bowerNameGenerator";
 import KeywordEditModal from "./KeywordEditModal";
 import BowerPreviewModal from "./BowerPreviewModal";
+import Toast from "./Toast";
 
 interface BowerEditModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export default function BowerEditModal({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempBowerName, setTempBowerName] = useState("");
   const [hasUserEditedName, setHasUserEditedName] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // Initialize with bower data and load feeds
   useEffect(() => {
@@ -604,12 +606,45 @@ export default function BowerEditModal({
 
             {/* Feeds Section */}
             <div className="mb-6">
-              <label className="block text-base font-medium text-gray-700 mb-3">
-                {language === "ja" ? "フィード" : "Feeds"}
-                <span className="ml-2 text-sm text-gray-500">
-                  ({feeds.length} feeds)
-                </span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-base font-medium text-gray-700">
+                  {language === "ja" ? "フィード" : "Feeds"}
+                  <span className="ml-2 text-sm text-gray-500">
+                    ({feeds.length} feeds)
+                  </span>
+                </label>
+                <button
+                  onClick={async () => {
+                    if (!bower?.id) return;
+                    setIsLoadingFeeds(true);
+                    try {
+                      await feedApi.fetchBowerFeeds(bower.id);
+                      setToast({
+                        message: language === "ja" ? "記事を更新しました" : "Articles refreshed",
+                        type: "success"
+                      });
+                    } catch (error) {
+                      console.error("Failed to refresh feeds:", error);
+                      setToast({
+                        message: language === "ja" ? "記事の更新に失敗しました" : "Failed to refresh articles",
+                        type: "error"
+                      });
+                    } finally {
+                      setIsLoadingFeeds(false);
+                    }
+                  }}
+                  disabled={!bower?.id || isLoadingFeeds || feeds.length === 0}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed text-sm flex items-center gap-2"
+                  title={language === "ja" ? "フィードの記事を更新" : "Refresh feed articles"}
+                >
+                  {isLoadingFeeds ? (
+                    <div className="animate-spin">🔄</div>
+                  ) : (
+                    "🔄"
+                  )}
+                  {language === "ja" ? "更新" : "Refresh"}
+                </button>
+              </div>
               <p className="text-base text-gray-600 mb-4">
                 {language === "ja"
                   ? "キーワードに関連するフィードが自動で登録されます。追加・削除できます。"
@@ -853,6 +888,15 @@ export default function BowerEditModal({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </>
   );
