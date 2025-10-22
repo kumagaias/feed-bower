@@ -234,57 +234,38 @@ export default function BowerEditModal({
     // 手動追加されたフィード（カスタムフィード）を保持
     const customFeeds = feeds.filter((feed) => feed.isCustom === true);
 
-    // フィード自動追加処理（バックエンドAPI連携）
-    if (newKeywords.length > 0) {
-      // バックエンドからフィード推奨を取得
-      if (bower?.id) {
-        try {
-          const recommendedFeeds = await feedApi.getFeedRecommendations(
-            bower.id,
-            newKeywords
-          );
+    // フィード自動追加処理（Bedrock API連携）
+    if (newKeywords.length > 0 && bower?.id) {
+      console.log("🔍 Auto-adding feeds for keywords:", newKeywords);
+      setIsLoadingFeeds(true);
 
-          if (recommendedFeeds && recommendedFeeds.length > 0) {
-            // 自動フィードとカスタムフィードを結合
-            setFeeds([...recommendedFeeds, ...customFeeds]);
-          } else {
-            // カスタムフィードのみ保持
-            setFeeds(customFeeds);
-          }
-        } catch (error) {
-          // バックエンドAPI失敗時のフォールバック（モックフィード）
-          const mockFeeds = newKeywords.map((keyword, index) => ({
-            id: `mock-feed-${Date.now()}-${index}`,
-            url: `https://example.com/feed/${keyword
-              .toLowerCase()
-              .replace(/\s+/g, "-")}`,
-            title: `${keyword} Feed`,
-            description: `Auto-generated feed for ${keyword}`,
-            category: keyword,
-            isCustom: false, // 自動生成フィード
-          }));
+      try {
+        // バックエンドからフィード推奨を取得（Bedrock使用）
+        const recommendedFeeds = await feedApi.getFeedRecommendations(
+          bower.id,
+          newKeywords
+        );
 
+        console.log("📥 Received recommendations:", recommendedFeeds);
+
+        if (recommendedFeeds && recommendedFeeds.length > 0) {
           // 自動フィードとカスタムフィードを結合
-          setFeeds([...mockFeeds, ...customFeeds]);
+          setFeeds([...recommendedFeeds, ...customFeeds]);
+          console.log("✅ Updated feeds with recommendations");
+        } else {
+          // カスタムフィードのみ保持
+          setFeeds(customFeeds);
+          console.log("ℹ️ No recommendations received, keeping custom feeds only");
         }
-      } else {
-        // バウアーIDがない場合のモックフィード
-        const mockFeeds = newKeywords.map((keyword, index) => ({
-          id: `mock-feed-${Date.now()}-${index}`,
-          url: `https://example.com/feed/${keyword
-            .toLowerCase()
-            .replace(/\s+/g, "-")}`,
-          title: `${keyword} Feed`,
-          description: `Auto-generated feed for ${keyword}`,
-          category: keyword,
-          isCustom: false, // 自動生成フィード
-        }));
-
-        // 自動フィードとカスタムフィードを結合
-        setFeeds([...mockFeeds, ...customFeeds]);
+      } catch (error) {
+        console.error("❌ Failed to get feed recommendations:", error);
+        // エラー時はカスタムフィードのみ保持
+        setFeeds(customFeeds);
+      } finally {
+        setIsLoadingFeeds(false);
       }
     } else {
-      // キーワードがない場合はカスタムフィードのみ保持
+      // キーワードがない場合、またはバウアーIDがない場合はカスタムフィードのみ保持
       setFeeds(customFeeds);
     }
 
