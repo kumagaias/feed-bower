@@ -83,46 +83,10 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 		fmt.Printf("[BedrockClient] EVENT_RECEIVED | session_id=%s | event_type=%T\n", sessionID, event)
 
 		switch v := event.(type) {
-		case *types.ResponseStreamMemberReturn:
-			// Handle return completion event
-			chunkCount++
-			if v.Value.Output != nil && v.Value.Output.Text != nil {
-				chunkText := *v.Value.Output.Text
-				fmt.Printf("[BedrockClient] RETURN_RECEIVED | session_id=%s | text_length=%d | text=%s\n",
-					sessionID, len(chunkText), chunkText)
-				
-				// Try to parse as JSON
-				var returnData map[string]interface{}
-				if err := json.Unmarshal([]byte(chunkText), &returnData); err == nil {
-					// Check if body exists and parse it
-					var feedsData []interface{}
-					if bodyStr, ok := returnData["body"].(string); ok {
-						var bodyData map[string]interface{}
-						if err := json.Unmarshal([]byte(bodyStr), &bodyData); err == nil {
-							if feeds, ok := bodyData["feeds"].([]interface{}); ok {
-								feedsData = feeds
-								fmt.Printf("[BedrockClient] RETURN_FEEDS_FOUND | session_id=%s | feed_count=%d\n",
-									sessionID, len(feedsData))
-								
-								for feedIdx, feed := range feedsData {
-									if feedMap, ok := feed.(map[string]interface{}); ok {
-										rec := FeedRecommendation{
-											URL:         getString(feedMap, "url"),
-											Title:       getString(feedMap, "title"),
-											Description: getString(feedMap, "description"),
-											Category:    getString(feedMap, "category"),
-											Relevance:   getFloat(feedMap, "relevance"),
-										}
-										if rec.URL != "" {
-											recommendations = append(recommendations, rec)
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		case *types.ResponseStreamMemberReturnControl:
+			// Log return control event for debugging
+			fmt.Printf("[BedrockClient] RETURN_CONTROL_RECEIVED | session_id=%s | invocation_count=%d\n",
+				sessionID, len(v.Value.InvocationInputs))
 		case *types.ResponseStreamMemberChunk:
 			chunkCount++
 			chunkText := string(v.Value.Bytes)
