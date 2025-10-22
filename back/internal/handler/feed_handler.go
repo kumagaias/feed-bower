@@ -501,12 +501,8 @@ type FetchBowerFeedsRequest struct {
 
 // FetchBowerFeeds fetches articles from all feeds in a bower
 func (h *FeedHandler) FetchBowerFeeds(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Get user ID from context
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok || userID == "" {
-		response.Error(w, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
+	user, ok := GetRequiredUserFromContext(w, r)
+	if !ok {
 		return
 	}
 
@@ -523,7 +519,7 @@ func (h *FeedHandler) FetchBowerFeeds(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch bower feeds
-	result, err := h.feedService.FetchBowerFeeds(ctx, userID, req.BowerID)
+	result, err := h.feedService.FetchBowerFeeds(r.Context(), user.UserID, req.BowerID)
 	if err != nil {
 		if err.Error() == "bower not found: bower not found" {
 			response.NotFound(w, "Bower not found")

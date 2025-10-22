@@ -92,10 +92,30 @@ export class CustomCognitoAuth {
     return null;
   }
 
+  // トークンの有効期限をチェック
+  isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000; // Convert to milliseconds
+      return Date.now() >= exp;
+    } catch (error) {
+      console.error('Failed to parse token:', error);
+      return true;
+    }
+  }
+
   // 認証状態をチェック
   isAuthenticated(): boolean {
-    const accessToken = this.getAccessToken();
-    return accessToken !== null;
+    const idToken = this.getIdToken();
+    if (!idToken) return false;
+    
+    // トークンの有効期限をチェック
+    if (this.isTokenExpired(idToken)) {
+      console.log('⚠️ ID token is expired');
+      return false;
+    }
+    
+    return true;
   }
 
   async signIn(username: string, password: string): Promise<SignInResult> {

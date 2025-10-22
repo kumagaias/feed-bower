@@ -23,7 +23,32 @@ async function getAuthToken(): Promise<string | null> {
     // Import the getAuthToken function from AuthContext
     const { getAuthToken: getAuthTokenFromContext } = await import('@/contexts/AuthContext');
     const token = await getAuthTokenFromContext();
-    console.log('🔐 Auth token status:', token ? 'Token available' : 'No token');
+    
+    if (!token) {
+      console.log('⚠️ No auth token available');
+      return null;
+    }
+    
+    // Check if token is expired
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const exp = payload.exp * 1000;
+      const isExpired = Date.now() >= exp;
+      
+      if (isExpired) {
+        console.log('⚠️ Auth token is expired, please log in again');
+        console.log('Token expiry:', new Date(exp).toISOString());
+        console.log('Current time:', new Date().toISOString());
+        return null;
+      }
+      
+      console.log('✅ Auth token is valid');
+      console.log('Token expires at:', new Date(exp).toISOString());
+    } catch (parseError) {
+      console.error('❌ Failed to parse token:', parseError);
+      return null;
+    }
+    
     return token;
   } catch (error) {
     console.log("❌ Failed to get auth token:", error);

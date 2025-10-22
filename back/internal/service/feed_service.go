@@ -729,6 +729,17 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 		"mobile": {
 			{"https://android-developers.googleblog.com/feeds/posts/default", "Android Developers Blog", "Android development news", "Mobile"},
 			{"https://developer.apple.com/news/rss/news.rss", "Apple Developer News", "iOS development news", "Mobile"},
+			{"https://www.theverge.com/rss/index.xml", "The Verge", "Mobile technology news", "Mobile"},
+		},
+		"ar": {
+			{"https://www.roadtovr.com/feed/", "Road to VR", "AR/VR news and reviews", "AR"},
+			{"https://uploadvr.com/feed/", "UploadVR", "Virtual and augmented reality", "AR"},
+			{"https://www.theverge.com/rss/index.xml", "The Verge", "Tech news including AR/VR", "AR"},
+		},
+		"business": {
+			{"https://hbr.org/feed", "Harvard Business Review", "Business strategy and management", "Business"},
+			{"https://www.entrepreneur.com/latest.rss", "Entrepreneur", "Entrepreneurship and business", "Business"},
+			{"https://www.forbes.com/business/feed/", "Forbes Business", "Business news and insights", "Business"},
 		},
 		"science": {
 			{"https://www.nature.com/nature.rss", "Nature", "Scientific research and news", "Science"},
@@ -763,6 +774,12 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 		"ビジネス": {
 			{"https://hbr.org/feed", "Harvard Business Review", "ビジネス戦略", "ビジネス"},
 			{"https://www.entrepreneur.com/latest.rss", "Entrepreneur", "起業家向け情報", "ビジネス"},
+			{"https://www.forbes.com/business/feed/", "Forbes Business", "ビジネスニュース", "ビジネス"},
+		},
+		"モバイル": {
+			{"https://android-developers.googleblog.com/feeds/posts/default", "Android Developers Blog", "Android開発ニュース", "モバイル"},
+			{"https://developer.apple.com/news/rss/news.rss", "Apple Developer News", "iOS開発ニュース", "モバイル"},
+			{"https://www.theverge.com/rss/index.xml", "The Verge", "モバイル技術ニュース", "モバイル"},
 		},
 	}
 
