@@ -255,7 +255,9 @@ export default function BowerEditModal({
         } else {
           // カスタムフィードのみ保持
           setFeeds(customFeeds);
-          console.log("ℹ️ No recommendations received, keeping custom feeds only");
+          console.log(
+            "ℹ️ No recommendations received, keeping custom feeds only"
+          );
         }
       } catch (error) {
         console.error("❌ Failed to get feed recommendations:", error);

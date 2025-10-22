@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 
-// Load feed database
+// Load feed database (fallback)
 let feedDatabase = [];
 try {
   const dbPath = path.join(__dirname, 'feed-database.json');
@@ -10,6 +12,117 @@ try {
   console.log(`Loaded ${feedDatabase.length} feeds from database`);
 } catch (error) {
   console.error('Failed to load feed database:', error);
+}
+
+/**
+ * Validate if a URL is a valid RSS/Atom feed
+ */
+async function validateFeedUrl(url, timeout = 5000) {
+  return new Promise((resolve) => {
+    try {
+      const urlObj = new URL(url);
+      const protocol = urlObj.protocol === 'https:' ? https : http;
+      
+      const options = {
+        method: 'HEAD',
+        timeout: timeout,
+        headers: {
+          'User-Agent': 'FeedBower/1.0'
+        }
+      };
+      
+      const req = protocol.request(url, options, (res) => {
+        const contentType = res.headers['content-type'] || '';
+        const isValidFeed = 
+          contentType.includes('xml') || 
+          contentType.includes('rss') || 
+          contentType.includes('atom') ||
+          contentType.includes('application/rss+xml') ||
+          contentType.includes('application/atom+xml') ||
+          res.statusCode === 200; // Accept 200 even without content-type
+        
+        resolve({
+          valid: isValidFeed && res.statusCode === 200,
+          statusCode: res.statusCode,
+          contentType: contentType
+        });
+      });
+      
+      req.on('error', () => {
+        resolve({ valid: false, error: 'Request failed' });
+      });
+      
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({ valid: false, error: 'Timeout' });
+      });
+      
+      req.end();
+    } catch (error) {
+      resolve({ valid: false, error: error.message });
+    }
+  });
+}
+
+/**
+ * Fetch and parse feed content to get title and description
+ */
+async function fetchFeedMetadata(url, timeout = 5000) {
+  return new Promise((resolve) => {
+    try {
+      const urlObj = new URL(url);
+      const protocol = urlObj.protocol === 'https:' ? https : http;
+      
+      const options = {
+        method: 'GET',
+        timeout: timeout,
+        headers: {
+          'User-Agent': 'FeedBower/1.0'
+        }
+      };
+      
+      const req = protocol.request(url, options, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+          // Limit data size to prevent memory issues
+          if (data.length > 100000) {
+            req.destroy();
+          }
+        });
+        
+        res.on('end', () => {
+          try {
+            // Simple XML parsing for title and description
+            const titleMatch = data.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const descMatch = data.match(/<description[^>]*>([^<]+)<\/description>/i);
+            const subtitleMatch = data.match(/<subtitle[^>]*>([^<]+)<\/subtitle>/i);
+            
+            resolve({
+              title: titleMatch ? titleMatch[1].trim() : 'Unknown Feed',
+              description: (descMatch || subtitleMatch) ? (descMatch || subtitleMatch)[1].trim() : ''
+            });
+          } catch (error) {
+            resolve({ title: 'Unknown Feed', description: '' });
+          }
+        });
+      });
+      
+      req.on('error', () => {
+        resolve({ title: 'Unknown Feed', description: '' });
+      });
+      
+      req.on('timeout', () => {
+        req.destroy();
+        resolve({ title: 'Unknown Feed', description: '' });
+      });
+      
+      req.end();
+    } catch (error) {
+      resolve({ title: 'Unknown Feed', description: '' });
+    }
+  });
 }
 
 /**
@@ -105,6 +218,12 @@ exports.handler = async (event) => {
     // Extract parameters from Bedrock Agent event
     const parameters = event.parameters || {};
     
+    // Check if this is a validation request
+    if (parameters.action === 'validate' && parameters.feedUrls) {
+      console.log('Validation request received');
+      return await handleValidation(parameters);
+    }
+    
     // Validate input
     const validationErrors = validateInput(parameters);
     if (validationErrors.length > 0) {
@@ -144,7 +263,7 @@ exports.handler = async (event) => {
       .sort((a, b) => b.relevance - a.relevance)
       .slice(0, limit);
     
-    console.log(`Found ${relevantFeeds.length} relevant feeds`);
+    console.log(`Found ${relevantFeeds.length} relevant feeds from database`);
     
     // Log matching details for each feed
     relevantFeeds.forEach(feed => {
@@ -162,7 +281,8 @@ exports.handler = async (event) => {
           category: feed.category,
           relevance: feed.relevance
         })),
-        total: relevantFeeds.length
+        total: relevantFeeds.length,
+        source: 'database'
       })
     };
     
@@ -177,3 +297,55 @@ exports.handler = async (event) => {
     };
   }
 };
+
+/**
+ * Handle feed URL validation
+ */
+async function handleValidation(parameters) {
+  const feedUrls = Array.isArray(parameters.feedUrls) 
+    ? parameters.feedUrls 
+    : [parameters.feedUrls];
+  
+  console.log(`Validating ${feedUrls.length} feed URLs`);
+  
+  const validationResults = await Promise.all(
+    feedUrls.map(async (url) => {
+      console.log(`Validating: ${url}`);
+      const validation = await validateFeedUrl(url);
+      
+      if (validation.valid) {
+        const metadata = await fetchFeedMetadata(url);
+        return {
+          url: url,
+          valid: true,
+          title: metadata.title,
+          description: metadata.description,
+          statusCode: validation.statusCode
+        };
+      } else {
+        return {
+          url: url,
+          valid: false,
+          error: validation.error || 'Invalid feed',
+          statusCode: validation.statusCode
+        };
+      }
+    })
+  );
+  
+  const validFeeds = validationResults.filter(r => r.valid);
+  const invalidFeeds = validationResults.filter(r => !r.valid);
+  
+  console.log(`Validation complete: ${validFeeds.length} valid, ${invalidFeeds.length} invalid`);
+  
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      validFeeds: validFeeds,
+      invalidFeeds: invalidFeeds,
+      total: feedUrls.length,
+      validCount: validFeeds.length,
+      invalidCount: invalidFeeds.length
+    })
+  };
+}

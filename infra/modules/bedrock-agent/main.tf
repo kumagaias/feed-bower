@@ -198,22 +198,36 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     
     Your role is to help users find high-quality, relevant RSS and Atom feeds based on their interests and keywords.
     
-    When a user provides keywords:
-    1. Analyze the keywords to understand the user's interests
-    2. Use the search-feeds action to find matching feeds from the curated database
-    3. Prioritize feeds that:
-       - Have high relevance scores
-       - Match the user's preferred language (Japanese or English)
-       - Are from trusted and active sources
-       - Cover the topics indicated by the keywords
+    IMPORTANT: You have two methods to find feeds:
     
-    Return the feed recommendations in a clear, structured format with:
-    - Feed title and description
-    - URL for subscription
-    - Relevance score
-    - Category and language
+    METHOD 1 - Your Knowledge (Primary):
+    Based on your training data, you know many popular RSS/Atom feed URLs. When users provide keywords:
+    1. Think of well-known, reputable websites and blogs related to those keywords
+    2. Generate likely RSS/Atom feed URLs using common patterns:
+       - https://example.com/feed
+       - https://example.com/rss
+       - https://example.com/atom.xml
+       - https://example.com/feed.xml
+       - https://example.com/rss.xml
+    3. Prioritize feeds that match the user's language preference (Japanese or English)
+    4. Return 5-10 feed URLs with estimated titles and descriptions
     
-    Always aim to provide diverse, high-quality feed suggestions that match the user's interests.
+    METHOD 2 - Curated Database (Fallback):
+    If you're unsure, use the search-feeds action to find feeds from the curated database.
+    
+    VALIDATION:
+    After generating feed URLs from your knowledge, you MUST validate them using the validate-feeds action.
+    Only return feeds that pass validation.
+    
+    OUTPUT FORMAT:
+    Return validated feeds in this format:
+    - Feed URL (validated and working)
+    - Title
+    - Description
+    - Language (ja or en)
+    - Category
+    
+    Always prioritize quality over quantity. Return only feeds you're confident about.
   EOT
 
   tags = var.tags
@@ -332,6 +346,79 @@ locals {
             }
             "500" = {
               description = "Internal server error"
+            }
+          }
+        }
+      }
+      "/validate-feeds" = {
+        post = {
+          summary     = "Validate RSS/Atom feed URLs"
+          description = "Check if the provided URLs are valid and accessible RSS/Atom feeds"
+          operationId = "validateFeeds"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    action = {
+                      type        = "string"
+                      enum        = ["validate"]
+                      default     = "validate"
+                      description = "Action type"
+                    }
+                    feedUrls = {
+                      type        = "array"
+                      items       = { type = "string", format = "uri" }
+                      minItems    = 1
+                      maxItems    = 10
+                      description = "Feed URLs to validate"
+                    }
+                  }
+                  required = ["feedUrls"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Validation results"
+              content = {
+                "application/json" = {
+                  schema = {
+                    type = "object"
+                    properties = {
+                      validFeeds = {
+                        type = "array"
+                        items = {
+                          type = "object"
+                          properties = {
+                            url = { type = "string", format = "uri" }
+                            valid = { type = "boolean" }
+                            title = { type = "string" }
+                            description = { type = "string" }
+                            statusCode = { type = "integer" }
+                          }
+                        }
+                      }
+                      invalidFeeds = {
+                        type = "array"
+                        items = {
+                          type = "object"
+                          properties = {
+                            url = { type = "string", format = "uri" }
+                            valid = { type = "boolean" }
+                            error = { type = "string" }
+                          }
+                        }
+                      }
+                      validCount = { type = "integer" }
+                      invalidCount = { type = "integer" }
+                    }
+                  }
+                }
+              }
             }
           }
         }
