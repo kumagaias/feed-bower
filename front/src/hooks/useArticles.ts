@@ -36,18 +36,25 @@ export function useArticles({ bowerId, search, tab = 'all' }: UseArticlesParams 
   const LIMIT = 50
 
   // Transform API article data to match our Article interface
-  const transformArticle = (apiArticle: any): Article => ({
-    id: apiArticle.article_id || apiArticle.id,
-    feedId: apiArticle.feed_id || apiArticle.feedId,
-    title: apiArticle.title,
-    content: apiArticle.content,
-    url: apiArticle.url,
-    publishedAt: new Date(apiArticle.published_at || apiArticle.publishedAt),
-    liked: apiArticle.liked || false,
-    bower: apiArticle.bower || 'Unknown',
-    read: apiArticle.read || false,
-    image: apiArticle.image_url || apiArticle.image
-  })
+  const transformArticle = (apiArticle: any): Article => {
+    // Convert Unix timestamp (seconds) to milliseconds for Date constructor
+    const publishedAtMs = typeof apiArticle.published_at === 'number' 
+      ? apiArticle.published_at * 1000 
+      : apiArticle.published_at || apiArticle.publishedAt;
+    
+    return {
+      id: apiArticle.article_id || apiArticle.id,
+      feedId: apiArticle.feed_id || apiArticle.feedId,
+      title: apiArticle.title,
+      content: apiArticle.content,
+      url: apiArticle.url,
+      publishedAt: new Date(publishedAtMs),
+      liked: apiArticle.liked || false,
+      bower: apiArticle.bower || 'Unknown',
+      read: apiArticle.read || false,
+      image: apiArticle.image_url || apiArticle.image
+    };
+  }
 
   // Load articles from API
   const loadArticles = useCallback(async (isLoadMore = false) => {

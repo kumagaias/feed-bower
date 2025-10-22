@@ -151,8 +151,8 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		log.Println("✅ FeedService linked to BowerService for auto-registration")
 	}
 
-	articleService := service.NewArticleService(articleRepo, feedRepo, bowerRepo, chickRepo)
 	chickService := service.NewChickService(chickRepo, articleRepo, feedRepo, bowerRepo)
+	articleService := service.NewArticleService(articleRepo, feedRepo, bowerRepo, chickRepo, chickService)
 
 	// Development user should be created using scripts/create-dev-user.sh
 

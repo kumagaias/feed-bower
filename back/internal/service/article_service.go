@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sort"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
@@ -59,10 +61,11 @@ type ArticleListResponse struct {
 
 // articleService implements ArticleService interface
 type articleService struct {
-	articleRepo repository.ArticleRepository
-	feedRepo    repository.FeedRepository
-	bowerRepo   repository.BowerRepository
-	chickRepo   repository.ChickRepository
+	articleRepo  repository.ArticleRepository
+	feedRepo     repository.FeedRepository
+	bowerRepo    repository.BowerRepository
+	chickRepo    repository.ChickRepository
+	chickService ChickService
 }
 
 // NewArticleService creates a new article service
@@ -71,12 +74,14 @@ func NewArticleService(
 	feedRepo repository.FeedRepository,
 	bowerRepo repository.BowerRepository,
 	chickRepo repository.ChickRepository,
+	chickService ChickService,
 ) ArticleService {
 	return &articleService{
-		articleRepo: articleRepo,
-		feedRepo:    feedRepo,
-		bowerRepo:   bowerRepo,
-		chickRepo:   chickRepo,
+		articleRepo:  articleRepo,
+		feedRepo:     feedRepo,
+		bowerRepo:    bowerRepo,
+		chickRepo:    chickRepo,
+		chickService: chickService,
 	}
 }
 
@@ -212,6 +217,15 @@ func (s *articleService) LikeArticle(ctx context.Context, userID string, article
 		return fmt.Errorf("failed to add liked article: %w", err)
 	}
 
+	// Update chick stats (increment likes)
+	_, err = s.chickService.UpdateStats(ctx, userID, &UpdateStatsRequest{
+		Action: "add_like",
+	})
+	if err != nil {
+		// Log error but don't fail the like operation
+		log.Printf("⚠️ Failed to update chick stats for like: %v", err)
+	}
+
 	return nil
 }
 
@@ -234,6 +248,15 @@ func (s *articleService) UnlikeArticle(ctx context.Context, userID string, artic
 	err = s.chickRepo.RemoveLikedArticle(ctx, userID, articleID)
 	if err != nil {
 		return fmt.Errorf("failed to remove liked article: %w", err)
+	}
+
+	// Update chick stats (decrement likes)
+	_, err = s.chickService.UpdateStats(ctx, userID, &UpdateStatsRequest{
+		Action: "remove_like",
+	})
+	if err != nil {
+		// Log error but don't fail the unlike operation
+		log.Printf("⚠️ Failed to update chick stats for unlike: %v", err)
 	}
 
 	return nil
@@ -402,15 +425,24 @@ func (s *articleService) getAllArticles(ctx context.Context, userID string, req 
 		return nil, nil, fmt.Errorf("failed to get articles: %w", err)
 	}
 
-	// Sort articles by published date (DynamoDB scan doesn't guarantee order)
-	sort.Slice(articles, func(i, j int) bool {
-		if req.SortOrder == "asc" {
-			return articles[i].PublishedAt < articles[j].PublishedAt
+	// Filter articles to last 7 days only
+	sevenDaysAgo := time.Now().AddDate(0, 0, -7).Unix()
+	filteredArticles := make([]*model.Article, 0, len(articles))
+	for _, article := range articles {
+		if article.PublishedAt >= sevenDaysAgo {
+			filteredArticles = append(filteredArticles, article)
 		}
-		return articles[i].PublishedAt > articles[j].PublishedAt
+	}
+
+	// Sort articles by published date (DynamoDB scan doesn't guarantee order)
+	sort.Slice(filteredArticles, func(i, j int) bool {
+		if req.SortOrder == "asc" {
+			return filteredArticles[i].PublishedAt < filteredArticles[j].PublishedAt
+		}
+		return filteredArticles[i].PublishedAt > filteredArticles[j].PublishedAt
 	})
 
-	return articles, nextKey, nil
+	return filteredArticles, nextKey, nil
 }
 
 // getLikedArticles retrieves liked articles for a user
