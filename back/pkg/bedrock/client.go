@@ -83,14 +83,15 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 		switch v := event.(type) {
 		case *types.ResponseStreamMemberChunk:
 			chunkCount++
-			fmt.Printf("[BedrockClient] CHUNK_RECEIVED | session_id=%s | chunk_number=%d | chunk_size_bytes=%d\n",
-				sessionID, chunkCount, len(v.Value.Bytes))
+			chunkText := string(v.Value.Bytes)
+			fmt.Printf("[BedrockClient] CHUNK_RECEIVED | session_id=%s | chunk_number=%d | chunk_size_bytes=%d | chunk_text=%s\n",
+				sessionID, chunkCount, len(v.Value.Bytes), chunkText)
 
 			// Parse chunk bytes
 			var chunkData map[string]interface{}
 			if err := json.Unmarshal(v.Value.Bytes, &chunkData); err != nil {
-				fmt.Printf("[BedrockClient] CHUNK_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v\n",
-					sessionID, chunkCount, err)
+				fmt.Printf("[BedrockClient] CHUNK_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v | raw_text=%s\n",
+					sessionID, chunkCount, err, chunkText)
 				continue
 			}
 
