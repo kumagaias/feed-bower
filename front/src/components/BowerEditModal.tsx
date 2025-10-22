@@ -231,45 +231,9 @@ export default function BowerEditModal({
       setBowerName(generatedName);
     }
 
-    // 手動追加されたフィード（カスタムフィード）を保持
-    const customFeeds = feeds.filter((feed) => feed.isCustom === true);
-
-    // フィード自動追加処理（Bedrock API連携）
-    if (newKeywords.length > 0 && bower?.id) {
-      console.log("🔍 Auto-adding feeds for keywords:", newKeywords);
-      setIsLoadingFeeds(true);
-
-      try {
-        // バックエンドからフィード推奨を取得（Bedrock使用）
-        const recommendedFeeds = await feedApi.getFeedRecommendations(
-          bower.id,
-          newKeywords
-        );
-
-        console.log("📥 Received recommendations:", recommendedFeeds);
-
-        if (recommendedFeeds && recommendedFeeds.length > 0) {
-          // 自動フィードとカスタムフィードを結合
-          setFeeds([...recommendedFeeds, ...customFeeds]);
-          console.log("✅ Updated feeds with recommendations");
-        } else {
-          // カスタムフィードのみ保持
-          setFeeds(customFeeds);
-          console.log(
-            "ℹ️ No recommendations received, keeping custom feeds only"
-          );
-        }
-      } catch (error) {
-        console.error("❌ Failed to get feed recommendations:", error);
-        // エラー時はカスタムフィードのみ保持
-        setFeeds(customFeeds);
-      } finally {
-        setIsLoadingFeeds(false);
-      }
-    } else {
-      // キーワードがない場合、またはバウアーIDがない場合はカスタムフィードのみ保持
-      setFeeds(customFeeds);
-    }
+    // キーワード変更時は既存のフィードをそのまま保持
+    // フィードの追加・削除はユーザーが手動で行う
+    console.log("✅ Keywords updated, keeping existing feeds:", feeds.length);
 
     // Real API-based auto-add (commented out for now)
     /*

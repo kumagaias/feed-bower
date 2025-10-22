@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
@@ -425,24 +424,15 @@ func (s *articleService) getAllArticles(ctx context.Context, userID string, req 
 		return nil, nil, fmt.Errorf("failed to get articles: %w", err)
 	}
 
-	// Filter articles to last 7 days only
-	sevenDaysAgo := time.Now().AddDate(0, 0, -7).Unix()
-	filteredArticles := make([]*model.Article, 0, len(articles))
-	for _, article := range articles {
-		if article.PublishedAt >= sevenDaysAgo {
-			filteredArticles = append(filteredArticles, article)
-		}
-	}
-
 	// Sort articles by published date (DynamoDB scan doesn't guarantee order)
-	sort.Slice(filteredArticles, func(i, j int) bool {
+	sort.Slice(articles, func(i, j int) bool {
 		if req.SortOrder == "asc" {
-			return filteredArticles[i].PublishedAt < filteredArticles[j].PublishedAt
+			return articles[i].PublishedAt < articles[j].PublishedAt
 		}
-		return filteredArticles[i].PublishedAt > filteredArticles[j].PublishedAt
+		return articles[i].PublishedAt > articles[j].PublishedAt
 	})
 
-	return filteredArticles, nextKey, nil
+	return articles, nextKey, nil
 }
 
 // getLikedArticles retrieves liked articles for a user
