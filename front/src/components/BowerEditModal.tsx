@@ -775,13 +775,6 @@ export default function BowerEditModal({
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowPreview(true)}
-                  disabled={feeds.length === 0 && keywords.length === 0}
-                  className="px-6 py-2 border-2 border-[#f59e0b] text-[#f59e0b] rounded-lg hover:bg-[#f59e0b] hover:text-white transition-colors disabled:border-gray-300 disabled:text-gray-300 disabled:cursor-not-allowed"
-                >
-                  {language === "ja" ? "プレビュー" : "Preview"}
-                </button>
-                <button
                   onClick={handleSave}
                   disabled={feeds.length === 0 && keywords.length === 0}
                   className="px-6 py-2 bg-[#f59e0b] text-white rounded-lg hover:bg-[#d97706] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
