@@ -594,33 +594,40 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 			return recommendations, nil
 		}
 
-		// Log error and return empty
+		// Log error and fallback to static mapping
 		if err != nil {
-			log.Printf("[FeedRecommendations] BEDROCK_ERROR | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | error=%v",
+			log.Printf("[FeedRecommendations] BEDROCK_ERROR | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | error=%v | fallback=static_mapping",
 				userID, bowerID, keywords, latency, err)
 
 			// Log performance metrics for failed attempt
 			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, err.Error())
-
-			// Return empty result (no fallback)
-			return []*model.Feed{}, nil
 		} else {
-			log.Printf("[FeedRecommendations] BEDROCK_EMPTY | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | feed_count=0",
+			log.Printf("[FeedRecommendations] BEDROCK_EMPTY | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | feed_count=0 | fallback=static_mapping",
 				userID, bowerID, keywords, latency)
 
 			// Log performance metrics for empty result
 			s.logPerformanceMetrics("bedrock_agent", latency, 0, true, "")
-
-			// Return empty result (no fallback)
-			return []*model.Feed{}, nil
 		}
 	} else {
-		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured",
+		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured | fallback=static_mapping",
 			userID, bowerID, keywords)
-
-		// Return error if Bedrock is not configured
-		return nil, errors.New("bedrock agent is not configured")
 	}
+
+	// Fallback to static mapping
+	log.Printf("[FeedRecommendations] STATIC_MAPPING_START | user_id=%s | bower_id=%s | keywords=%v | method=static_mapping",
+		userID, bowerID, keywords)
+	startTime := time.Now()
+
+	staticRecommendations := s.getStaticFeedRecommendations(bowerID, keywords, existingURLs)
+	latency := time.Since(startTime).Milliseconds()
+
+	log.Printf("[FeedRecommendations] STATIC_MAPPING_SUCCESS | user_id=%s | bower_id=%s | keywords=%v | feed_count=%d | latency_ms=%d | method=static_mapping",
+		userID, bowerID, keywords, len(staticRecommendations), latency)
+
+	// Log performance metrics
+	s.logPerformanceMetrics("static_mapping", latency, len(staticRecommendations), true, "")
+
+	return staticRecommendations, nil
 }
 
 // logPerformanceMetrics logs structured performance metrics for monitoring
@@ -696,6 +703,87 @@ func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, bow
 }
 
 // getStaticFeedRecommendations returns feed recommendations using static keyword mapping
+func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []string, existingURLs map[string]bool) []*model.Feed {
+	log.Printf("[StaticMapping] START | bower_id=%s | keywords=%v", bowerID, keywords)
+
+	// Static keyword to feed URL mapping
+	staticMapping := map[string][]struct {
+		URL         string
+		Title       string
+		Description string
+		Category    string
+	}{
+		"technology": {
+			{URL: "https://techcrunch.com/feed/", Title: "TechCrunch", Description: "Latest technology news", Category: "Technology"},
+			{URL: "https://www.theverge.com/rss/index.xml", Title: "The Verge", Description: "Technology news and reviews", Category: "Technology"},
+			{URL: "https://arstechnica.com/feed/", Title: "Ars Technica", Description: "Technology news and analysis", Category: "Technology"},
+		},
+		"programming": {
+			{URL: "https://dev.to/feed", Title: "DEV Community", Description: "Programming articles and tutorials", Category: "Programming"},
+			{URL: "https://stackoverflow.blog/feed/", Title: "Stack Overflow Blog", Description: "Programming insights", Category: "Programming"},
+			{URL: "https://github.blog/feed/", Title: "GitHub Blog", Description: "Software development news", Category: "Programming"},
+		},
+		"ai": {
+			{URL: "https://openai.com/blog/rss/", Title: "OpenAI Blog", Description: "AI research and updates", Category: "AI"},
+			{URL: "https://deepmind.google/blog/rss.xml", Title: "Google DeepMind", Description: "AI research", Category: "AI"},
+		},
+		"news": {
+			{URL: "https://feeds.bbci.co.uk/news/rss.xml", Title: "BBC News", Description: "World news", Category: "News"},
+			{URL: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", Title: "New York Times", Description: "News and analysis", Category: "News"},
+		},
+		"science": {
+			{URL: "https://www.nature.com/nature.rss", Title: "Nature", Description: "Scientific research", Category: "Science"},
+			{URL: "https://www.sciencedaily.com/rss/all.xml", Title: "Science Daily", Description: "Science news", Category: "Science"},
+		},
+	}
+
+	recommendations := make([]*model.Feed, 0)
+	seenURLs := make(map[string]bool)
+
+	// Match keywords to feeds
+	for _, keyword := range keywords {
+		normalizedKeyword := strings.ToLower(strings.TrimSpace(keyword))
+		log.Printf("[StaticMapping] KEYWORD | bower_id=%s | keyword=%s | normalized=%s",
+			bowerID, keyword, normalizedKeyword)
+
+		if feeds, ok := staticMapping[normalizedKeyword]; ok {
+			log.Printf("[StaticMapping] MATCH_FOUND | bower_id=%s | keyword=%s | feed_count=%d",
+				bowerID, normalizedKeyword, len(feeds))
+
+			for _, feedData := range feeds {
+				// Skip if already exists or already added in this batch
+				if existingURLs[feedData.URL] || seenURLs[feedData.URL] {
+					log.Printf("[StaticMapping] SKIP_DUPLICATE | bower_id=%s | url=%s | reason=already_exists",
+						bowerID, feedData.URL)
+					continue
+				}
+
+				log.Printf("[StaticMapping] ADD_FEED | bower_id=%s | url=%s | title=%s | category=%s",
+					bowerID, feedData.URL, feedData.Title, feedData.Category)
+
+				feed := model.NewFeed(bowerID, feedData.URL, feedData.Title, feedData.Description, feedData.Category)
+				recommendations = append(recommendations, feed)
+				seenURLs[feedData.URL] = true
+
+				// Limit to 10 recommendations
+				if len(recommendations) >= 10 {
+					log.Printf("[StaticMapping] LIMIT_REACHED | bower_id=%s | max_recommendations=10",
+						bowerID)
+					return recommendations
+				}
+			}
+		} else {
+			log.Printf("[StaticMapping] NO_MATCH | bower_id=%s | keyword=%s",
+				bowerID, normalizedKeyword)
+		}
+	}
+
+	log.Printf("[StaticMapping] COMPLETE | bower_id=%s | recommendation_count=%d",
+		bowerID, len(recommendations))
+
+	return recommendations
+}
+
 // AutoRegisterFeeds automatically registers recommended feeds to a bower
 func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowerID string, keywords []string, maxFeeds int) (*AutoRegisterResult, error) {
 	if userID == "" {

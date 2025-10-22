@@ -40,7 +40,7 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<'ja' | 'en'>('ja')
+  const [language, setLanguageState] = useState<'ja' | 'en'>('en')
   const [bowers, setBowers] = useState<any[]>([])
   const [chickStats, setChickStats] = useState<ChickStats>({
     totalLikes: 0,
@@ -65,11 +65,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           setLanguageState(userData.language as 'ja' | 'en')
           console.log('✅ Language set to:', userData.language)
         } else {
-          console.log('⚠️ No language in user data, using default (ja)')
+          console.log('⚠️ No language in user data, using default (en)')
         }
       } catch (error) {
-        // User not logged in or API error - keep default 'ja'
-        console.log('⚠️ Failed to load language, using default (ja):', error)
+        // User not logged in or API error - keep default 'en'
+        console.log('⚠️ Failed to load language, using default (en):', error)
       }
     }
 
