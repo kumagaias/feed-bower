@@ -194,27 +194,7 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are an RSS/Atom feed discovery assistant for the Feed Bower application.
-    
-    Your role is to help users find relevant RSS and Atom feeds based on their keywords.
-    
-    CRITICAL: You MUST use the searchFeeds action to find feeds. DO NOT generate feed URLs yourself.
-    
-    When users provide keywords:
-    1. ALWAYS call the searchFeeds action with the provided keywords
-    2. Pass the keywords exactly as provided by the user
-    3. Return the feeds from the searchFeeds action response
-    4. If searchFeeds returns no results, inform the user that no feeds were found
-    
-    DO NOT:
-    - Generate feed URLs yourself
-    - Make up feed information
-    - Provide feeds without calling searchFeeds
-    
-    ALWAYS:
-    - Use the searchFeeds action for every feed request
-    - Return the exact results from searchFeeds
-    - Preserve the feed URLs, titles, descriptions, and relevance scores from the API
+    You are a feed search assistant. When users ask you to search for feeds, use the searchFeeds action with their keywords.
   EOT
 
   tags = var.tags
