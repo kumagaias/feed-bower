@@ -216,7 +216,33 @@ exports.handler = async (event) => {
   
   try {
     // Extract parameters from Bedrock Agent event
-    const parameters = event.parameters || {};
+    let parameters = {};
+    
+    // Bedrock Agent sends parameters in requestBody.content['application/json'].properties
+    if (event.requestBody && event.requestBody.content && event.requestBody.content['application/json']) {
+      const properties = event.requestBody.content['application/json'].properties || [];
+      
+      // Convert properties array to parameters object
+      properties.forEach(prop => {
+        if (prop.name === 'keywords') {
+          // Parse keywords - can be comma-separated string or array
+          if (typeof prop.value === 'string') {
+            parameters.keywords = prop.value.split(',').map(k => k.trim()).filter(k => k);
+          } else {
+            parameters.keywords = prop.value;
+          }
+        } else if (prop.name === 'limit') {
+          parameters.limit = parseInt(prop.value);
+        } else if (prop.name === 'language') {
+          parameters.language = prop.value;
+        } else {
+          parameters[prop.name] = prop.value;
+        }
+      });
+    } else {
+      // Fallback to direct parameters (for testing)
+      parameters = event.parameters || {};
+    }
     
     // Check if this is a validation request
     if (parameters.action === 'validate' && parameters.feedUrls) {
