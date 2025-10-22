@@ -9,6 +9,7 @@ import { useApp } from '@/contexts/AppContext'
 import { useBowers } from '@/hooks/useBowers'
 import { useArticles } from '@/hooks/useArticles'
 import { useTranslation } from '@/lib/i18n'
+import { feedApi } from '@/lib/api'
 
 type TabType = 'all' | 'important' | 'liked'
 
@@ -312,7 +313,6 @@ export default function FeedsPage() {
                 onClick={async () => {
                   if (selectedBowerId === 'all' || selectedBowerId.startsWith('preset-')) return;
                   try {
-                    const { feedApi } = await import('@/lib/api');
                     await feedApi.fetchBowerFeeds(selectedBowerId);
                     // Refresh articles after fetching feeds
                     refresh();
