@@ -585,7 +585,7 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 
 			// Log performance metrics for failed attempt
 			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, err.Error())
-			
+
 			// Return empty result (no fallback)
 			return []*model.Feed{}, nil
 		} else {
@@ -594,14 +594,14 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 
 			// Log performance metrics for empty result
 			s.logPerformanceMetrics("bedrock_agent", latency, 0, true, "")
-			
+
 			// Return empty result (no fallback)
 			return []*model.Feed{}, nil
 		}
 	} else {
 		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured",
 			userID, bowerID, keywords)
-		
+
 		// Return error if Bedrock is not configured
 		return nil, errors.New("bedrock agent is not configured")
 	}
