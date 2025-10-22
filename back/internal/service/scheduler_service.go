@@ -13,6 +13,7 @@ import (
 // SchedulerService defines the interface for scheduled operations
 type SchedulerService interface {
 	FetchAllFeeds(ctx context.Context) error
+	CleanupOrphanedArticles(ctx context.Context) error
 }
 
 // schedulerService implements SchedulerService interface
@@ -117,6 +118,53 @@ func (s *schedulerService) FetchAllFeeds(ctx context.Context) error {
 	log.Printf("   - Total articles fetched: %d", totalArticles)
 	log.Printf("   - New articles saved: %d", totalNew)
 	log.Printf("   - Errors: %d", totalErrors)
+
+	return nil
+}
+
+// CleanupOrphanedArticles removes articles whose feeds no longer exist
+func (s *schedulerService) CleanupOrphanedArticles(ctx context.Context) error {
+	log.Println("🧹 Starting orphaned articles cleanup...")
+
+	// Get all articles
+	articles, _, err := s.articleRepo.List(ctx, 1000, nil)
+	if err != nil {
+		return fmt.Errorf("failed to list articles: %w", err)
+	}
+
+	if len(articles) == 0 {
+		log.Println("ℹ️  No articles found")
+		return nil
+	}
+
+	log.Printf("📊 Checking %d articles for orphaned entries", len(articles))
+
+	deletedCount := 0
+	errorCount := 0
+
+	// Check each article's feed
+	for _, article := range articles {
+		// Check if feed exists
+		_, err := s.feedRepo.GetByID(ctx, article.FeedID)
+		if err != nil {
+			// Feed doesn't exist, delete the article
+			log.Printf("🗑️  Deleting orphaned article: %s (feed_id: %s)", article.ArticleID, article.FeedID)
+			
+			if err := s.articleRepo.Delete(ctx, article.ArticleID); err != nil {
+				log.Printf("❌ Failed to delete article %s: %v", article.ArticleID, err)
+				errorCount++
+				continue
+			}
+			
+			deletedCount++
+		}
+	}
+
+	log.Printf("✨ Cleanup completed!")
+	log.Printf("📊 Summary:")
+	log.Printf("   - Total articles checked: %d", len(articles))
+	log.Printf("   - Orphaned articles deleted: %d", deletedCount)
+	log.Printf("   - Errors: %d", errorCount)
 
 	return nil
 }
