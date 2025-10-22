@@ -190,7 +190,8 @@ func setupRouter(config *Config) (*mux.Router, error) {
 			"/api/auth/guest",
 			"/api/auth/register",
 			"/api/auth/login",
-			"/api/feeds/validate", // Public endpoint for feed validation
+			"/api/feeds/validate",    // Public endpoint for feed validation
+			"/api/feeds/preview-url", // Public endpoint for feed preview
 		},
 	}
 

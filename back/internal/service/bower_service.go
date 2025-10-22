@@ -35,7 +35,7 @@ type BowerService interface {
 // CreateBowerRequest represents the request to create a bower
 type CreateBowerRequest struct {
 	Name              string   `json:"name" validate:"required,min=1,max=50"`
-	Keywords          []string `json:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	Keywords          []string `json:"keywords" validate:"required,min=1,max=5,dive,min=1,max=20"`
 	EggColors         []string `json:"egg_colors"`
 	Color             string   `json:"color" validate:"omitempty,hexcolor"`
 	IsPublic          bool     `json:"is_public"`
@@ -53,7 +53,7 @@ type CreateBowerResult struct {
 // UpdateBowerRequest represents the request to update a bower
 type UpdateBowerRequest struct {
 	Name      *string   `json:"name,omitempty" validate:"omitempty,min=1,max=50"`
-	Keywords  *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=8,dive,min=1,max=20"`
+	Keywords  *[]string `json:"keywords,omitempty" validate:"omitempty,min=1,max=5,dive,min=1,max=20"`
 	EggColors *[]string `json:"egg_colors,omitempty"`
 	Color     *string   `json:"color,omitempty" validate:"omitempty,hexcolor"`
 	IsPublic  *bool     `json:"is_public,omitempty"`

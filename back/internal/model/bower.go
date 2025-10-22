@@ -9,7 +9,7 @@ type Bower struct {
 	BowerID   string   `json:"bower_id" dynamodbav:"bower_id" validate:"required"`
 	UserID    string   `json:"user_id" dynamodbav:"user_id" validate:"required"`
 	Name      string   `json:"name" dynamodbav:"name" validate:"required,min=1,max=50"`
-	Keywords  []string `json:"keywords" dynamodbav:"keywords" validate:"required,min=1,max=8,dive,min=1,max=20"`
+	Keywords  []string `json:"keywords" dynamodbav:"keywords" validate:"required,min=1,max=5,dive,min=1,max=20"`
 	EggColors []string `json:"egg_colors" dynamodbav:"egg_colors"`
 	Color     string   `json:"color" dynamodbav:"color" validate:"required,hexcolor"`
 	IsPublic  bool     `json:"is_public" dynamodbav:"is_public"`
@@ -49,7 +49,7 @@ func (b *Bower) UpdateTimestamp() {
 
 // AddKeyword adds a keyword if it doesn't already exist and doesn't exceed max limit
 func (b *Bower) AddKeyword(keyword string) bool {
-	if len(b.Keywords) >= 8 {
+	if len(b.Keywords) >= 5 {
 		return false
 	}
 

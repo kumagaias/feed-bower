@@ -114,7 +114,7 @@ export default function BowerCard({
         
         <div className="mb-4 relative">
           <div className="flex flex-wrap gap-2 justify-center items-start content-start" style={{ minHeight: '6rem', maxHeight: '6rem', overflow: 'hidden' }}>
-            {(bower.keywords || []).slice(0, 8).map((keyword: string, index: number) => {
+            {(bower.keywords || []).slice(0, 5).map((keyword: string, index: number) => {
               const keywordColor = bower.eggColors?.[index] || eggColors[index % eggColors.length];
               return (
               <span
@@ -130,9 +130,9 @@ export default function BowerCard({
               </span>
               );
             })}
-            {(bower.keywords || []).length > 8 && (
+            {(bower.keywords || []).length > 5 && (
               <span className="inline-block flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium text-gray-600 whitespace-nowrap" style={{ backgroundColor: 'var(--color-background-main)', border: '1px solid var(--color-tertiary)' }}>
-                +{bower.keywords.length - 8}
+                +{bower.keywords.length - 5}
               </span>
             )}
           </div>

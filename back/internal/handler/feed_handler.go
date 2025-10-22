@@ -293,20 +293,16 @@ func (h *FeedHandler) PreviewFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 // PreviewFeedByURL previews a feed by URL (for new feeds)
+// This is a public endpoint that doesn't require authentication
 func (h *FeedHandler) PreviewFeedByURL(w http.ResponseWriter, r *http.Request) {
-	user, ok := GetRequiredUserFromContext(w, r)
-	if !ok {
-		return
-	}
-
 	url := GetQueryParam(r, "url", "")
 	if url == "" {
 		response.BadRequest(w, "url query parameter is required")
 		return
 	}
 
-	// Preview the feed URL
-	preview, err := h.feedService.PreviewFeed(r.Context(), user.UserID, url)
+	// Preview the feed URL (use empty userID for public preview)
+	preview, err := h.feedService.PreviewFeed(r.Context(), "", url)
 	if err != nil {
 		response.InternalServerError(w, "Failed to preview feed: "+err.Error())
 		return
