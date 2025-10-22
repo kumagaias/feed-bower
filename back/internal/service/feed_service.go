@@ -578,39 +578,33 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 			return recommendations, nil
 		}
 
-		// Log error and fallback
+		// Log error and return empty
 		if err != nil {
-			log.Printf("[FeedRecommendations] BEDROCK_ERROR | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | error=%v | fallback=static_mapping",
+			log.Printf("[FeedRecommendations] BEDROCK_ERROR | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | error=%v",
 				userID, bowerID, keywords, latency, err)
 
 			// Log performance metrics for failed attempt
 			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, err.Error())
+			
+			// Return empty result (no fallback)
+			return []*model.Feed{}, nil
 		} else {
-			log.Printf("[FeedRecommendations] BEDROCK_EMPTY | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | feed_count=0 | fallback=static_mapping",
+			log.Printf("[FeedRecommendations] BEDROCK_EMPTY | user_id=%s | bower_id=%s | keywords=%v | latency_ms=%d | feed_count=0",
 				userID, bowerID, keywords, latency)
 
 			// Log performance metrics for empty result
-			s.logPerformanceMetrics("bedrock_agent", latency, 0, false, "no_feeds_returned")
+			s.logPerformanceMetrics("bedrock_agent", latency, 0, true, "")
+			
+			// Return empty result (no fallback)
+			return []*model.Feed{}, nil
 		}
 	} else {
-		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured | fallback=static_mapping",
+		log.Printf("[FeedRecommendations] BEDROCK_DISABLED | user_id=%s | bower_id=%s | keywords=%v | reason=not_configured",
 			userID, bowerID, keywords)
+		
+		// Return error if Bedrock is not configured
+		return nil, errors.New("bedrock agent is not configured")
 	}
-
-	// Fallback to static keyword mapping
-	log.Printf("[FeedRecommendations] FALLBACK_START | user_id=%s | bower_id=%s | keywords=%v | method=static_mapping",
-		userID, bowerID, keywords)
-	startTime := time.Now()
-	recommendations := s.getStaticFeedRecommendations(bowerID, keywords, existingURLs)
-	latency := time.Since(startTime).Milliseconds()
-
-	log.Printf("[FeedRecommendations] FALLBACK_SUCCESS | user_id=%s | bower_id=%s | keywords=%v | feed_count=%d | latency_ms=%d | method=static_mapping",
-		userID, bowerID, keywords, len(recommendations), latency)
-
-	// Log performance metrics for fallback
-	s.logPerformanceMetrics("static_mapping", latency, len(recommendations), true, "")
-
-	return recommendations, nil
 }
 
 // logPerformanceMetrics logs structured performance metrics for monitoring
@@ -686,168 +680,6 @@ func (s *feedService) getFeedRecommendationsFromBedrock(ctx context.Context, bow
 }
 
 // getStaticFeedRecommendations returns feed recommendations using static keyword mapping
-func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []string, existingURLs map[string]bool) []*model.Feed {
-	log.Printf("[StaticMapping] START | bower_id=%s | keywords=%v | keyword_count=%d",
-		bowerID, keywords, len(keywords))
-
-	recommendations := make([]*model.Feed, 0)
-
-	// Keyword to feed URL mapping (static fallback data)
-	keywordFeedMap := map[string][]struct {
-		URL         string
-		Title       string
-		Description string
-		Category    string
-	}{
-		// English keywords
-		"ai": {
-			{"https://feeds.feedburner.com/oreilly/radar", "O'Reilly Radar", "Technology insights and trends", "Technology"},
-			{"https://ai.googleblog.com/feeds/posts/default", "Google AI Blog", "Latest AI research and developments", "AI"},
-		},
-		"programming": {
-			{"https://dev.to/feed/tag/programming", "Dev.to Programming", "Programming articles and tutorials", "Programming"},
-			{"https://stackoverflow.com/feeds", "Stack Overflow", "Programming Q&A", "Programming"},
-		},
-		"technology": {
-			{"https://techcrunch.com/feed/", "TechCrunch", "Technology news and startup coverage", "Technology"},
-			{"https://www.wired.com/feed/", "Wired", "Technology, science, and culture", "Technology"},
-		},
-		"design": {
-			{"https://www.smashingmagazine.com/feed/", "Smashing Magazine", "Web design and development", "Design"},
-			{"https://dribbble.com/shots/popular.rss", "Dribbble Popular", "Design inspiration", "Design"},
-		},
-		"javascript": {
-			{"https://javascript.plainenglish.io/feed", "JavaScript in Plain English", "JavaScript tutorials and tips", "JavaScript"},
-			{"https://dev.to/feed/tag/javascript", "Dev.to JavaScript", "JavaScript community articles", "JavaScript"},
-		},
-		"react": {
-			{"https://dev.to/feed/tag/react", "Dev.to React", "React development articles", "React"},
-			{"https://reactjs.org/feed.xml", "React Blog", "Official React news", "React"},
-		},
-		"python": {
-			{"https://realpython.com/atom.xml", "Real Python", "Python tutorials and guides", "Python"},
-			{"https://dev.to/feed/tag/python", "Dev.to Python", "Python community articles", "Python"},
-		},
-		"mobile": {
-			{"https://android-developers.googleblog.com/feeds/posts/default", "Android Developers Blog", "Android development news", "Mobile"},
-			{"https://developer.apple.com/news/rss/news.rss", "Apple Developer News", "iOS development news", "Mobile"},
-			{"https://www.theverge.com/rss/index.xml", "The Verge", "Mobile technology news", "Mobile"},
-		},
-		"ar": {
-			{"https://www.roadtovr.com/feed/", "Road to VR", "AR/VR news and reviews", "AR"},
-			{"https://uploadvr.com/feed/", "UploadVR", "Virtual and augmented reality", "AR"},
-			{"https://www.theverge.com/rss/index.xml", "The Verge", "Tech news including AR/VR", "AR"},
-		},
-		"business": {
-			{"https://hbr.org/feed", "Harvard Business Review", "Business strategy and management", "Business"},
-			{"https://www.entrepreneur.com/latest.rss", "Entrepreneur", "Entrepreneurship and business", "Business"},
-			{"https://www.forbes.com/business/feed/", "Forbes Business", "Business news and insights", "Business"},
-		},
-		"science": {
-			{"https://www.nature.com/nature.rss", "Nature", "Scientific research and news", "Science"},
-			{"https://www.sciencedaily.com/rss/all.xml", "Science Daily", "Latest science news", "Science"},
-		},
-		"app development": {
-			{"https://dev.to/feed/tag/mobile", "Dev.to Mobile", "Mobile app development", "App Development"},
-			{"https://www.raywenderlich.com/feed", "Ray Wenderlich", "Mobile development tutorials", "App Development"},
-		},
-
-		// Japanese keywords
-		"プログラミング": {
-			{"https://qiita.com/tags/programming/feed", "Qiita プログラミング", "プログラミング記事", "プログラミング"},
-			{"https://zenn.dev/feed", "Zenn", "エンジニア向け記事", "プログラミング"},
-		},
-		"テクノロジー": {
-			{"https://techcrunch.com/feed/", "TechCrunch", "テクノロジーニュース", "テクノロジー"},
-			{"https://www.wired.com/feed/", "Wired", "テクノロジーと文化", "テクノロジー"},
-		},
-		"デザイン": {
-			{"https://www.smashingmagazine.com/feed/", "Smashing Magazine", "ウェブデザイン", "デザイン"},
-			{"https://dribbble.com/shots/popular.rss", "Dribbble Popular", "デザインインスピレーション", "デザイン"},
-		},
-		"web開発": {
-			{"https://css-tricks.com/feed/", "CSS-Tricks", "ウェブ開発のヒント", "Web開発"},
-			{"https://dev.to/feed/tag/webdev", "Dev.to Web Development", "ウェブ開発記事", "Web開発"},
-		},
-		"スタートアップ": {
-			{"https://techcrunch.com/startups/feed/", "TechCrunch Startups", "スタートアップニュース", "スタートアップ"},
-			{"https://www.producthunt.com/feed", "Product Hunt", "新しいプロダクト", "スタートアップ"},
-		},
-		"ビジネス": {
-			{"https://hbr.org/feed", "Harvard Business Review", "ビジネス戦略", "ビジネス"},
-			{"https://www.entrepreneur.com/latest.rss", "Entrepreneur", "起業家向け情報", "ビジネス"},
-			{"https://www.forbes.com/business/feed/", "Forbes Business", "ビジネスニュース", "ビジネス"},
-		},
-		"モバイル": {
-			{"https://android-developers.googleblog.com/feeds/posts/default", "Android Developers Blog", "Android開発ニュース", "モバイル"},
-			{"https://developer.apple.com/news/rss/news.rss", "Apple Developer News", "iOS開発ニュース", "モバイル"},
-			{"https://www.theverge.com/rss/index.xml", "The Verge", "モバイル技術ニュース", "モバイル"},
-		},
-	}
-
-	// Generate recommendations based on keywords
-	matchedKeywords := 0
-	skippedDuplicates := 0
-
-	for keywordIdx, keyword := range keywords {
-		keywordLower := strings.ToLower(keyword)
-
-		// Try both original and lowercase
-		feedOptions := keywordFeedMap[keyword]
-		if len(feedOptions) == 0 {
-			feedOptions = keywordFeedMap[keywordLower]
-		}
-
-		if len(feedOptions) == 0 {
-			log.Printf("[StaticMapping] KEYWORD_NO_MATCH | bower_id=%s | keyword=%s | keyword_index=%d",
-				bowerID, keyword, keywordIdx)
-			continue
-		}
-
-		matchedKeywords++
-		log.Printf("[StaticMapping] KEYWORD_MATCHED | bower_id=%s | keyword=%s | keyword_index=%d | available_feeds=%d",
-			bowerID, keyword, keywordIdx, len(feedOptions))
-
-		// Add up to 2 feeds per keyword
-		added := 0
-		for feedIdx, feedOption := range feedOptions {
-			if existingURLs[feedOption.URL] {
-				log.Printf("[StaticMapping] SKIP_DUPLICATE | bower_id=%s | keyword=%s | url=%s | reason=already_exists",
-					bowerID, keyword, feedOption.URL)
-				skippedDuplicates++
-				continue // Skip if already exists
-			}
-
-			// Create feed from static mapping
-			feed := model.NewFeed(bowerID, feedOption.URL, feedOption.Title, feedOption.Description, feedOption.Category)
-			recommendations = append(recommendations, feed)
-			existingURLs[feedOption.URL] = true
-
-			log.Printf("[StaticMapping] FEED_ADDED | bower_id=%s | keyword=%s | feed_index=%d | url=%s | title=%s | category=%s",
-				bowerID, keyword, feedIdx, feedOption.URL, feedOption.Title, feedOption.Category)
-
-			added++
-			if added >= 2 {
-				log.Printf("[StaticMapping] KEYWORD_LIMIT_REACHED | bower_id=%s | keyword=%s | max_per_keyword=2",
-					bowerID, keyword)
-				break // Limit to 2 feeds per keyword
-			}
-		}
-
-		// Limit total recommendations
-		if len(recommendations) >= 6 {
-			log.Printf("[StaticMapping] TOTAL_LIMIT_REACHED | bower_id=%s | max_total=6",
-				bowerID)
-			break
-		}
-	}
-
-	log.Printf("[StaticMapping] COMPLETE | bower_id=%s | total_keywords=%d | matched_keywords=%d | skipped_duplicates=%d | final_count=%d",
-		bowerID, len(keywords), matchedKeywords, skippedDuplicates, len(recommendations))
-
-	return recommendations
-}
-
 // AutoRegisterFeeds automatically registers recommended feeds to a bower
 func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowerID string, keywords []string, maxFeeds int) (*AutoRegisterResult, error) {
 	if userID == "" {

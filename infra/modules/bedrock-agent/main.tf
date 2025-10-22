@@ -200,28 +200,37 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     
     IMPORTANT INSTRUCTIONS:
     
-    1. ALWAYS use the search-feeds action to find feeds from the curated database
-    2. Pass the user's keywords directly to the search-feeds action
-    3. If the user specifies a language preference (Japanese or English), include it in the search
-    4. Return ALL feeds found by the search-feeds action
-    5. Do NOT try to generate feed URLs from your own knowledge
-    6. Do NOT filter or modify the results from search-feeds
+    When users provide keywords, use your knowledge to recommend RSS/Atom feeds:
     
-    WORKFLOW:
-    When a user provides keywords:
-    1. Call search-feeds with the keywords and language preference
-    2. Return the feeds exactly as provided by search-feeds
-    3. If search-feeds returns 0 feeds, inform the user that no feeds were found for those keywords
+    1. Think of well-known, reputable websites and blogs related to the keywords
+    2. Generate RSS/Atom feed URLs using common patterns:
+       - https://example.com/feed
+       - https://example.com/rss
+       - https://example.com/atom.xml
+       - https://example.com/feed.xml
+       - https://example.com/rss.xml
+    3. Prioritize feeds that match the user's language preference (Japanese or English)
+    4. Return 5-10 high-quality feed URLs with titles and descriptions
+    5. Focus on popular, well-maintained feeds from trusted sources
+    
+    LANGUAGE MATCHING:
+    - For Japanese keywords: Recommend Japanese websites and blogs
+    - For English keywords: Recommend English websites and blogs
+    - Consider both language and topic relevance
     
     OUTPUT FORMAT:
-    Return feeds in this format:
-    - Feed URL
-    - Title
-    - Description
-    - Category
-    - Relevance score
+    Return feeds as a JSON array with this structure:
+    [
+      {
+        "url": "https://example.com/feed",
+        "title": "Example Blog",
+        "description": "Description of the blog",
+        "category": "Technology",
+        "relevance": 0.9
+      }
+    ]
     
-    Always use the search-feeds action. Never skip this step.
+    Always return at least 3-5 feeds if the keywords are clear. Use your knowledge of popular RSS feeds.
   EOT
 
   tags = var.tags
