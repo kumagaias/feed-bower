@@ -115,9 +115,6 @@ describe('KeywordEditModal', () => {
   it('should validate keyword length', async () => {
     const user = userEvent.setup()
     
-    // Mock alert
-    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {})
-    
     render(
       <KeywordEditModal
         isOpen={true}
@@ -131,11 +128,10 @@ describe('KeywordEditModal', () => {
     await user.type(input, longKeyword)
     await user.click(screen.getByText('>'))
 
-    expect(alertSpy).toHaveBeenCalledWith(
-      expect.stringContaining('20文字以内で入力してください')
-    )
-
-    alertSpy.mockRestore()
+    // Toast should be displayed instead of alert
+    await waitFor(() => {
+      expect(screen.getByText(/20文字以内で入力してください/)).toBeInTheDocument()
+    })
   })
 
   it('should call onSave with selected keywords', async () => {
