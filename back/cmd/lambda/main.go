@@ -143,7 +143,7 @@ func setupRouter(config *Config) (*mux.Router, error) {
 		BedrockAgentAlias: config.BedrockAgentAlias,
 		BedrockRegion:     config.BedrockRegion,
 	}
-	feedService := service.NewFeedService(feedRepo, bowerRepo, rssService, feedServiceConfig)
+	feedService := service.NewFeedService(feedRepo, bowerRepo, articleRepo, rssService, feedServiceConfig)
 
 	// Set FeedService on BowerService to enable auto-registration (avoid circular dependency)
 	if bs, ok := bowerService.(interface{ SetFeedService(service.FeedService) }); ok {

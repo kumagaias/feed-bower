@@ -149,13 +149,13 @@ func (s *schedulerService) CleanupOrphanedArticles(ctx context.Context) error {
 		if err != nil {
 			// Feed doesn't exist, delete the article
 			log.Printf("🗑️  Deleting orphaned article: %s (feed_id: %s)", article.ArticleID, article.FeedID)
-			
+
 			if err := s.articleRepo.Delete(ctx, article.ArticleID); err != nil {
 				log.Printf("❌ Failed to delete article %s: %v", article.ArticleID, err)
 				errorCount++
 				continue
 			}
-			
+
 			deletedCount++
 		}
 	}

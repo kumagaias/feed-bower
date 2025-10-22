@@ -348,7 +348,7 @@ func (s *bowerService) DeleteBower(ctx context.Context, userID string, bowerID s
 		// Note: This requires adding articleRepo to bowerService
 		// For now, we'll log this and handle it separately
 		log.Printf("🗑️ Deleting feed %s (articles will be orphaned)", feed.FeedID)
-		
+
 		err = s.feedRepo.Delete(ctx, feed.FeedID)
 		if err != nil {
 			log.Printf("⚠️ Failed to delete feed %s: %v", feed.FeedID, err)

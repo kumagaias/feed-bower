@@ -390,7 +390,7 @@ func TestServiceIntegration(t *testing.T) {
 	authService := NewAuthService(repos.UserRepo, "test-secret")
 	bowerService := NewBowerService(repos.BowerRepo, repos.FeedRepo)
 	rssService := NewMockRSSService()
-	_ = NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil) // feedService for future use (no Bedrock in tests)
+	_ = NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil) // feedService for future use (no Bedrock in tests)
 	chickService := NewChickService(repos.ChickRepo, repos.ArticleRepo, repos.FeedRepo, repos.BowerRepo)
 
 	// Test flow: Create user -> Create bower -> Add feed -> Check chick stats

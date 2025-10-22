@@ -19,7 +19,7 @@ func TestBedrockIntegration(t *testing.T) {
 	rssService := NewMockRSSService()
 
 	// FeedService without Bedrock (nil config)
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil)
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
 
 	// Link services for auto-registration
 	if bs, ok := bowerService.(interface{ SetFeedService(FeedService) }); ok {
@@ -74,7 +74,7 @@ func TestAutoRegisterFeeds_EndToEnd(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil)
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
 
 	// Create a test user and bower
 	userID := "test-user-123"
@@ -126,7 +126,7 @@ func TestFeedRecommendations_Fallback(t *testing.T) {
 
 	// Create services without Bedrock
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil)
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
 
 	// Create a test bower
 	userID := "test-user"
@@ -198,7 +198,7 @@ func TestPerformance_AutoRegister(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil)
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
 
 	// Create test bower
 	userID := "test-user-perf"
@@ -248,7 +248,7 @@ func TestConcurrentAutoRegister(t *testing.T) {
 
 	// Create services
 	rssService := NewMockRSSService()
-	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, rssService, nil)
+	feedService := NewFeedService(repos.FeedRepo, repos.BowerRepo, repos.ArticleRepo, rssService, nil)
 
 	// Create multiple test bowers
 	userID := "test-user-concurrent"

@@ -111,12 +111,13 @@ type FeedServiceConfig struct {
 type feedService struct {
 	feedRepo      repository.FeedRepository
 	bowerRepo     repository.BowerRepository
+	articleRepo   repository.ArticleRepository
 	rssService    RSSService
 	bedrockClient *bedrock.Client
 }
 
 // NewFeedService creates a new feed service
-func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, rssService RSSService, config *FeedServiceConfig) FeedService {
+func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.BowerRepository, articleRepo repository.ArticleRepository, rssService RSSService, config *FeedServiceConfig) FeedService {
 	var bedrockClient *bedrock.Client
 
 	// Initialize Bedrock client if configured
@@ -128,6 +129,7 @@ func NewFeedService(feedRepo repository.FeedRepository, bowerRepo repository.Bow
 	return &feedService{
 		feedRepo:      feedRepo,
 		bowerRepo:     bowerRepo,
+		articleRepo:   articleRepo,
 		rssService:    rssService,
 		bedrockClient: bedrockClient,
 	}
@@ -1156,8 +1158,47 @@ func (s *feedService) FetchBowerFeeds(ctx context.Context, userID string, bowerI
 		log.Printf("[FetchBowerFeeds] FETCHED | user_id=%s | bower_id=%s | feed_id=%s | articles=%d",
 			userID, bowerID, feed.FeedID, len(feedData.Articles))
 
-		// Save articles (implementation similar to scheduler)
-		// For now, we'll just count them
+		// Save articles to DynamoDB
+		if len(feedData.Articles) > 0 {
+			// Check for duplicates and save new articles
+			newArticles := make([]*model.Article, 0)
+			for _, articleData := range feedData.Articles {
+				// Check if article already exists by URL
+				existing, err := s.articleRepo.GetByURL(ctx, articleData.URL)
+				if err == nil && existing != nil {
+					// Article already exists, skip
+					continue
+				}
+
+				// Convert ArticleData to model.Article
+				article := &model.Article{
+					FeedID:      feed.FeedID,
+					Title:       articleData.Title,
+					Content:     articleData.Content,
+					URL:         articleData.URL,
+					PublishedAt: articleData.PublishedAt.Unix(),
+					ImageURL:    articleData.ImageURL,
+					CreatedAt:   time.Now().Unix(),
+				}
+				newArticles = append(newArticles, article)
+			}
+
+			if len(newArticles) > 0 {
+				log.Printf("[FetchBowerFeeds] SAVING | user_id=%s | bower_id=%s | feed_id=%s | new_articles=%d",
+					userID, bowerID, feed.FeedID, len(newArticles))
+
+				// Batch create articles
+				err = s.articleRepo.BatchCreate(ctx, newArticles)
+				if err != nil {
+					log.Printf("[FetchBowerFeeds] SAVE_FAILED | user_id=%s | bower_id=%s | feed_id=%s | error=%v",
+						userID, bowerID, feed.FeedID, err)
+				} else {
+					log.Printf("[FetchBowerFeeds] SAVED | user_id=%s | bower_id=%s | feed_id=%s | saved=%d",
+						userID, bowerID, feed.FeedID, len(newArticles))
+				}
+			}
+		}
+
 		result.TotalArticles += len(feedData.Articles)
 		result.SuccessfulFeeds++
 	}
