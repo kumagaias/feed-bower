@@ -1,0 +1,8 @@
+# Demo user credentials - intentionally public for demo purposes
+# These are not real secrets and are meant to be shared publicly
+
+# Demo user password in create script
+9673acf4c7bc70d91a6bbb8be6c98d03ac10c569:scripts/create-demo-user.sh:generic-api-key:10
+
+# Demo user password in landing header
+9673acf4c7bc70d91a6bbb8be6c98d03ac10c569:front/src/components/LandingHeader.tsx:generic-api-key:276
