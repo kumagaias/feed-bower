@@ -47,7 +47,7 @@ export default function FeedsPage() {
     toggleRead,
     searchArticles 
   } = useArticles({ 
-    bowerId: selectedBowerId === 'all' ? undefined : selectedBowerId,
+    bowerId: selectedBowerId === 'all' || selectedBowerId.startsWith('preset-') ? undefined : selectedBowerId,
     search: searchQuery,
     tab: activeTab 
   })
@@ -300,7 +300,7 @@ export default function FeedsPage() {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 <option value="all">{t.allBowers}</option>
-                {bowers.map(bower => (
+                {bowers.filter(bower => !bower.id.startsWith('preset-')).map(bower => (
                   <option key={bower.id} value={bower.id}>
                     🪺 {bower.name}
                   </option>
@@ -310,7 +310,7 @@ export default function FeedsPage() {
               {/* Refresh Button */}
               <button
                 onClick={async () => {
-                  if (selectedBowerId === 'all') return;
+                  if (selectedBowerId === 'all' || selectedBowerId.startsWith('preset-')) return;
                   try {
                     const { feedApi } = await import('@/lib/api');
                     await feedApi.fetchBowerFeeds(selectedBowerId);
@@ -320,7 +320,7 @@ export default function FeedsPage() {
                     console.error('Failed to refresh feeds:', error);
                   }
                 }}
-                disabled={selectedBowerId === 'all' || articlesLoading}
+                disabled={selectedBowerId === 'all' || selectedBowerId.startsWith('preset-') || articlesLoading}
                 className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                 title={language === 'ja' ? 'フィードの記事を更新' : 'Refresh feed articles'}
               >
