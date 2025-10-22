@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n'
 import { KEYWORD_COLORS, getKeywordColor } from '@/lib/colors'
 import NestSVG from './NestSVG'
 import EggSVG from './EggSVG'
+import Toast from './Toast'
 
 // Cloud component for modal animation
 const ModalCloudSVG = ({ size }: { size: number }) => (
@@ -130,6 +131,7 @@ export default function KeywordEditModal({
   const [modalClouds, setModalClouds] = useState<ModalCloud[]>([])
   const [modalBirds, setModalBirds] = useState<ModalBird[]>([])
   const [balloons, setBalloons] = useState<Balloon[]>([])
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null)
   const nestRef = useRef<HTMLDivElement>(null)
 
   const colors = KEYWORD_COLORS
@@ -308,17 +310,21 @@ export default function KeywordEditModal({
       
       // Check if already at max limit
       if (eggs.length >= 5) {
-        alert(language === 'ja' ? 
-          'キーワードは最大5個までです' : 
-          'Maximum 5 keywords allowed')
+        setToast({
+          message: language === 'ja' ? 'キーワードは最大5個までです' : 'Maximum 5 keywords allowed',
+          type: 'warning'
+        })
         return
       }
       
       // Check character length (20 characters max)
       if (trimmedKeyword.length > 20) {
-        alert(language === 'ja' ? 
-          `キーワード「${trimmedKeyword}」は20文字以内で入力してください` : 
-          `Keyword "${trimmedKeyword}" must be 20 characters or less`)
+        setToast({
+          message: language === 'ja' ? 
+            `キーワード「${trimmedKeyword}」は20文字以内で入力してください` : 
+            `Keyword "${trimmedKeyword}" must be 20 characters or less`,
+          type: 'warning'
+        })
         return
       }
       
@@ -338,9 +344,10 @@ export default function KeywordEditModal({
 
   const handleKeywordClick = (keyword: FloatingKeyword) => {
     if (eggs.length >= 5) {
-      alert(language === 'ja' ? 
-        'キーワードは最大5個までです' : 
-        'Maximum 5 keywords allowed')
+      setToast({
+        message: language === 'ja' ? 'キーワードは最大5個までです' : 'Maximum 5 keywords allowed',
+        type: 'warning'
+      })
       return
     }
 
@@ -618,6 +625,15 @@ export default function KeywordEditModal({
           </div>
         </div>
       </div>
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }
