@@ -167,7 +167,7 @@ export default function BowerEditModal({
   const handleRemoveFeed = async (feedId: string) => {
     try {
       await feedApi.deleteFeed(feedId);
-      setFeeds((prev) => prev.filter((f) => f.id !== feedId));
+      setFeeds((prev) => prev.filter((f) => f.feed_id !== feedId));
     } catch (error) {
       console.error("Failed to remove feed:", error);
       alert(
@@ -659,7 +659,7 @@ export default function BowerEditModal({
 
                     return (
                       <div
-                        key={feed.id}
+                        key={feed.feed_id || feed.url}
                         className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                       >
                         <div className="flex items-center gap-3 flex-1">
@@ -686,7 +686,7 @@ export default function BowerEditModal({
                         </div>
                         {feeds.length > 1 && (
                           <button
-                            onClick={() => handleRemoveFeed(feed.id)}
+                            onClick={() => handleRemoveFeed(feed.feed_id)}
                             className="text-red-500 hover:text-red-700 text-sm px-2"
                           >
                             削除
