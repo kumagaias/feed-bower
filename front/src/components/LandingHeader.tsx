@@ -267,14 +267,7 @@ export default function LandingHeader() {
 
             {/* Demo User Login */}
             {(typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === 'true') && (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 mb-2">
-                  {language === 'ja' ? 'デモユーザーでログイン' : 'Demo User Login'}
-                </p>
-                <p className="text-xs text-blue-700 mb-3">
-                  Email: feed-bower-demo@example.com<br />
-                  Password: XjvHG5LMBoFZ
-                </p>
+              <div className="mb-4">
                 <button
                   onClick={async () => {
                     setEmail('feed-bower-demo@example.com');
@@ -293,8 +286,9 @@ export default function LandingHeader() {
                     }
                   }}
                   disabled={isSubmitting}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  <span>🎭</span>
                   {language === 'ja' ? 'デモユーザーでログイン' : 'Login as Demo User'}
                 </button>
               </div>
