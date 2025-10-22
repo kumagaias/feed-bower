@@ -33,6 +33,19 @@ Feed Bowerは、キーワードベースでRSSフィードを整理し、鳥の�
 - **インフラ**: AWS (Amplify, API Gateway, DynamoDB, Lambda), Terraform
 - **CI/CD**: GitHub Actions
 
+## インフラ構成
+
+![Infrastructure Diagram](docs/img/infra.jpg)
+
+Feed BowerのAWSインフラストラクチャは以下のコンポーネントで構成されています：
+
+- **フロントエンド**: AWS Amplify でホスティング
+- **API**: API Gateway + Lambda (Go) でRESTful API提供
+- **データベース**: DynamoDB でユーザー・バウアー・フィード・記事データを管理
+- **AI推薦**: Amazon Bedrock Agent でフィード推薦機能を実装
+- **認証**: Amazon Cognito でユーザー認証・認可
+- **コンテナ**: ECR でLambda用Dockerイメージを管理
+
 ## プロジェクト構造
 
 ```
