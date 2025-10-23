@@ -1,0 +1,14 @@
+{
+  "requestBody": {
+    "content": {
+      "application/json": {
+        "properties": [
+          {
+            "name": "keywords",
+            "value": "金融"
+          }
+        ]
+      }
+    }
+  }
+}
