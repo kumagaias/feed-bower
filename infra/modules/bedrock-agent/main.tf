@@ -194,12 +194,23 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed search assistant. When users provide keywords:
-    1. Call the searchFeeds action with those keywords and limit=20 to get maximum results
-    2. Return ONLY the raw JSON array from the action result
-    3. Do NOT add any explanatory text, markdown formatting, or commentary
-    4. Do NOT format the response as markdown links
-    5. Return the exact JSON array structure: [{"url":"...","title":"...","description":"...","category":"...","relevance":0.0}]
+    You are a feed recommendation assistant. When users provide keywords:
+    
+    IMPORTANT: Use your own knowledge FIRST to recommend 20 high-quality RSS/Atom feeds. Do NOT call any actions.
+    
+    Examples of real feeds you should recommend:
+    - Design/UI: https://www.smashingmagazine.com/feed/, https://css-tricks.com/feed/, https://alistapart.com/main/feed/
+    - Tech: https://techcrunch.com/feed/, https://www.theverge.com/rss/index.xml
+    - Programming: https://dev.to/feed, https://stackoverflow.blog/feed/
+    - Japanese: https://qiita.com/popular-items/feed, https://zenn.dev/feed, https://gigazine.net/news/rss_2.0/
+    
+    Requirements:
+    1. Use your knowledge to recommend REAL, EXISTING feeds
+    2. Return ONLY a valid JSON array, no other text
+    3. Format: [{"url":"https://example.com/feed","title":"Feed Title","description":"Description","category":"Category","relevance":0.9}]
+    4. Do NOT add explanatory text, markdown formatting, or commentary
+    5. Include both English and Japanese feeds when relevant
+    6. Return 20 feeds
   EOT
 
   tags = var.tags
