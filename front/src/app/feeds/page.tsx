@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Layout from '@/components/Layout'
 import ArticleCard from '@/components/ArticleCard'
 import LoadingAnimation from '@/components/LoadingAnimation'
@@ -15,6 +15,7 @@ type TabType = 'all' | 'important' | 'liked'
 
 export default function FeedsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { language } = useApp()
   const t = useTranslation(language)
   const { bowers, loading: bowersLoading } = useBowers()
@@ -25,16 +26,16 @@ export default function FeedsPage() {
   const [dateGroups, setDateGroups] = useState<{ [key: string]: boolean }>({})
   const [allDatesOpen, setAllDatesOpen] = useState(true)
 
-  // Read bowerId from URL parameter on mount
+  // Read bowerId from URL parameter on mount and when URL changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const bowerIdParam = params.get('bowerId')
-      if (bowerIdParam) {
-        setSelectedBowerId(bowerIdParam)
-      }
+    const bowerIdParam = searchParams.get('bowerId')
+    if (bowerIdParam) {
+      setSelectedBowerId(bowerIdParam)
+    } else {
+      // Reset to 'all' if no bowerId parameter
+      setSelectedBowerId('all')
     }
-  }, [])
+  }, [searchParams])
 
   const { 
     articles, 
