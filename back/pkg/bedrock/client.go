@@ -93,11 +93,45 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 			fmt.Printf("[BedrockClient] CHUNK_RECEIVED | session_id=%s | chunk_number=%d | chunk_size_bytes=%d | chunk_text=%s\n",
 				sessionID, chunkCount, len(v.Value.Bytes), chunkText)
 
-			// Parse chunk bytes
+			// Try to parse as JSON first
 			var chunkData map[string]interface{}
 			if err := json.Unmarshal(v.Value.Bytes, &chunkData); err != nil {
-				fmt.Printf("[BedrockClient] CHUNK_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v | raw_text=%s\n",
-					sessionID, chunkCount, err, chunkText)
+				// Not JSON, might be text containing JSON
+				fmt.Printf("[BedrockClient] CHUNK_NOT_JSON | session_id=%s | chunk_number=%d | trying_text_extraction\n",
+					sessionID, chunkCount)
+				
+				// Try to extract JSON from text (Bedrock might wrap it in text)
+				// Look for JSON array pattern in text
+				if strings.Contains(chunkText, "[{") && strings.Contains(chunkText, "}]") {
+					start := strings.Index(chunkText, "[{")
+					end := strings.LastIndex(chunkText, "}]") + 2
+					if start >= 0 && end > start {
+						jsonStr := chunkText[start:end]
+						fmt.Printf("[BedrockClient] JSON_EXTRACTED | session_id=%s | json_length=%d | json=%s\n",
+							sessionID, len(jsonStr), jsonStr)
+						
+						var feedsData []interface{}
+						if err := json.Unmarshal([]byte(jsonStr), &feedsData); err == nil {
+							fmt.Printf("[BedrockClient] FEEDS_PARSED_FROM_TEXT | session_id=%s | feed_count=%d\n",
+								sessionID, len(feedsData))
+							
+							for _, feed := range feedsData {
+								if feedMap, ok := feed.(map[string]interface{}); ok {
+									rec := FeedRecommendation{
+										URL:         getString(feedMap, "url"),
+										Title:       getString(feedMap, "title"),
+										Description: getString(feedMap, "description"),
+										Category:    getString(feedMap, "category"),
+										Relevance:   getFloat(feedMap, "relevance"),
+									}
+									if rec.URL != "" {
+										recommendations = append(recommendations, rec)
+									}
+								}
+							}
+						}
+					}
+				}
 				continue
 			}
 
