@@ -85,7 +85,7 @@ aws logs filter-log-events \
   --start-time "${START_TIME}" \
   --filter-pattern "feed" \
   --query 'events[*].message' \
-  --output text | grep -i "load\|database\|feed" | head -20
+  --output text 2>/dev/null | grep -i "load\|database\|feed" | head -20 || echo "No feed loading logs found"
 
 echo ""
 echo -e "${YELLOW}========================================${NC}"
@@ -93,13 +93,13 @@ echo -e "${YELLOW}Lambda Response${NC}"
 echo -e "${YELLOW}========================================${NC}"
 echo ""
 
-# Check Lambda responses
+# Check Lambda responses - use simpler filter
 aws logs filter-log-events \
   --log-group-name "${LOG_GROUP_NAME}" \
   --start-time "${START_TIME}" \
-  --filter-pattern "response\|return" \
+  --filter-pattern "response" \
   --query 'events[*].message' \
-  --output text | head -20
+  --output text 2>/dev/null | head -20 || echo "No response logs found"
 
 echo ""
 echo -e "${YELLOW}========================================${NC}"
@@ -124,23 +124,31 @@ INVOCATION_COUNT=$(aws logs filter-log-events \
   --start-time "${START_TIME}" \
   --filter-pattern "START RequestId" \
   --query 'length(events)' \
-  --output text)
+  --output text 2>/dev/null || echo "0")
 
 ERROR_COUNT=$(aws logs filter-log-events \
   --log-group-name "${LOG_GROUP_NAME}" \
   --start-time "${START_TIME}" \
   --filter-pattern "ERROR" \
   --query 'length(events)' \
-  --output text)
+  --output text 2>/dev/null || echo "0")
+
+# Remove any non-numeric characters
+INVOCATION_COUNT=$(echo "$INVOCATION_COUNT" | tr -cd '0-9' || echo "0")
+ERROR_COUNT=$(echo "$ERROR_COUNT" | tr -cd '0-9' || echo "0")
+
+# Default to 0 if empty
+INVOCATION_COUNT=${INVOCATION_COUNT:-0}
+ERROR_COUNT=${ERROR_COUNT:-0}
 
 echo -e "${GREEN}Total Invocations:${NC} ${INVOCATION_COUNT}"
 echo -e "${GREEN}Total Errors:${NC} ${ERROR_COUNT}"
 
-if [ "$ERROR_COUNT" -gt 0 ]; then
+if [ "$ERROR_COUNT" -gt 0 ] 2>/dev/null; then
   echo ""
   echo -e "${RED}⚠️  Lambda function has errors${NC}"
   echo -e "${YELLOW}   Check the error logs above for details${NC}"
-elif [ "$INVOCATION_COUNT" -eq 0 ]; then
+elif [ "$INVOCATION_COUNT" -eq 0 ] 2>/dev/null; then
   echo ""
   echo -e "${YELLOW}⚠️  No Lambda invocations found${NC}"
   echo -e "${YELLOW}   Lambda function may not be connected to Bedrock Agent${NC}"

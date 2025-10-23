@@ -238,21 +238,26 @@ export default function BowerEditModal({
 
       try {
         // バックエンドのauto-register APIを使用（推奨フィードを自動的にDBに保存）
-        const result = await feedApi.autoRegisterFeeds(bower.id, newKeywords, 5);
+        const result = await feedApi.autoRegisterFeeds(
+          bower.id,
+          newKeywords,
+          5
+        );
 
         console.log("📥 Auto-register result:", result);
 
         if (result && result.added_feeds && result.added_feeds.length > 0) {
           // 追加されたフィードをUIに反映
-          setFeeds(prev => [...prev, ...result.added_feeds]);
+          setFeeds((prev) => [...prev, ...result.added_feeds]);
           console.log(`✅ Auto-registered ${result.added_feeds.length} feeds`);
-          
+
           // 成功メッセージを表示
           setToast({
-            message: language === 'ja' 
-              ? `${result.added_feeds.length}件のフィードを自動登録しました` 
-              : `Auto-registered ${result.added_feeds.length} feeds`,
-            type: 'success'
+            message:
+              language === "ja"
+                ? `${result.added_feeds.length}件のフィードを自動登録しました`
+                : `Auto-registered ${result.added_feeds.length} feeds`,
+            type: "success",
           });
 
           // フィードの記事を取得（バックグラウンドで実行）
@@ -270,20 +275,25 @@ export default function BowerEditModal({
 
         // スキップされたフィードがある場合
         if (result && result.skipped_feeds && result.skipped_feeds.length > 0) {
-          console.log(`ℹ️ Skipped ${result.skipped_feeds.length} duplicate feeds`);
+          console.log(
+            `ℹ️ Skipped ${result.skipped_feeds.length} duplicate feeds`
+          );
         }
 
         // 失敗したフィードがある場合
         if (result && result.failed_feeds && result.failed_feeds.length > 0) {
-          console.log(`⚠️ Failed to register ${result.failed_feeds.length} feeds`);
+          console.log(
+            `⚠️ Failed to register ${result.failed_feeds.length} feeds`
+          );
         }
       } catch (error) {
         console.error("❌ Failed to auto-register feeds:", error);
         setToast({
-          message: language === 'ja' 
-            ? 'フィードの自動登録に失敗しました' 
-            : 'Failed to auto-register feeds',
-          type: 'error'
+          message:
+            language === "ja"
+              ? "フィードの自動登録に失敗しました"
+              : "Failed to auto-register feeds",
+          type: "error",
         });
       } finally {
         setIsLoadingFeeds(false);
@@ -650,14 +660,27 @@ export default function BowerEditModal({
               {!isLoadingFeeds && feeds.length > 0 && (
                 <div className="space-y-2 mb-4">
                   {feeds.map((feed, index) => {
-                    // Extract keyword from feed URL or use index-based keyword
-                    const keyword =
+                    // フィードのカテゴリーまたはタイトルから、マッチしたキーワードを見つける
+                    const matchedKeyword = keywords.find((k) => {
+                      const kLower = k.toLowerCase();
+                      const titleLower = (feed.title || "").toLowerCase();
+                      const categoryLower = (feed.category || "").toLowerCase();
+                      const descriptionLower = (
+                        feed.description || ""
+                      ).toLowerCase();
+
+                      return (
+                        titleLower.includes(kLower) ||
+                        categoryLower.includes(kLower) ||
+                        descriptionLower.includes(kLower)
+                      );
+                    });
+
+                    // 表示するラベル: カテゴリー > マッチしたキーワード > デフォルト
+                    const displayLabel =
                       feed.category ||
-                      keywords.find((k) =>
-                        feed.url.toLowerCase().includes(k.toLowerCase())
-                      ) ||
-                      feed.url.split("/").pop()?.replace(/-/g, " ") ||
-                      `Feed ${index + 1}`;
+                      matchedKeyword ||
+                      (language === "ja" ? "フィード" : "Feed");
 
                     return (
                       <div
@@ -665,22 +688,24 @@ export default function BowerEditModal({
                         className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
                       >
                         <div className="flex items-center gap-3 flex-1">
-                          <div className="text-sm text-gray-600">
-                            {feed.url}
+                          <div className="text-sm text-gray-600 truncate max-w-md">
+                            {feed.title || feed.url}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {/* キーワードラベル */}
                             <span
-                              className="px-2 py-1 text-xs text-white rounded-full"
+                              className="px-2 py-1 text-xs text-white rounded-full whitespace-nowrap"
                               style={{
-                                backgroundColor: getKeywordColor(keyword),
+                                backgroundColor: getKeywordColor(
+                                  matchedKeyword || displayLabel
+                                ),
                               }}
                             >
-                              {keyword}
+                              {displayLabel}
                             </span>
                             {/* カスタムラベル */}
                             {feed.isCustom && (
-                              <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full border border-purple-200">
+                              <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full border border-purple-200 whitespace-nowrap">
                                 {language === "ja" ? "カスタム" : "Custom"}
                               </span>
                             )}
@@ -689,7 +714,7 @@ export default function BowerEditModal({
                         {feeds.length > 1 && (
                           <button
                             onClick={() => handleRemoveFeed(feed.feed_id)}
-                            className="text-red-500 hover:text-red-700 text-sm px-2"
+                            className="text-red-500 hover:text-red-700 text-sm px-2 flex-shrink-0"
                           >
                             削除
                           </button>
