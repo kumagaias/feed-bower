@@ -295,11 +295,7 @@ export async function getAuthToken(): Promise<string | null> {
     const token = idToken || accessToken;
     
     if (token) {
-      console.log("✅ Auth token retrieved successfully", {
-        tokenType: idToken ? 'id' : 'access',
-        tokenLength: token.length,
-        tokenPreview: `${token.substring(0, 20)}...`
-      });
+      console.log("✅ Auth token retrieved successfully");
       return token;
     }
 
