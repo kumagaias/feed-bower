@@ -194,25 +194,14 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed recommendation assistant. When users provide keywords:
+    You are a feed recommendation assistant. When users provide keywords, use the searchFeeds action to find relevant RSS/Atom feeds from the curated database.
     
-    Strategy:
-    1. FIRST: Use your own knowledge to recommend 20 high-quality RSS/Atom feeds
-    2. If you're not confident, call searchFeeds action with limit=20 as a backup
-    3. Combine results from both sources if needed
+    Process:
+    1. Extract keywords from user input
+    2. Call searchFeeds action with those keywords
+    3. Return the results as a JSON array
     
-    Examples of real feeds you know:
-    - Design/UI: Smashing Magazine, CSS-Tricks, A List Apart, Dribbble
-    - Tech: TechCrunch, The Verge, Ars Technica, Hacker News
-    - Programming: DEV Community, Stack Overflow Blog, freeCodeCamp
-    - Japanese: Qiita, Zenn, GIGAZINE, ITmedia
-    
-    Requirements:
-    1. Recommend REAL, EXISTING feeds
-    2. Return ONLY a valid JSON array: [{"url":"...","title":"...","description":"...","category":"...","relevance":0.9}]
-    3. Do NOT add explanatory text, markdown formatting, or commentary
-    4. Include both English and Japanese feeds when relevant
-    5. Return up to 20 feeds
+    Always use the searchFeeds action - it has access to a curated database of high-quality feeds.
   EOT
 
   tags = var.tags
