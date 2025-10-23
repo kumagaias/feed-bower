@@ -104,21 +104,22 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 					sessionID, chunkCount)
 
 				// Try to extract JSON from text (Bedrock might wrap it in text)
-				// Look for JSON array pattern in text
-				if strings.Contains(chunkText, "[{") && strings.Contains(chunkText, "}]") {
-					start := strings.Index(chunkText, "[{")
-					end := strings.LastIndex(chunkText, "}]") + 2
+				// Look for JSON array pattern in text - support both [{...}] and [\n{...}\n]
+				if strings.Contains(chunkText, "[") && strings.Contains(chunkText, "]") {
+					// Find the first [ and last ]
+					start := strings.Index(chunkText, "[")
+					end := strings.LastIndex(chunkText, "]") + 1
 					if start >= 0 && end > start {
 						jsonStr := chunkText[start:end]
-						fmt.Printf("[BedrockClient] JSON_EXTRACTED | session_id=%s | json_length=%d | json=%s\n",
-							sessionID, len(jsonStr), jsonStr)
+						fmt.Printf("[BedrockClient] JSON_EXTRACTED | session_id=%s | json_length=%d | json_preview=%s\n",
+							sessionID, len(jsonStr), truncateString(jsonStr, 200))
 
 						var feedsData []interface{}
 						if err := json.Unmarshal([]byte(jsonStr), &feedsData); err == nil {
 							fmt.Printf("[BedrockClient] FEEDS_PARSED_FROM_TEXT | session_id=%s | feed_count=%d\n",
 								sessionID, len(feedsData))
 
-							for _, feed := range feedsData {
+							for feedIdx, feed := range feedsData {
 								if feedMap, ok := feed.(map[string]interface{}); ok {
 									rec := FeedRecommendation{
 										URL:         getString(feedMap, "url"),
@@ -128,10 +129,15 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 										Relevance:   getFloat(feedMap, "relevance"),
 									}
 									if rec.URL != "" {
+										fmt.Printf("[BedrockClient] FEED_PARSED_FROM_TEXT | session_id=%s | chunk_number=%d | feed_index=%d | url=%s | title=%s | relevance=%.2f\n",
+											sessionID, chunkCount, feedIdx, rec.URL, rec.Title, rec.Relevance)
 										recommendations = append(recommendations, rec)
 									}
 								}
 							}
+						} else {
+							fmt.Printf("[BedrockClient] JSON_PARSE_FAILED | session_id=%s | error=%v | json_preview=%s\n",
+								sessionID, err, truncateString(jsonStr, 200))
 						}
 					}
 				}

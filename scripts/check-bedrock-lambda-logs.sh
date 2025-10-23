@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 ENVIRONMENT="${1:-production}"
-LOG_GROUP_NAME="/aws/lambda/feed-recommendation-function-${ENVIRONMENT}"
+LOG_GROUP_NAME="/aws/lambda/feed-bower-${ENVIRONMENT}-feed-search"
 HOURS_AGO="${2:-1}"
 
 echo -e "${BLUE}========================================${NC}"
