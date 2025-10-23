@@ -949,7 +949,7 @@ func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowe
 			}
 
 			// Fetch feed information to verify it's a valid RSS/Atom feed (with retry)
-			var feedInfo *model.FeedInfo
+			var feedInfo *FeedInfo
 			var err error
 			maxRetries := 3
 			retryDelay := 1 * time.Second
