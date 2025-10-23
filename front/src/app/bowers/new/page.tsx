@@ -73,24 +73,38 @@ export default function NewBowerPage() {
       return
     }
 
-    const bower = await createBower({
-      name: bowerData.name.trim(),
-      keywords: bowerData.keywords,
-      is_public: false // デフォルトは非公開
-    })
-
-    if (bower) {
-      setShowEditModal(false) // モーダルを閉じる
+    try {
+      // Show creating toast
       setToast({
-        message: language === 'ja' ? 'バウアーを作成しました' : 'Bower created successfully',
+        message: language === 'ja' ? 'バウアーを作成中...' : 'Creating bower...',
         type: 'success'
       })
-      
-      // Redirect to bowers page after a short delay
-      setTimeout(() => {
-        router.push('/bowers')
-      }, 800)
-    } else {
+
+      const bower = await createBower({
+        name: bowerData.name.trim(),
+        keywords: bowerData.keywords,
+        is_public: false // デフォルトは非公開
+      })
+
+      if (bower) {
+        setShowEditModal(false) // モーダルを閉じる
+        setToast({
+          message: language === 'ja' ? 'バウアーを作成しました！' : 'Bower created successfully!',
+          type: 'success'
+        })
+        
+        // Redirect to bowers page after a short delay
+        setTimeout(() => {
+          router.push('/bowers')
+        }, 1000)
+      } else {
+        setToast({
+          message: language === 'ja' ? 'バウアーの作成に失敗しました' : 'Failed to create bower',
+          type: 'error'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to create bower:', error)
       setToast({
         message: language === 'ja' ? 'バウアーの作成に失敗しました' : 'Failed to create bower',
         type: 'error'

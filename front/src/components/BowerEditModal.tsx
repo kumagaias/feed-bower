@@ -223,6 +223,10 @@ export default function BowerEditModal({
   };
 
   const handleKeywordSave = async (newKeywords: string[]) => {
+    console.log("🎯 handleKeywordSave called with:", newKeywords);
+    console.log("🎯 bower?.id:", bower?.id);
+    console.log("🎯 bower:", bower);
+    
     setKeywords(newKeywords);
 
     // Auto-generate bower name only if user hasn't manually edited it AND name is empty
@@ -240,6 +244,8 @@ export default function BowerEditModal({
 
       try {
         if (bower?.id) {
+          console.log("📝 Existing bower - auto-registering feeds");
+
           // 既存バウアー: auto-register APIを使用（推奨フィードを自動的にDBに保存）
           const result = await feedApi.autoRegisterFeeds(
             bower.id,
