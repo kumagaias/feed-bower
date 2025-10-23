@@ -394,6 +394,38 @@ terraform init -migrate-state
 - Automatic deployment when merged to main branch
 - GitHub Actions execution
 
+## モニタリング・ログ確認
+
+### フィード推奨ログの確認
+
+Bedrock Agent または静的マッピングのどちらが使用されているかを確認できます。
+
+```bash
+# 過去1時間のログを確認（デフォルト）
+./scripts/check-feed-recommendation-logs.sh production
+
+# 過去24時間のログを確認
+./scripts/check-feed-recommendation-logs.sh production 24
+
+# リアルタイムでログを監視
+./scripts/tail-feed-logs.sh production
+```
+
+**ログの見方**:
+
+- `[BedrockIntegration]` - Bedrock Agent が使用されている
+- `[StaticMapping]` - 静的マッピングが使用されている（フォールバック）
+- `source=bedrock` - Bedrock からの推奨結果
+- `source=static_mapping` - 静的マッピングからの推奨結果
+
+**確認項目**:
+
+- ✅ Bedrock Agent が設定されているか
+- ✅ Bedrock Agent が正常に応答しているか
+- ✅ フォールバックが動作しているか
+- ✅ レスポンス時間（latency_ms）
+- ✅ 推奨フィード数（feed_count）
+
 ## トラブルシューティング
 
 ### よくある問題と解決策

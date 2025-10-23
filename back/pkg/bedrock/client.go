@@ -140,23 +140,36 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 
 			// Check if body exists and parse it
 			var feedsData []interface{}
+			
+			// Try multiple paths to find feeds data
+			// 1. Check for "body" field (Lambda response format)
 			if bodyStr, ok := chunkData["body"].(string); ok {
-				fmt.Printf("[BedrockClient] BODY_FOUND | session_id=%s | chunk_number=%d | body_length=%d\n",
-					sessionID, chunkCount, len(bodyStr))
+				fmt.Printf("[BedrockClient] BODY_FOUND | session_id=%s | chunk_number=%d | body_length=%d | body_preview=%s\n",
+					sessionID, chunkCount, len(bodyStr), truncateString(bodyStr, 200))
 
 				var bodyData map[string]interface{}
 				if err := json.Unmarshal([]byte(bodyStr), &bodyData); err != nil {
-					fmt.Printf("[BedrockClient] BODY_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v\n",
-						sessionID, chunkCount, err)
+					fmt.Printf("[BedrockClient] BODY_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v | body=%s\n",
+						sessionID, chunkCount, err, bodyStr)
 					continue
 				}
 
 				if feeds, ok := bodyData["feeds"].([]interface{}); ok {
 					feedsData = feeds
+					fmt.Printf("[BedrockClient] FEEDS_FOUND_IN_BODY | session_id=%s | chunk_number=%d | feed_count=%d\n",
+						sessionID, chunkCount, len(feedsData))
+				} else {
+					fmt.Printf("[BedrockClient] NO_FEEDS_IN_BODY | session_id=%s | chunk_number=%d | body_keys=%v\n",
+						sessionID, chunkCount, getKeys(bodyData))
 				}
 			} else if feeds, ok := chunkData["feeds"].([]interface{}); ok {
-				// Fallback: feeds directly in chunk
+				// 2. Fallback: feeds directly in chunk
 				feedsData = feeds
+				fmt.Printf("[BedrockClient] FEEDS_FOUND_DIRECTLY | session_id=%s | chunk_number=%d | feed_count=%d\n",
+					sessionID, chunkCount, len(feedsData))
+			} else {
+				fmt.Printf("[BedrockClient] NO_FEEDS_FOUND | session_id=%s | chunk_number=%d | chunk_keys=%v\n",
+					sessionID, chunkCount, getKeys(chunkData))
 			}
 
 			// Extract recommendations from feeds
@@ -215,6 +228,21 @@ func getFloat(m map[string]interface{}, key string) float64 {
 		return v
 	}
 	return 0.0
+}
+
+func getKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func truncateString(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 func generateSessionID() string {
