@@ -433,5 +433,95 @@
     "language": "en",
     "tags": ["design", "architecture", "interior", "modern", "style"],
     "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://krebsonsecurity.com/feed/",
+    "title": "Krebs on Security",
+    "description": "In-depth security news and investigation",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "infosec", "hacking", "privacy"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.schneier.com/feed/atom/",
+    "title": "Schneier on Security",
+    "description": "Security insights and analysis by Bruce Schneier",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "privacy", "cryptography", "infosec"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.darkreading.com/rss.xml",
+    "title": "Dark Reading",
+    "description": "Cybersecurity news, analysis, and research",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "infosec", "threats", "vulnerabilities"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://threatpost.com/feed/",
+    "title": "Threatpost",
+    "description": "Cybersecurity news and threat intelligence",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "threats", "vulnerabilities", "infosec"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.bleepingcomputer.com/feed/",
+    "title": "BleepingComputer",
+    "description": "Technology news and computer security",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "tech", "malware", "vulnerabilities"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.securityweek.com/feed/",
+    "title": "SecurityWeek",
+    "description": "Enterprise cybersecurity news and analysis",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "enterprise", "infosec", "threats"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.csoonline.com/feed/",
+    "title": "CSO Online",
+    "description": "Security and risk management news",
+    "category": "Security",
+    "language": "en",
+    "tags": ["security", "cybersecurity", "risk management", "ciso", "infosec"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.ipa.go.jp/security/announce/alert.rdf",
+    "title": "IPA セキュリティセンター",
+    "description": "日本の情報処理推進機構によるセキュリティ情報",
+    "category": "Security",
+    "language": "ja",
+    "tags": ["セキュリティ", "security", "サイバーセキュリティ", "脆弱性", "情報セキュリティ"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.jpcert.or.jp/rss/jpcert.rdf",
+    "title": "JPCERT/CC",
+    "description": "日本のコンピュータセキュリティインシデント対応チーム",
+    "category": "Security",
+    "language": "ja",
+    "tags": ["セキュリティ", "security", "サイバーセキュリティ", "インシデント", "脆弱性"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.itmedia.co.jp/enterprise/security/rss/rss2.xml",
+    "title": "ITmedia エンタープライズ セキュリティ",
+    "description": "日本の企業向けセキュリティニュース",
+    "category": "Security",
+    "language": "ja",
+    "tags": ["セキュリティ", "security", "サイバーセキュリティ", "企業", "情報セキュリティ"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
   }
 ]
