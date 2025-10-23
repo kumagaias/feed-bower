@@ -100,7 +100,7 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 				// Not JSON, might be text containing JSON
 				fmt.Printf("[BedrockClient] CHUNK_NOT_JSON | session_id=%s | chunk_number=%d | trying_text_extraction\n",
 					sessionID, chunkCount)
-				
+
 				// Try to extract JSON from text (Bedrock might wrap it in text)
 				// Look for JSON array pattern in text
 				if strings.Contains(chunkText, "[{") && strings.Contains(chunkText, "}]") {
@@ -110,12 +110,12 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 						jsonStr := chunkText[start:end]
 						fmt.Printf("[BedrockClient] JSON_EXTRACTED | session_id=%s | json_length=%d | json=%s\n",
 							sessionID, len(jsonStr), jsonStr)
-						
+
 						var feedsData []interface{}
 						if err := json.Unmarshal([]byte(jsonStr), &feedsData); err == nil {
 							fmt.Printf("[BedrockClient] FEEDS_PARSED_FROM_TEXT | session_id=%s | feed_count=%d\n",
 								sessionID, len(feedsData))
-							
+
 							for _, feed := range feedsData {
 								if feedMap, ok := feed.(map[string]interface{}); ok {
 									rec := FeedRecommendation{
@@ -141,14 +141,14 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 			if bodyStr, ok := chunkData["body"].(string); ok {
 				fmt.Printf("[BedrockClient] BODY_FOUND | session_id=%s | chunk_number=%d | body_length=%d\n",
 					sessionID, chunkCount, len(bodyStr))
-				
+
 				var bodyData map[string]interface{}
 				if err := json.Unmarshal([]byte(bodyStr), &bodyData); err != nil {
 					fmt.Printf("[BedrockClient] BODY_PARSE_ERROR | session_id=%s | chunk_number=%d | error=%v\n",
 						sessionID, chunkCount, err)
 					continue
 				}
-				
+
 				if feeds, ok := bodyData["feeds"].([]interface{}); ok {
 					feedsData = feeds
 				}
