@@ -218,7 +218,7 @@ func (s *articleService) LikeArticle(ctx context.Context, userID string, article
 
 	// Update chick stats (increment likes)
 	// Update chick stats for like
-	if err := s.chickService.UpdateChickStatsForLike(userID, articleID); err != nil {
+	if _, err := s.chickService.AddLike(ctx, userID, articleID); err != nil {
 		log.Printf("⚠️ Failed to update chick stats for like: %v", err)
 	}
 
@@ -248,7 +248,7 @@ func (s *articleService) UnlikeArticle(ctx context.Context, userID string, artic
 
 	// Update chick stats (decrement likes)
 	// Update chick stats for unlike
-	if err := s.chickService.UpdateChickStatsForUnlike(userID, articleID); err != nil {
+	if _, err := s.chickService.RemoveLike(ctx, userID, articleID); err != nil {
 		log.Printf("⚠️ Failed to update chick stats for unlike: %v", err)
 	}
 
