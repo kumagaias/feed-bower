@@ -199,27 +199,9 @@ func (s *articleService) LikeArticle(ctx context.Context, userID string, article
 		return fmt.Errorf("article access check failed: %w", err)
 	}
 
-	// Check if already liked
-	isLiked, err := s.chickRepo.IsArticleLiked(ctx, userID, articleID)
-	if err != nil {
-		return fmt.Errorf("failed to check like status: %w", err)
-	}
-
-	if isLiked {
-		return errors.New("article is already liked")
-	}
-
-	// Add liked article
-	likedArticle := model.NewLikedArticle(userID, articleID)
-	err = s.chickRepo.AddLikedArticle(ctx, likedArticle)
-	if err != nil {
-		return fmt.Errorf("failed to add liked article: %w", err)
-	}
-
-	// Update chick stats (increment likes)
-	// Update chick stats for like
+	// Update chick stats for like (this will also add the liked article)
 	if _, err := s.chickService.AddLike(ctx, userID, articleID); err != nil {
-		log.Printf("⚠️ Failed to update chick stats for like: %v", err)
+		return fmt.Errorf("failed to like article: %w", err)
 	}
 
 	return nil
@@ -240,16 +222,9 @@ func (s *articleService) UnlikeArticle(ctx context.Context, userID string, artic
 		return fmt.Errorf("article access check failed: %w", err)
 	}
 
-	// Remove liked article
-	err = s.chickRepo.RemoveLikedArticle(ctx, userID, articleID)
-	if err != nil {
-		return fmt.Errorf("failed to remove liked article: %w", err)
-	}
-
-	// Update chick stats (decrement likes)
-	// Update chick stats for unlike
+	// Update chick stats for unlike (this will also remove the liked article)
 	if _, err := s.chickService.RemoveLike(ctx, userID, articleID); err != nil {
-		log.Printf("⚠️ Failed to update chick stats for unlike: %v", err)
+		return fmt.Errorf("failed to unlike article: %w", err)
 	}
 
 	return nil
