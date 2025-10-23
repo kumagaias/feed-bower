@@ -29,8 +29,8 @@ echo -e "${YELLOW}Watching for feed recommendation activity...${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""
 
-# Start time (now)
-START_TIME=$(date +%s)000
+# Start time (5 minutes ago to catch recent logs)
+START_TIME="5m"
 
 # Function to colorize log output
 colorize_log() {
@@ -56,6 +56,6 @@ colorize_log() {
 # Tail logs with filter
 aws logs tail "${LOG_GROUP_NAME}" \
   --follow \
-  --since "${START_TIME}" \
+  --since ${START_TIME} \
   --filter-pattern "FeedRecommendations OR BedrockIntegration OR StaticMapping OR AutoRegisterFeeds OR PerformanceMetrics" \
   --format short | colorize_log

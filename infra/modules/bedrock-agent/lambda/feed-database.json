@@ -343,5 +343,95 @@
     "language": "ja",
     "tags": ["sns", "ソーシャルメディア", "マーケティング", "ビジネス", "活用"],
     "lastUpdated": "2024-10-20T10:00:00Z"
+  },
+  {
+    "url": "https://www.smashingmagazine.com/feed/",
+    "title": "Smashing Magazine",
+    "description": "Web design and development articles, tutorials, and resources",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "ui", "ux", "web design", "frontend", "typography", "color"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.designernews.co/rss",
+    "title": "Designer News",
+    "description": "Community for designers to share and discuss design news",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "ui", "ux", "community", "news"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.awwwards.com/blog/feed/",
+    "title": "Awwwards Blog",
+    "description": "Web design trends, inspiration, and awards",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "ui", "ux", "web design", "inspiration", "awards"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.nngroup.com/feed/rss/",
+    "title": "Nielsen Norman Group",
+    "description": "UX research and usability articles",
+    "category": "UX Research",
+    "language": "en",
+    "tags": ["ux", "ui", "usability", "research", "design"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.figma.com/blog/rss/",
+    "title": "Figma Blog",
+    "description": "Design tools, tips, and updates from Figma",
+    "category": "Design Tools",
+    "language": "en",
+    "tags": ["figma", "design", "ui", "ux", "tools", "collaboration"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://uxdesign.cc/feed",
+    "title": "UX Collective",
+    "description": "User experience design articles and insights",
+    "category": "UX Design",
+    "language": "en",
+    "tags": ["ux", "ui", "design", "user experience", "product design"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.creativebloq.com/feed",
+    "title": "Creative Bloq",
+    "description": "Design, art, and creative inspiration",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "ui", "ux", "art", "creative", "typography"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.designboom.com/feed/",
+    "title": "Designboom",
+    "description": "Architecture, design, art, and technology",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "architecture", "art", "technology", "innovation"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://abduzeedo.com/rss.xml",
+    "title": "Abduzeedo",
+    "description": "Design inspiration and tutorials",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "ui", "ux", "inspiration", "tutorial", "color"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
+  },
+  {
+    "url": "https://www.designmilk.com/feed/",
+    "title": "Design Milk",
+    "description": "Modern design, architecture, and interior design",
+    "category": "Design",
+    "language": "en",
+    "tags": ["design", "architecture", "interior", "modern", "style"],
+    "lastUpdated": "2024-10-23T00:00:00Z"
   }
 ]
