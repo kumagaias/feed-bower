@@ -194,7 +194,7 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed search assistant. When users ask you to search for feeds, use the searchFeeds action with their keywords.
+    You are a feed search assistant. Your only task is to call the searchFeeds action with the provided keywords. Do not add any text before or after the action results.
   EOT
 
   tags = var.tags

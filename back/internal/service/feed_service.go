@@ -727,6 +727,10 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			{URL: "https://openai.com/blog/rss/", Title: "OpenAI Blog", Description: "AI research and updates", Category: "AI"},
 			{URL: "https://deepmind.google/blog/rss.xml", Title: "Google DeepMind", Description: "AI research", Category: "AI"},
 		},
+		"machine learning": {
+			{URL: "https://www.reddit.com/r/MachineLearning/.rss", Title: "r/MachineLearning", Description: "Machine learning discussions", Category: "AI"},
+			{URL: "https://machinelearningmastery.com/feed/", Title: "Machine Learning Mastery", Description: "ML tutorials", Category: "AI"},
+		},
 		"news": {
 			{URL: "https://feeds.bbci.co.uk/news/rss.xml", Title: "BBC News", Description: "World news", Category: "News"},
 			{URL: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", Title: "New York Times", Description: "News and analysis", Category: "News"},
@@ -734,6 +738,13 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 		"science": {
 			{URL: "https://www.nature.com/nature.rss", Title: "Nature", Description: "Scientific research", Category: "Science"},
 			{URL: "https://www.sciencedaily.com/rss/all.xml", Title: "Science Daily", Description: "Science news", Category: "Science"},
+		},
+		"web": {
+			{URL: "https://css-tricks.com/feed/", Title: "CSS-Tricks", Description: "Web development tips", Category: "Web Development"},
+			{URL: "https://www.smashingmagazine.com/feed/", Title: "Smashing Magazine", Description: "Web design and development", Category: "Web Development"},
+		},
+		"dev": {
+			{URL: "https://dev.to/feed", Title: "DEV Community", Description: "Developer community", Category: "Programming"},
 		},
 	}
 
