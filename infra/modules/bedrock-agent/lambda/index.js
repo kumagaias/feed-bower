@@ -193,8 +193,8 @@ function validateInput(parameters) {
   // Check limit
   if (parameters.limit !== undefined) {
     const limit = parseInt(parameters.limit);
-    if (isNaN(limit) || limit < 1 || limit > 10) {
-      errors.push('limit must be between 1 and 10');
+    if (isNaN(limit) || limit < 1 || limit > 20) {
+      errors.push('limit must be between 1 and 20');
     }
   }
   

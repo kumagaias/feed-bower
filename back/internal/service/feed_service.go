@@ -948,13 +948,31 @@ func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowe
 				return
 			}
 
-			// Fetch feed information to verify it's a valid RSS/Atom feed
-			feedInfo, err := s.rssService.FetchFeedInfo(feedCtx, recommendation.URL)
+			// Fetch feed information to verify it's a valid RSS/Atom feed (with retry)
+			var feedInfo *model.FeedInfo
+			var err error
+			maxRetries := 3
+			retryDelay := 1 * time.Second
+
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				feedInfo, err = s.rssService.FetchFeedInfo(feedCtx, recommendation.URL)
+				if err == nil {
+					break // Success
+				}
+
+				if attempt < maxRetries {
+					log.Printf("[AutoRegisterFeeds] FETCH_RETRY | user_id=%s | bower_id=%s | url=%s | attempt=%d/%d | error=%v",
+						userID, bowerID, recommendation.URL, attempt, maxRetries, err)
+					time.Sleep(retryDelay)
+					retryDelay *= 2 // Exponential backoff
+				}
+			}
+
 			if err != nil {
 				result.status = "failed"
-				result.reason = fmt.Sprintf("failed to fetch feed: %v", err)
-				log.Printf("[AutoRegisterFeeds] FETCH_FAILED | user_id=%s | bower_id=%s | url=%s | error=%v",
-					userID, bowerID, recommendation.URL, err)
+				result.reason = fmt.Sprintf("failed to fetch feed after %d attempts: %v", maxRetries, err)
+				log.Printf("[AutoRegisterFeeds] FETCH_FAILED | user_id=%s | bower_id=%s | url=%s | attempts=%d | error=%v",
+					userID, bowerID, recommendation.URL, maxRetries, err)
 				resultChan <- result
 				return
 			}

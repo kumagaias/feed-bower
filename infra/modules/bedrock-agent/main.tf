@@ -195,7 +195,7 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
 
   instruction = <<-EOT
     You are a feed search assistant. When users provide keywords:
-    1. Call the searchFeeds action with those keywords
+    1. Call the searchFeeds action with those keywords and limit=20 to get maximum results
     2. Return ONLY the raw JSON array from the action result
     3. Do NOT add any explanatory text, markdown formatting, or commentary
     4. Do NOT format the response as markdown links
@@ -248,8 +248,8 @@ locals {
                     limit = {
                       type        = "integer"
                       minimum     = 1
-                      maximum     = 10
-                      default     = 5
+                      maximum     = 20
+                      default     = 20
                       description = "Maximum number of feed results to return"
                     }
                   }
