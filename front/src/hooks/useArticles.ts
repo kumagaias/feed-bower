@@ -116,10 +116,19 @@ export function useArticles({ bowerId, search, tab = 'all' }: UseArticlesParams 
         const transformedArticles = data.articles.map(transformArticle)
         
         if (isLoadMore) {
-          setArticles(prev => [...prev, ...transformedArticles])
+          // Remove duplicates when loading more
+          setArticles(prev => {
+            const existingIds = new Set(prev.map(a => a.id))
+            const newArticles = transformedArticles.filter(a => !existingIds.has(a.id))
+            return [...prev, ...newArticles]
+          })
           setOffset(prev => prev + LIMIT)
         } else {
-          setArticles(transformedArticles)
+          // Remove duplicates in initial load
+          const uniqueArticles = transformedArticles.filter((article, index, self) =>
+            index === self.findIndex(a => a.id === article.id)
+          )
+          setArticles(uniqueArticles)
           setOffset(LIMIT)
         }
         
