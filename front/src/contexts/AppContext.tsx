@@ -57,19 +57,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   useEffect(() => {
     const loadUserLanguage = async () => {
       try {
+        // Check if user is logged in first
+        const { getAuthToken } = await import('@/lib/api')
+        const token = await getAuthToken()
+        
+        if (!token) {
+          // User not logged in, use default language
+          return
+        }
+        
         const { authApi } = await import('@/lib/api')
-        console.log('🌐 Loading user language preference...')
         const userData = await authApi.getMe()
-        console.log('📥 User data received:', userData)
+        
         if (userData && userData.language) {
           setLanguageState(userData.language as 'ja' | 'en')
-          console.log('✅ Language set to:', userData.language)
-        } else {
-          console.log('⚠️ No language in user data, using default (en)')
         }
       } catch (error) {
-        // User not logged in or API error - keep default 'en'
-        console.log('⚠️ Failed to load language, using default (en):', error)
+        // API error - keep default 'en'
       }
     }
 

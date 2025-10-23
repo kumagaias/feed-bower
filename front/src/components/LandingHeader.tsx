@@ -128,7 +128,7 @@ export default function LandingHeader() {
                 </div>
                 <div className="text-2xl relative z-10">🪺</div>
               </div>
-              <span className="text-xl font-bold" style={{ color: "#F5F5DC" }}>
+              <span className="text-base sm:text-xl font-bold" style={{ color: "#F5F5DC" }}>
                 Feed Bower
               </span>
             </Link>

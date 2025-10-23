@@ -42,8 +42,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-background-main)]">
         <div className="text-center">
-          <div className="text-4xl mb-4">🔒</div>
-          <p className="text-[var(--color-text-muted)] mb-4">認証が必要です</p>
+          <div className="text-6xl mb-4 animate-bounce">🐣</div>
+          <p className="text-[var(--color-text-muted)] mb-4">{t.authRequired}</p>
           <button
             onClick={() => router.push('/')}
             className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-md hover:bg-[var(--color-secondary)] transition-colors"

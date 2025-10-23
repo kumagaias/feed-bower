@@ -93,7 +93,7 @@ function HomeContent() {
                     <div className="text-6xl md:text-7xl opacity-20 absolute top-2 left-2">🪺</div>
                     <div className="text-6xl md:text-7xl relative z-10">🪺</div>
                   </div>
-                  <h1 className="text-5xl md:text-6xl font-bold" style={{ color: '#003333' }}>
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center" style={{ color: '#003333' }}>
                     {t.title}
                   </h1>
                 </div>
