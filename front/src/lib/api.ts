@@ -25,7 +25,6 @@ async function getAuthToken(): Promise<string | null> {
     const token = await getAuthTokenFromContext();
     
     if (!token) {
-      console.log('⚠️ No auth token available');
       return null;
     }
     
@@ -36,22 +35,14 @@ async function getAuthToken(): Promise<string | null> {
       const isExpired = Date.now() >= exp;
       
       if (isExpired) {
-        console.log('⚠️ Auth token is expired, please log in again');
-        console.log('Token expiry:', new Date(exp).toISOString());
-        console.log('Current time:', new Date().toISOString());
         return null;
       }
-      
-      console.log('✅ Auth token is valid');
-      console.log('Token expires at:', new Date(exp).toISOString());
     } catch (parseError) {
-      console.error('❌ Failed to parse token:', parseError);
       return null;
     }
     
     return token;
   } catch (error) {
-    console.log("❌ Failed to get auth token:", error);
     return null;
   }
 }
@@ -73,18 +64,8 @@ async function apiRequest<T>(
     'Content-Type': 'application/json',
   }
   
-  console.log('🔍 API Request Debug:', {
-    endpoint,
-    tokenExists: !!token,
-    tokenLength: token?.length || 0,
-    tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
-  });
-  
   if (token) {
     headers.Authorization = `Bearer ${token}`
-    console.log('✅ Authorization header added to request')
-  } else {
-    console.log('⚠️ No authorization token available')
   }
   
   // Merge with provided headers
