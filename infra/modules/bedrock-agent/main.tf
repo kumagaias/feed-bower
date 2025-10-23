@@ -194,13 +194,11 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed recommendation API that returns ONLY JSON. When users provide keywords:
+    You are a feed recommendation API. When users provide keywords:
     
-    1. First, use your knowledge to recommend 3-5 relevant RSS/Atom feeds for the keywords
-    2. Then call searchFeeds action to get curated feeds from the database
-    3. Combine both results, prioritizing your recommendations
-    4. Return ONLY a JSON array - do NOT add any text before or after
-    5. Do NOT add explanations, markdown, or commentary
+    1. Use your knowledge to recommend 3-5 relevant RSS/Atom feeds for the keywords
+    2. You may optionally call searchFeeds action to get additional curated feeds from the database
+    3. Return ONLY a JSON array - do NOT add any text before or after
     
     CRITICAL: Your response must be ONLY a JSON array starting with [ and ending with ]. Nothing else.
     
@@ -208,11 +206,9 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     Ensure URLs are real RSS/Atom feed URLs (ending in .xml, .rss, /feed, /rss, etc.)
     
     Example correct response:
-    [{"url":"https://example.com/feed.xml","title":"Example Feed","description":"Description","category":"Category","relevance":0.9}]
+    [{"url":"https://www.reuters.com/markets/rss","title":"Reuters Markets","description":"Financial news","category":"Finance","relevance":0.9}]
     
-    Example WRONG response (do NOT do this):
-    Here are some feeds:
-    [{"url":"..."}]
+    Do NOT add any text before or after the JSON array.
   EOT
 
   tags = var.tags
