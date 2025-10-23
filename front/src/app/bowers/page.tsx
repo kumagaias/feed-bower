@@ -34,6 +34,7 @@ export default function BowersPage() {
   const [showCreatorModal, setShowCreatorModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingBower, setEditingBower] = useState<any>(null)
+  const [addingPresetId, setAddingPresetId] = useState<string | null>(null)
 
   const itemsPerPage = 9 // 3x3 grid
 
@@ -327,6 +328,13 @@ export default function BowersPage() {
     
     // If it's a preset, save it as a new bower
     if (bower.isPreset) {
+      // Prevent multiple clicks
+      if (addingPresetId === bower.id) {
+        return
+      }
+      
+      setAddingPresetId(bower.id)
+      
       try {
         const result = await createBower({
           name: bower.name,
@@ -353,6 +361,8 @@ export default function BowersPage() {
           message: language === 'ja' ? 'プリセットの保存に失敗しました' : 'Failed to save preset',
           type: 'error'
         })
+      } finally {
+        setAddingPresetId(null)
       }
     } else {
       // For now, just show a toast for non-preset public bowers
@@ -589,6 +599,7 @@ export default function BowersPage() {
                 {paginatedBowers.map((bower) => {
                   const isOwnBower = !bower.creatorId || bower.creatorId === user?.id
                   const isLiked = bower.likedBy?.includes(user?.id || '') || false
+                  const isAdding = addingPresetId === bower.id
                   
                   return (
                     <BowerCard
@@ -600,6 +611,7 @@ export default function BowersPage() {
                       onEdit={() => handleEditBower(bower)}
                       onDelete={() => handleDeleteBower(bower)}
                       onLike={(e) => handleLikeBower(bower, e)}
+                      isAdding={isAdding}
                     />
                   )
                 })}

@@ -13,6 +13,7 @@ interface BowerCardProps {
   onEdit: () => void
   onDelete: () => void
   onLike: (e: React.MouseEvent) => void
+  isAdding?: boolean
 }
 
 export default function BowerCard({
@@ -22,7 +23,8 @@ export default function BowerCard({
   language,
   onEdit,
   onDelete,
-  onLike
+  onLike,
+  isAdding = false
 }: BowerCardProps) {
   const router = useRouter()
   const t = useTranslation(language)
@@ -151,11 +153,21 @@ export default function BowerCard({
                 e.stopPropagation()
                 onLike(e)
               }}
-              className="w-full py-2.5 rounded-lg transition-all font-medium text-sm shadow-sm hover:shadow-md text-white hover:opacity-90"
+              disabled={isAdding}
+              className="w-full py-2.5 rounded-lg transition-all font-medium text-sm shadow-sm hover:shadow-md text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: colors.primary }}
             >
-              <span className="text-lg">+</span>
-              <span className="ml-1">{language === 'ja' ? '保存' : 'Save'}</span>
+              {isAdding ? (
+                <>
+                  <span className="inline-block animate-spin mr-1">⏳</span>
+                  <span>{language === 'ja' ? '追加中...' : 'Adding...'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">+</span>
+                  <span className="ml-1">{language === 'ja' ? '保存' : 'Save'}</span>
+                </>
+              )}
             </button>
           )}
           

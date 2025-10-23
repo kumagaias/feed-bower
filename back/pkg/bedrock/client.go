@@ -140,7 +140,7 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 
 			// Check if body exists and parse it
 			var feedsData []interface{}
-			
+
 			// Try multiple paths to find feeds data
 			// 1. Check for "body" field (Lambda response format)
 			if bodyStr, ok := chunkData["body"].(string); ok {
