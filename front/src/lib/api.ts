@@ -495,12 +495,12 @@ export const feedApi = {
   },
 
   // Get feed recommendations based on keywords
-  async getFeedRecommendations(bowerID: string, keywords: string[]) {
+  async getFeedRecommendations(keywords: string[], maxFeeds: number = 5) {
     return apiRequest<any[]>('/feeds/recommendations', {
       method: 'POST',
       body: JSON.stringify({
-        bower_id: bowerID,
-        keywords: keywords
+        keywords: keywords,
+        max_feeds: maxFeeds
       }),
     })
   },
