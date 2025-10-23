@@ -91,6 +91,7 @@ type AutoRegisterResult struct {
 	TotalAdded   int           `json:"total_added"`
 	TotalSkipped int           `json:"total_skipped"`
 	TotalFailed  int           `json:"total_failed"`
+	Source       string        `json:"source"` // "bedrock" or "static_mapping"
 }
 
 // FailedFeed represents a feed that failed to be added
@@ -838,8 +839,36 @@ func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowe
 		return nil, fmt.Errorf("failed to get recommendations: %w", err)
 	}
 
-	log.Printf("[AutoRegisterFeeds] RECOMMENDATIONS_RECEIVED | user_id=%s | bower_id=%s | recommendation_count=%d",
-		userID, bowerID, len(recommendations))
+	// Determine source based on whether Bedrock was used
+	source := "static_mapping"
+	if s.bedrockClient != nil && len(recommendations) > 0 {
+		// Check if recommendations came from Bedrock by looking at the first feed
+		// Static mapping feeds have specific URLs we know
+		if len(recommendations) > 0 {
+			firstURL := recommendations[0].URL
+			// If URL is from our static mapping, it's static
+			staticURLs := []string{
+				"techcrunch.com", "theverge.com", "arstechnica.com",
+				"dev.to", "stackoverflow.blog", "github.blog",
+				"openai.com", "deepmind.google",
+				"reddit.com/r/MachineLearning", "machinelearningmastery.com",
+				"css-tricks.com", "smashingmagazine.com",
+			}
+			isStatic := false
+			for _, staticURL := range staticURLs {
+				if strings.Contains(firstURL, staticURL) {
+					isStatic = true
+					break
+				}
+			}
+			if !isStatic {
+				source = "bedrock"
+			}
+		}
+	}
+
+	log.Printf("[AutoRegisterFeeds] RECOMMENDATIONS_RECEIVED | user_id=%s | bower_id=%s | recommendation_count=%d | source=%s",
+		userID, bowerID, len(recommendations), source)
 
 	// Limit recommendations to maxFeeds
 	if len(recommendations) > maxFeeds {
@@ -984,9 +1013,10 @@ func (s *feedService) AutoRegisterFeeds(ctx context.Context, userID string, bowe
 		}
 	}
 
-	log.Printf("[AutoRegisterFeeds] COMPLETE | user_id=%s | bower_id=%s | total_added=%d | total_skipped=%d | total_failed=%d",
-		userID, bowerID, result.TotalAdded, result.TotalSkipped, result.TotalFailed)
+	log.Printf("[AutoRegisterFeeds] COMPLETE | user_id=%s | bower_id=%s | total_added=%d | total_skipped=%d | total_failed=%d | source=%s",
+		userID, bowerID, result.TotalAdded, result.TotalSkipped, result.TotalFailed, source)
 
+	result.Source = source
 	return result, nil
 }
 
