@@ -381,7 +381,10 @@ export default function KeywordEditModal({
   }
 
   const handleSave = () => {
-    onSave(eggs.map(e => e.keyword))
+    const keywords = eggs.map(e => e.keyword)
+    console.log("🥚 KeywordEditModal handleSave called with:", keywords)
+    console.log("🥚 onSave function:", onSave)
+    onSave(keywords)
     onClose()
   }
 
