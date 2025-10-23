@@ -506,16 +506,20 @@ module "github_oidc" {
 
   ecr_repository_arns = [
     module.ecr.repository_arn,
+    module.ecr_bedrock_lambda.repository_arn,
   ]
 
   lambda_function_arns = [
     module.lambda.function_arn,
+    module.bedrock_agent.lambda_function_arn,
   ]
 
   tags = local.common_tags
 
   depends_on = [
     module.ecr,
+    module.ecr_bedrock_lambda,
     module.lambda,
+    module.bedrock_agent,
   ]
 }

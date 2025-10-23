@@ -42,7 +42,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build, tag, and push main API image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -58,7 +58,21 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Update Lambda function
+      - name: Build, tag, and push Bedrock Lambda image to Amazon ECR
+        id: build-bedrock-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: feed-bower-bedrock-lambda-production
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd bedrock-lambda
+          docker build --no-cache -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update main API Lambda function
         env:
           FUNCTION_NAME: feed-bower-api-production
           IMAGE_URI: ${{ steps.build-image.outputs.image }}
@@ -68,9 +82,27 @@ jobs:
             --image-uri $IMAGE_URI \
             --region ${{ env.AWS_REGION }}
 
-      - name: Wait for Lambda update to complete
+      - name: Update Bedrock Lambda function
+        env:
+          FUNCTION_NAME: feed-bower-production-feed-search
+          IMAGE_URI: ${{ steps.build-bedrock-image.outputs.image }}
+        run: |
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --image-uri $IMAGE_URI \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for main API Lambda update to complete
         env:
           FUNCTION_NAME: feed-bower-api-production
+        run: |
+          aws lambda wait function-updated \
+            --function-name $FUNCTION_NAME \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for Bedrock Lambda update to complete
+        env:
+          FUNCTION_NAME: feed-bower-production-feed-search
         run: |
           aws lambda wait function-updated \
             --function-name $FUNCTION_NAME \
@@ -79,5 +111,7 @@ jobs:
       - name: Deployment summary
         run: |
           echo "✅ Backend deployed to production"
-          echo "📦 Image: ${{ steps.build-image.outputs.image }}"
-          echo "🔗 Function: feed-bower-api-production"
+          echo "📦 Main API Image: ${{ steps.build-image.outputs.image }}"
+          echo "🔗 Main API Function: feed-bower-api-production"
+          echo "📦 Bedrock Lambda Image: ${{ steps.build-bedrock-image.outputs.image }}"
+          echo "🔗 Bedrock Lambda Function: feed-bower-production-feed-search"
