@@ -692,5 +692,32 @@ export const authApi = {
   },
 }
 
+// Chick API
+export const chickApi = {
+  // Get chick stats
+  async getStats() {
+    return apiRequest<{
+      total_likes: number
+      checked_days: number
+      experience: number
+      level: number
+      next_level_exp: number
+    }>('/chick/stats', {
+      method: 'GET',
+    })
+  },
+
+  // Get liked articles
+  async getLikedArticles(limit: number = 50, offset: number = 0) {
+    return apiRequest<{
+      articles: any[]
+      total: number
+      has_more: boolean
+    }>(`/chick/liked-articles?limit=${limit}&offset=${offset}`, {
+      method: 'GET',
+    })
+  },
+}
+
 // Export the ApiError class for error handling
 export { ApiError, getAuthToken }

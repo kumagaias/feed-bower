@@ -53,9 +53,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [demoMode, setDemoMode] = useState<boolean>(false)
   const [isMobile, setIsMobile] = useState(false)
 
-  // Load user's language preference from backend on mount
+  // Load user's language preference and chick stats from backend on mount
   useEffect(() => {
-    const loadUserLanguage = async () => {
+    const loadUserData = async () => {
       try {
         // Check if user is logged in first
         const { getAuthToken } = await import('@/lib/api')
@@ -66,18 +66,35 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           return
         }
         
-        const { authApi } = await import('@/lib/api')
-        const userData = await authApi.getMe()
+        const { authApi, chickApi } = await import('@/lib/api')
         
+        // Load language preference
+        const userData = await authApi.getMe()
         if (userData && userData.language) {
           setLanguageState(userData.language as 'ja' | 'en')
         }
+        
+        // Load chick stats
+        try {
+          const stats = await chickApi.getStats()
+          if (stats) {
+            setChickStats({
+              totalLikes: stats.total_likes || 0,
+              level: stats.level || 1,
+              experience: stats.experience || 0,
+              nextLevelExp: stats.next_level_exp || 100,
+              checkedDays: stats.checked_days || 0
+            })
+          }
+        } catch (statsError) {
+          console.log('Could not load chick stats:', statsError)
+        }
       } catch (error) {
-        // API error - keep default 'en'
+        // API error - keep defaults
       }
     }
 
-    loadUserLanguage()
+    loadUserData()
   }, [])
 
   const setLanguage = async (lang: 'ja' | 'en') => {
