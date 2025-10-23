@@ -44,7 +44,9 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 	}
 
 	// Create prompt for Bedrock Agent
-	prompt := fmt.Sprintf("Please search for RSS/Atom feeds using the searchFeeds action with these keywords: %v", keywords)
+	// Simple prompt - just pass keywords, let the agent instruction handle the rest
+	keywordsStr := strings.Join(keywords, " ")
+	prompt := keywordsStr
 
 	// Generate session ID
 	sessionID := generateSessionID()
