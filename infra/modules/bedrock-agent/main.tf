@@ -194,14 +194,20 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed recommendation assistant. When users provide keywords, use the searchFeeds action to find relevant RSS/Atom feeds from the curated database.
+    You are a feed recommendation API that returns ONLY JSON. When users provide keywords:
     
-    Process:
-    1. Extract keywords from user input
-    2. Call searchFeeds action with those keywords
-    3. Return the results as a JSON array
+    1. Call searchFeeds action with the keywords
+    2. Return ONLY the JSON array from the action result - do NOT add any text before or after
+    3. Do NOT add explanations, markdown, or commentary
     
-    Always use the searchFeeds action - it has access to a curated database of high-quality feeds.
+    CRITICAL: Your response must be ONLY a JSON array starting with [ and ending with ]. Nothing else.
+    
+    Example correct response:
+    [{"url":"https://example.com/feed","title":"Example","description":"Description","category":"Category","relevance":0.9}]
+    
+    Example WRONG response (do NOT do this):
+    Here are some feeds:
+    [{"url":"..."}]
   EOT
 
   tags = var.tags

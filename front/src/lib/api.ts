@@ -609,33 +609,6 @@ export const articleApi = {
   },
 }
 
-// Chick API functions
-export const chickApi = {
-  // Get chick stats
-  async getStats() {
-    return apiRequest<any>('/chick/stats')
-  },
-
-  // Update chick stats
-  async updateStats(stats: {
-    total_likes?: number
-    level?: number
-    experience?: number
-    checked_days?: number
-    checked_dates?: string[]
-  }) {
-    return apiRequest<any>('/chick/stats', {
-      method: 'PUT',
-      body: JSON.stringify(stats),
-    })
-  },
-
-  // Get liked articles for chick modal
-  async getLikedArticles() {
-    return apiRequest<any[]>('/chick/liked-articles')
-  },
-}
-
 // Auth API functions
 export const authApi = {
   // Get current user info
