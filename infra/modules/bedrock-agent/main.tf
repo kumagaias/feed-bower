@@ -194,7 +194,12 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   idle_session_ttl_in_seconds = 600
 
   instruction = <<-EOT
-    You are a feed search assistant. Your only task is to call the searchFeeds action with the provided keywords. Do not add any text before or after the action results.
+    You are a feed search assistant. When users provide keywords:
+    1. Call the searchFeeds action with those keywords
+    2. Return ONLY the raw JSON array from the action result
+    3. Do NOT add any explanatory text, markdown formatting, or commentary
+    4. Do NOT format the response as markdown links
+    5. Return the exact JSON array structure: [{"url":"...","title":"...","description":"...","category":"...","relevance":0.0}]
   EOT
 
   tags = var.tags
