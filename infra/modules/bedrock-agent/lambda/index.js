@@ -273,11 +273,21 @@ exports.handler = async (event) => {
     if (validationErrors.length > 0) {
       console.error('Validation errors:', validationErrors);
       return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: 'Invalid input parameters',
-          details: validationErrors
-        })
+        messageVersion: "1.0",
+        response: {
+          actionGroup: event.actionGroup || "feed-search",
+          apiPath: event.apiPath || "/search-feeds",
+          httpMethod: event.httpMethod || "POST",
+          httpStatusCode: 400,
+          responseBody: {
+            "application/json": {
+              body: JSON.stringify({
+                error: 'Invalid input parameters',
+                details: validationErrors
+              })
+            }
+          }
+        }
       };
     }
     
@@ -314,30 +324,52 @@ exports.handler = async (event) => {
       console.log(`Feed: ${feed.title}, Relevance: ${feed.relevance.toFixed(3)}, Language: ${feed.language}`);
     });
     
-    // Return results
+    // Return results in Bedrock Agent format
+    const responseBody = {
+      feeds: relevantFeeds.map(feed => ({
+        url: feed.url,
+        title: feed.title,
+        description: feed.description,
+        category: feed.category,
+        relevance: feed.relevance
+      })),
+      total: relevantFeeds.length,
+      source: 'database'
+    };
+    
     return {
-      statusCode: 200,
-      body: JSON.stringify({
-        feeds: relevantFeeds.map(feed => ({
-          url: feed.url,
-          title: feed.title,
-          description: feed.description,
-          category: feed.category,
-          relevance: feed.relevance
-        })),
-        total: relevantFeeds.length,
-        source: 'database'
-      })
+      messageVersion: "1.0",
+      response: {
+        actionGroup: event.actionGroup || "feed-search",
+        apiPath: event.apiPath || "/search-feeds",
+        httpMethod: event.httpMethod || "POST",
+        httpStatusCode: 200,
+        responseBody: {
+          "application/json": {
+            body: JSON.stringify(responseBody)
+          }
+        }
+      }
     };
     
   } catch (error) {
     console.error('Error processing request:', error);
     return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: error.message
-      })
+      messageVersion: "1.0",
+      response: {
+        actionGroup: event.actionGroup || "feed-search",
+        apiPath: event.apiPath || "/search-feeds",
+        httpMethod: event.httpMethod || "POST",
+        httpStatusCode: 500,
+        responseBody: {
+          "application/json": {
+            body: JSON.stringify({
+              error: 'Internal server error',
+              message: error.message
+            })
+          }
+        }
+      }
     };
   }
 };
