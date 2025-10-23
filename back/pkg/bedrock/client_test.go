@@ -90,8 +90,8 @@ func TestParseBedrockResponse(t *testing.T) {
 			},
 		},
 		{
-			name: "Compact JSON without prefix",
-			chunkText: `[{"url":"https://example.com/feed","title":"Example Feed","description":"Test","category":"Test","relevance":0.5}]`,
+			name:          "Compact JSON without prefix",
+			chunkText:     `[{"url":"https://example.com/feed","title":"Example Feed","description":"Test","category":"Test","relevance":0.5}]`,
 			expectedCount: 1,
 			expectedURLs: []string{
 				"https://example.com/feed",
@@ -114,9 +114,9 @@ func TestParseBedrockResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			recommendations := parseTextForFeeds(tt.chunkText)
-			
+
 			assert.Equal(t, tt.expectedCount, len(recommendations), "Expected %d feeds, got %d", tt.expectedCount, len(recommendations))
-			
+
 			if tt.expectedCount > 0 {
 				for i, expectedURL := range tt.expectedURLs {
 					if i < len(recommendations) {
@@ -141,9 +141,9 @@ func TestFeedRecommendationFields(t *testing.T) {
 ]`
 
 	recommendations := parseTextForFeeds(chunkText)
-	
+
 	assert.Equal(t, 1, len(recommendations))
-	
+
 	feed := recommendations[0]
 	assert.Equal(t, "https://example.com/feed", feed.URL)
 	assert.Equal(t, "Example Feed", feed.Title)
@@ -171,7 +171,7 @@ func TestInvalidFeedSkipped(t *testing.T) {
 ]`
 
 	recommendations := parseTextForFeeds(chunkText)
-	
+
 	assert.Equal(t, 1, len(recommendations), "Should only include feeds with URLs")
 	assert.Equal(t, "https://valid.com/feed", recommendations[0].URL)
 	assert.Equal(t, "Valid Feed", recommendations[0].Title)
@@ -180,32 +180,32 @@ func TestInvalidFeedSkipped(t *testing.T) {
 // Helper function extracted from client.go logic for testing
 func parseTextForFeeds(chunkText string) []FeedRecommendation {
 	recommendations := make([]FeedRecommendation, 0)
-	
+
 	// Look for JSON array pattern in text
 	if len(chunkText) == 0 {
 		return recommendations
 	}
-	
+
 	// Find the first [ and last ]
 	start := -1
 	end := -1
-	
+
 	for i := 0; i < len(chunkText); i++ {
 		if chunkText[i] == '[' && start == -1 {
 			start = i
 		}
 	}
-	
+
 	for i := len(chunkText) - 1; i >= 0; i-- {
 		if chunkText[i] == ']' && end == -1 {
 			end = i + 1
 			break
 		}
 	}
-	
+
 	if start >= 0 && end > start {
 		jsonStr := chunkText[start:end]
-		
+
 		// Try to parse as JSON array
 		var feedsData []map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonStr), &feedsData); err == nil {
@@ -223,6 +223,6 @@ func parseTextForFeeds(chunkText string) []FeedRecommendation {
 			}
 		}
 	}
-	
+
 	return recommendations
 }
