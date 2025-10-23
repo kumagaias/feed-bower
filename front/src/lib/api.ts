@@ -693,4 +693,4 @@ export const authApi = {
 }
 
 // Export the ApiError class for error handling
-export { ApiError }
+export { ApiError, getAuthToken }
