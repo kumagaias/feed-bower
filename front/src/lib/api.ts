@@ -495,10 +495,11 @@ export const feedApi = {
   },
 
   // Get feed recommendations based on keywords
-  async getFeedRecommendations(keywords: string[], maxFeeds: number = 5) {
+  async getFeedRecommendations(keywords: string[], maxFeeds: number = 5, bowerId?: string) {
     return apiRequest<any[]>('/feeds/recommendations', {
       method: 'POST',
       body: JSON.stringify({
+        bower_id: bowerId || 'preview', // 新規バウアー作成時は'preview'を使用
         keywords: keywords,
         max_feeds: maxFeeds
       }),
