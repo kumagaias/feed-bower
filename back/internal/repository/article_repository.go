@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -161,46 +162,53 @@ func (r *articleRepository) GetByFeedIDs(ctx context.Context, feedIDs []string, 
 		limit = 50 // Default limit
 	}
 
-	// For multiple feed IDs, we need to use a scan with filter expression
-	// This is not the most efficient approach, but DynamoDB doesn't support OR conditions in KeyConditionExpression
-	filterExpressions := make([]string, len(feedIDs))
-	expressionAttributeValues := make(map[string]types.AttributeValue)
-
-	for i, feedID := range feedIDs {
-		placeholder := fmt.Sprintf(":feed_id_%d", i)
-		filterExpressions[i] = fmt.Sprintf("feed_id = %s", placeholder)
-		expressionAttributeValues[placeholder] = &types.AttributeValueMemberS{Value: feedID}
-	}
-
-	filterExpression := fmt.Sprintf("(%s)", joinStrings(filterExpressions, " OR "))
-
-	input := &dynamodb.ScanInput{
-		TableName:                 aws.String(r.tables.Articles),
-		FilterExpression:          aws.String(filterExpression),
-		ExpressionAttributeValues: expressionAttributeValues,
-		Limit:                     aws.Int32(limit),
-	}
-
-	if lastKey != nil {
-		input.ExclusiveStartKey = lastKey
-	}
-
-	result, err := r.client.Scan(ctx, input)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to scan articles by feed IDs: %w", err)
-	}
-
-	articles := make([]*model.Article, 0, len(result.Items))
-	for _, item := range result.Items {
-		var article model.Article
-		err = attributevalue.UnmarshalMap(item, &article)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to unmarshal article: %w", err)
+	// Use FeedIdPublishedAtIndex GSI to query articles by feed_id
+	// Query each feed_id separately and merge results
+	allArticles := make([]*model.Article, 0)
+	
+	for _, feedID := range feedIDs {
+		input := &dynamodb.QueryInput{
+			TableName:              aws.String(r.tables.Articles),
+			IndexName:              aws.String("FeedIdPublishedAtIndex"),
+			KeyConditionExpression: aws.String("feed_id = :feed_id"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":feed_id": &types.AttributeValueMemberS{Value: feedID},
+			},
+			ScanIndexForward: aws.Bool(false), // Sort by published_at descending
+			Limit:            aws.Int32(limit),
 		}
-		articles = append(articles, &article)
+
+		result, err := r.client.Query(ctx, input)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to query articles for feed %s: %w", feedID, err)
+		}
+
+		for _, item := range result.Items {
+			var article model.Article
+			err = attributevalue.UnmarshalMap(item, &article)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to unmarshal article: %w", err)
+			}
+			allArticles = append(allArticles, &article)
+		}
+		
+		// Stop if we have enough articles
+		if len(allArticles) >= int(limit) {
+			break
+		}
 	}
 
-	return articles, result.LastEvaluatedKey, nil
+	// Sort all articles by published_at descending
+	sort.Slice(allArticles, func(i, j int) bool {
+		return allArticles[i].PublishedAt > allArticles[j].PublishedAt
+	})
+
+	// Limit to requested number
+	if len(allArticles) > int(limit) {
+		allArticles = allArticles[:limit]
+	}
+
+	return allArticles, nil, nil
 }
 
 // GetByURL retrieves an article by its URL (for duplicate checking)
