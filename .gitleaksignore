@@ -6,3 +6,6 @@
 
 # Demo user password in landing header
 9673acf4c7bc70d91a6bbb8be6c98d03ac10c569:front/src/components/LandingHeader.tsx:generic-api-key:276
+
+# Demo user password in README.md
+1868fca24e35e3f82a8127ef15c01702169f6da1:README.md:generic-api-key:128
