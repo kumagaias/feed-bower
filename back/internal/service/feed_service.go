@@ -755,6 +755,19 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 		"dev": {
 			{URL: "https://dev.to/feed", Title: "DEV Community", Description: "Developer community", Category: "Programming"},
 		},
+		"travel": {
+			{URL: "https://www.lonelyplanet.com/feed", Title: "Lonely Planet", Description: "Travel guides and tips", Category: "Travel"},
+			{URL: "https://www.travelandleisure.com/rss", Title: "Travel + Leisure", Description: "Travel inspiration", Category: "Travel"},
+			{URL: "https://www.nationalgeographic.com/travel/rss", Title: "National Geographic Travel", Description: "Travel stories", Category: "Travel"},
+		},
+		"business": {
+			{URL: "https://hbr.org/feed", Title: "Harvard Business Review", Description: "Business insights", Category: "Business"},
+			{URL: "https://www.entrepreneur.com/latest.rss", Title: "Entrepreneur", Description: "Business and startup news", Category: "Business"},
+		},
+		"design": {
+			{URL: "https://www.smashingmagazine.com/feed/", Title: "Smashing Magazine", Description: "Web design and development", Category: "Design"},
+			{URL: "https://dribbble.com/shots/popular.rss", Title: "Dribbble", Description: "Design inspiration", Category: "Design"},
+		},
 	}
 
 	recommendations := make([]*model.Feed, 0)
