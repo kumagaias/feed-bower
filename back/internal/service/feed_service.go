@@ -546,35 +546,43 @@ func (s *feedService) GetFeedRecommendations(ctx context.Context, userID string,
 	log.Printf("[FeedRecommendations] START | user_id=%s | bower_id=%s | keywords=%v | keyword_count=%d",
 		userID, bowerID, keywords, len(keywords))
 
-	// Check if user has access to bower
-	bower, err := s.bowerRepo.GetByID(ctx, bowerID)
-	if err != nil {
-		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=bower_not_found | details=%v",
-			userID, bowerID, err)
-		return nil, fmt.Errorf("bower not found: %w", err)
-	}
-
-	if bower.UserID != userID {
-		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=access_denied | reason=not_bower_owner",
-			userID, bowerID)
-		return nil, errors.New("access denied: not bower owner")
-	}
-
-	// Get existing feeds to avoid duplicates
-	existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
-	if err != nil {
-		log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_existing_feeds | details=%v",
-			userID, bowerID, err)
-		return nil, fmt.Errorf("failed to get existing feeds: %w", err)
-	}
-
+	// Initialize existing URLs map
 	existingURLs := make(map[string]bool)
-	for _, feed := range existingFeeds {
-		existingURLs[feed.URL] = true
-	}
 
-	log.Printf("[FeedRecommendations] INFO | user_id=%s | bower_id=%s | existing_feeds_count=%d",
-		userID, bowerID, len(existingFeeds))
+	// Skip bower validation for preview mode (new bower creation)
+	if bowerID != "preview" {
+		// Check if user has access to bower
+		bower, err := s.bowerRepo.GetByID(ctx, bowerID)
+		if err != nil {
+			log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=bower_not_found | details=%v",
+				userID, bowerID, err)
+			return nil, fmt.Errorf("bower not found: %w", err)
+		}
+
+		if bower.UserID != userID {
+			log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=access_denied | reason=not_bower_owner",
+				userID, bowerID)
+			return nil, errors.New("access denied: not bower owner")
+		}
+
+		// Get existing feeds to avoid duplicates
+		existingFeeds, err := s.feedRepo.GetByBowerID(ctx, bowerID)
+		if err != nil {
+			log.Printf("[FeedRecommendations] ERROR | user_id=%s | bower_id=%s | error=failed_to_get_existing_feeds | details=%v",
+				userID, bowerID, err)
+			return nil, fmt.Errorf("failed to get existing feeds: %w", err)
+		}
+
+		for _, feed := range existingFeeds {
+			existingURLs[feed.URL] = true
+		}
+
+		log.Printf("[FeedRecommendations] INFO | user_id=%s | bower_id=%s | existing_feeds_count=%d",
+			userID, bowerID, len(existingFeeds))
+	} else {
+		log.Printf("[FeedRecommendations] INFO | user_id=%s | bower_id=%s | mode=preview | existing_feeds_count=0",
+			userID, bowerID)
+	}
 
 	// Try Bedrock Agent first if configured
 	if s.bedrockClient != nil {
