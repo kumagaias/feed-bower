@@ -295,6 +295,10 @@ export default function BowerEditModal({
         } else {
           // 新規バウアー: 推奨フィードを取得してプレビュー表示
           console.log("🆕 New bower - getting feed recommendations for preview");
+          
+          // まずフィードをクリア（キーワード変更時に古いフィードを削除）
+          setFeeds([]);
+          
           const recommendations = await feedApi.getFeedRecommendations(newKeywords, 5);
           
           console.log("📥 Feed recommendations:", recommendations);
@@ -338,6 +342,10 @@ export default function BowerEditModal({
       } finally {
         setIsLoadingFeeds(false);
       }
+    } else {
+      // キーワードが空の場合はフィードをクリア
+      console.log("🧹 No keywords - clearing feeds");
+      setFeeds([]);
     }
 
     // Real API-based auto-add (commented out for now)
