@@ -33,6 +33,7 @@ try:
     
     event_count = 0
     chunk_count = 0
+    full_response = ""
     
     # Process event stream
     for event in response['completion']:
@@ -44,7 +45,8 @@ try:
             chunk_data = event['chunk']
             if 'bytes' in chunk_data:
                 text = chunk_data['bytes'].decode('utf-8')
-                print(f"  Chunk #{chunk_count} text: {text[:200]}")
+                full_response += text
+                print(f"  Chunk #{chunk_count} text: {text}")
         
         elif 'returnControl' in event:
             print(f"  ReturnControl event")
@@ -57,6 +59,20 @@ try:
     
     print(f"✅ Total events: {event_count}")
     print(f"✅ Total chunks: {chunk_count}")
+    print()
+    print("📄 Full Response:")
+    print(full_response)
+    print()
+    
+    # Try to parse as JSON
+    try:
+        import json
+        feeds = json.loads(full_response)
+        print(f"✅ Successfully parsed {len(feeds)} feeds")
+        for i, feed in enumerate(feeds[:5], 1):
+            print(f"  {i}. {feed.get('title', 'N/A')} - {feed.get('url', 'N/A')}")
+    except Exception as e:
+        print(f"❌ Failed to parse JSON: {e}")
     
 except Exception as e:
     print(f"❌ Error: {e}")

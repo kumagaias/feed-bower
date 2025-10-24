@@ -742,36 +742,43 @@ export default function BowerEditModal({
                     return (
                       <div
                         key={feed.feed_id || feed.url}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="text-sm text-gray-600 truncate max-w-md">
-                            {feed.title || feed.url}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* キーワードラベル */}
-                            <span
-                              className="px-2 py-1 text-xs text-white rounded-full whitespace-nowrap"
-                              style={{
-                                backgroundColor: getKeywordColor(
-                                  matchedKeyword || displayLabel
-                                ),
-                              }}
-                            >
-                              {displayLabel}
-                            </span>
-                            {/* カスタムラベル */}
-                            {feed.isCustom && (
-                              <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full border border-purple-200 whitespace-nowrap">
-                                {language === "ja" ? "カスタム" : "Custom"}
+                        <div className="flex flex-col gap-1 flex-1 min-w-0">
+                          {/* タイトル */}
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-gray-800 truncate">
+                              {feed.title || (language === "ja" ? "タイトルなし" : "No title")}
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {/* キーワードラベル */}
+                              <span
+                                className="px-2 py-1 text-xs text-white rounded-full whitespace-nowrap"
+                                style={{
+                                  backgroundColor: getKeywordColor(
+                                    matchedKeyword || displayLabel
+                                  ),
+                                }}
+                              >
+                                {displayLabel}
                               </span>
-                            )}
+                              {/* カスタムラベル */}
+                              {feed.isCustom && (
+                                <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full border border-purple-200 whitespace-nowrap">
+                                  {language === "ja" ? "カスタム" : "Custom"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {/* URL */}
+                          <div className="text-xs text-gray-500 truncate">
+                            {feed.url}
                           </div>
                         </div>
                         {feeds.length > 1 && (
                           <button
                             onClick={() => handleRemoveFeed(feed.feed_id)}
-                            className="text-red-500 hover:text-red-700 text-sm px-2 flex-shrink-0"
+                            className="text-red-500 hover:text-red-700 text-sm px-2 flex-shrink-0 ml-2"
                           >
                             削除
                           </button>
