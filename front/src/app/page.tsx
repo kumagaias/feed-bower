@@ -15,6 +15,12 @@ function HomeContent() {
   const t = useTranslation(language)
   const [isDemoMode, setIsDemoMode] = useState(false)
 
+  // Log version info on mount
+  useEffect(() => {
+    console.log('🚀 Feed Bower Version:', process.env.NEXT_PUBLIC_BUILD_ID || 'dev');
+    console.log('📅 Build Time:', process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown');
+  }, []);
+
   // Check for demo mode
   useEffect(() => {
     const demoParam = searchParams.get('demo')

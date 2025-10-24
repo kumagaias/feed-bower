@@ -7,6 +7,9 @@ applications:
           commands:
             - nvm use 24
             - npm ci
+            - rm -rf .next
+            - export NEXT_PUBLIC_BUILD_ID=$(git rev-parse --short HEAD)
+            - export NEXT_PUBLIC_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
         build:
           commands:
             - npm run build
