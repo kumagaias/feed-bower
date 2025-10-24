@@ -133,6 +133,10 @@ func (m *mockRSSServiceForScheduler) ParseAtomFeed(data []byte) (*FeedData, erro
 	return nil, nil
 }
 
+func (m *mockRSSServiceForScheduler) ParseRDFFeed(data []byte) (*FeedData, error) {
+	return nil, nil
+}
+
 func (m *mockRSSServiceForScheduler) ExtractImageURL(content string) string {
 	return ""
 }

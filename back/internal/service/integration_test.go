@@ -373,6 +373,10 @@ func (m *MockRSSService) ParseAtomFeed(data []byte) (*FeedData, error) {
 	return &FeedData{}, nil
 }
 
+func (m *MockRSSService) ParseRDFFeed(data []byte) (*FeedData, error) {
+	return &FeedData{}, nil
+}
+
 func (m *MockRSSService) ExtractImageURL(content string) string {
 	return ""
 }

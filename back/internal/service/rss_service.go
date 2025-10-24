@@ -24,6 +24,7 @@ type RSSService interface {
 	// Article parsing
 	ParseRSSFeed(data []byte) (*FeedData, error)
 	ParseAtomFeed(data []byte) (*FeedData, error)
+	ParseRDFFeed(data []byte) (*FeedData, error)
 
 	// Utility functions
 	ExtractImageURL(content string) string
@@ -78,6 +79,26 @@ type Item struct {
 	Category    string `xml:"category"`
 	Content     string `xml:"content"`
 	Encoded     string `xml:"encoded"` // For content:encoded
+}
+
+// RSS 1.0 / RDF structures
+type RDF struct {
+	XMLName xml.Name   `xml:"RDF"`
+	Channel RDFChannel `xml:"channel"`
+	Items   []RDFItem  `xml:"item"`
+}
+
+type RDFChannel struct {
+	Title       string `xml:"title"`
+	Description string `xml:"description"`
+	Link        string `xml:"link"`
+}
+
+type RDFItem struct {
+	Title       string `xml:"title"`
+	Description string `xml:"description"`
+	Link        string `xml:"link"`
+	Date        string `xml:"date"` // dc:date
 }
 
 // Atom structures
@@ -204,9 +225,9 @@ func (s *rssService) parseFeed(data []byte, feedURL string) (*FeedData, error) {
 		return s.ParseRSSFeed(data)
 	} else if strings.Contains(dataStr, "<feed") && (strings.Contains(dataStr, "atom") || strings.Contains(dataStr, "Atom")) {
 		return s.ParseAtomFeed(data)
-	} else if strings.Contains(dataStr, "<rdf:RDF") {
-		// RSS 1.0 / RDF - treat as RSS for now
-		return s.ParseRSSFeed(data)
+	} else if strings.Contains(dataStr, "<rdf:RDF") || strings.Contains(dataStr, "<RDF") {
+		// RSS 1.0 / RDF
+		return s.ParseRDFFeed(data)
 	}
 
 	// Default to RSS if we can't determine
@@ -269,6 +290,34 @@ func (s *rssService) ParseAtomFeed(data []byte) (*FeedData, error) {
 	// Parse articles
 	for _, entry := range atom.Entries {
 		article, err := s.parseAtomEntry(entry)
+		if err != nil {
+			// Skip invalid articles but continue processing
+			continue
+		}
+		feedData.Articles = append(feedData.Articles, *article)
+	}
+
+	return feedData, nil
+}
+
+// ParseRDFFeed parses RSS 1.0 / RDF feed data
+func (s *rssService) ParseRDFFeed(data []byte) (*FeedData, error) {
+	var rdf RDF
+	err := xml.Unmarshal(data, &rdf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse RDF XML: %w", err)
+	}
+
+	feedData := &FeedData{
+		Title:       s.CleanContent(rdf.Channel.Title),
+		Description: s.CleanContent(rdf.Channel.Description),
+		URL:         rdf.Channel.Link,
+		Articles:    make([]ArticleData, 0, len(rdf.Items)),
+	}
+
+	// Parse articles
+	for _, item := range rdf.Items {
+		article, err := s.parseRDFItem(item)
 		if err != nil {
 			// Skip invalid articles but continue processing
 			continue
@@ -358,6 +407,35 @@ func (s *rssService) parseAtomEntry(entry AtomEntry) (*ArticleData, error) {
 
 	// Extract image URL from content
 	if imageURL := s.ExtractImageURL(content); imageURL != "" {
+		article.ImageURL = &imageURL
+	}
+
+	return article, nil
+}
+
+// parseRDFItem parses a single RDF item
+func (s *rssService) parseRDFItem(item RDFItem) (*ArticleData, error) {
+	if item.Title == "" && item.Description == "" {
+		return nil, errors.New("item has no title or description")
+	}
+
+	// Parse published date
+	publishedAt := time.Now()
+	if item.Date != "" {
+		if parsed, err := s.parseDate(item.Date); err == nil {
+			publishedAt = parsed
+		}
+	}
+
+	article := &ArticleData{
+		Title:       s.CleanContent(item.Title),
+		Content:     s.CleanContent(item.Description),
+		URL:         item.Link,
+		PublishedAt: publishedAt,
+	}
+
+	// Extract image URL from content
+	if imageURL := s.ExtractImageURL(item.Description); imageURL != "" {
 		article.ImageURL = &imageURL
 	}
 
