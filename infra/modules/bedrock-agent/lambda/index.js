@@ -16,6 +16,7 @@ try {
 
 /**
  * Validate if a URL is a valid RSS/Atom feed
+ * Checks both Content-Type header and response body
  */
 async function validateFeedUrl(url, timeout = 5000) {
   return new Promise((resolve) => {
@@ -24,32 +25,82 @@ async function validateFeedUrl(url, timeout = 5000) {
       const protocol = urlObj.protocol === 'https:' ? https : http;
       
       const options = {
-        method: 'HEAD',
+        method: 'GET',
         timeout: timeout,
         headers: {
           'User-Agent': 'FeedBower/1.0'
         }
       };
       
+      let data = '';
+      
       const req = protocol.request(url, options, (res) => {
         const contentType = res.headers['content-type'] || '';
-        const isValidFeed = 
-          contentType.includes('xml') || 
-          contentType.includes('rss') || 
-          contentType.includes('atom') ||
-          contentType.includes('application/rss+xml') ||
-          contentType.includes('application/atom+xml') ||
-          res.statusCode === 200; // Accept 200 even without content-type
         
-        resolve({
-          valid: isValidFeed && res.statusCode === 200,
-          statusCode: res.statusCode,
-          contentType: contentType
+        // Check Content-Type header first
+        const validContentTypes = [
+          'application/rss+xml',
+          'application/xml',
+          'text/xml',
+          'application/atom+xml',
+          'application/rdf+xml'
+        ];
+        
+        const hasValidContentType = validContentTypes.some(type => 
+          contentType.toLowerCase().includes(type)
+        );
+        
+        // If status is not 200, it's invalid
+        if (res.statusCode !== 200) {
+          resolve({
+            valid: false,
+            statusCode: res.statusCode,
+            contentType: contentType,
+            error: `HTTP ${res.statusCode}`
+          });
+          return;
+        }
+        
+        // Collect response body for validation
+        res.on('data', (chunk) => {
+          data += chunk;
+          // Limit data size to first 10KB for validation
+          if (data.length > 10000) {
+            req.destroy();
+          }
+        });
+        
+        res.on('end', () => {
+          // Check body for RSS/Atom indicators
+          const hasXmlDeclaration = data.includes('<?xml');
+          const hasRss2 = data.includes('<rss') && data.includes('version="2.0"');
+          const hasRss1 = data.includes('<rdf:RDF') || data.includes('<RDF');
+          const hasAtom = data.includes('<feed') && data.includes('http://www.w3.org/2005/Atom');
+          const hasChannel = data.includes('<channel>');
+          const hasItem = data.includes('<item>');
+          const hasEntry = data.includes('<entry>');
+          
+          const isValidFeed = (
+            hasXmlDeclaration &&
+            (
+              (hasRss2 && hasChannel && hasItem) ||
+              (hasAtom && hasEntry) ||
+              (hasRss1 && hasItem)
+            )
+          ) || hasValidContentType;
+          
+          resolve({
+            valid: isValidFeed,
+            statusCode: res.statusCode,
+            contentType: contentType,
+            hasValidContentType: hasValidContentType,
+            hasValidBody: hasXmlDeclaration && (hasRss2 || hasAtom || hasRss1)
+          });
         });
       });
       
-      req.on('error', () => {
-        resolve({ valid: false, error: 'Request failed' });
+      req.on('error', (error) => {
+        resolve({ valid: false, error: error.message });
       });
       
       req.on('timeout', () => {
@@ -396,14 +447,20 @@ async function handleValidation(parameters) {
           valid: true,
           title: metadata.title,
           description: metadata.description,
-          statusCode: validation.statusCode
+          statusCode: validation.statusCode,
+          contentType: validation.contentType,
+          validationDetails: {
+            hasValidContentType: validation.hasValidContentType,
+            hasValidBody: validation.hasValidBody
+          }
         };
       } else {
         return {
           url: url,
           valid: false,
           error: validation.error || 'Invalid feed',
-          statusCode: validation.statusCode
+          statusCode: validation.statusCode,
+          contentType: validation.contentType
         };
       }
     })
@@ -414,14 +471,32 @@ async function handleValidation(parameters) {
   
   console.log(`Validation complete: ${validFeeds.length} valid, ${invalidFeeds.length} invalid`);
   
+  // Log details for each validation
+  validFeeds.forEach(feed => {
+    console.log(`✅ Valid: ${feed.url} - ${feed.title} (${feed.contentType})`);
+  });
+  invalidFeeds.forEach(feed => {
+    console.log(`❌ Invalid: ${feed.url} - ${feed.error}`);
+  });
+  
   return {
-    statusCode: 200,
-    body: JSON.stringify({
-      validFeeds: validFeeds,
-      invalidFeeds: invalidFeeds,
-      total: feedUrls.length,
-      validCount: validFeeds.length,
-      invalidCount: invalidFeeds.length
-    })
+    messageVersion: "1.0",
+    response: {
+      actionGroup: "feed-search",
+      apiPath: "/validate-feeds",
+      httpMethod: "POST",
+      httpStatusCode: 200,
+      responseBody: {
+        "application/json": {
+          body: JSON.stringify({
+            validFeeds: validFeeds,
+            invalidFeeds: invalidFeeds,
+            total: feedUrls.length,
+            validCount: validFeeds.length,
+            invalidCount: invalidFeeds.length
+          })
+        }
+      }
+    }
   };
 }
