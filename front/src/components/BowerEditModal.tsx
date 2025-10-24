@@ -305,18 +305,27 @@ export default function BowerEditModal({
 
           if (recommendations && recommendations.length > 0) {
             // プレビューとしてフィードを表示（まだDBには保存しない）
-            const previewFeeds = recommendations.map((rec: any) => ({
-              feed_id: `preview-${rec.url}`,
-              url: rec.url,
-              title: rec.title,
-              description: rec.description,
-              category: rec.category,
-              bower_id: 'preview',
-              isPreview: true, // プレビューフラグ
-            }));
+            const previewFeeds = recommendations.map((rec: any) => {
+              console.log("🔍 Processing recommendation:", {
+                url: rec.url,
+                title: rec.title,
+                category: rec.category,
+                hasCategory: !!rec.category
+              });
+              
+              return {
+                feed_id: `preview-${rec.url}`,
+                url: rec.url,
+                title: rec.title,
+                description: rec.description,
+                category: rec.category || newKeywords[0], // カテゴリーがない場合は最初のキーワードを使用
+                bower_id: 'preview',
+                isPreview: true, // プレビューフラグ
+              };
+            });
             
             setFeeds(previewFeeds);
-            console.log(`✅ Got ${previewFeeds.length} feed recommendations`);
+            console.log(`✅ Got ${previewFeeds.length} feed recommendations with categories:`, previewFeeds.map(f => f.category));
             
             setToast({
               message:
