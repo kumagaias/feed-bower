@@ -165,7 +165,7 @@ func (r *articleRepository) GetByFeedIDs(ctx context.Context, feedIDs []string, 
 	// Use FeedIdPublishedAtIndex GSI to query articles by feed_id
 	// Query each feed_id separately and merge results
 	allArticles := make([]*model.Article, 0)
-	
+
 	for _, feedID := range feedIDs {
 		input := &dynamodb.QueryInput{
 			TableName:              aws.String(r.tables.Articles),
@@ -191,7 +191,7 @@ func (r *articleRepository) GetByFeedIDs(ctx context.Context, feedIDs []string, 
 			}
 			allArticles = append(allArticles, &article)
 		}
-		
+
 		// Stop if we have enough articles
 		if len(allArticles) >= int(limit) {
 			break
