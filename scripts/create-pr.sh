@@ -71,17 +71,17 @@ if command -v gh &> /dev/null; then
     
     if [ "$CREATE_PR" = "y" ] || [ "$CREATE_PR" = "Y" ]; then
         echo -e "${BLUE}🔗 PRを作成中...${NC}"
-        gh pr create --title "$PR_TITLE" --body "## 変更内容
+        gh pr create --title "$PR_TITLE" --body "## Changes
 
 $(git log -1 --pretty=%B)
 
-## チェックリスト
-- [ ] テストが通ることを確認
-- [ ] コードレビューを依頼
-- [ ] ドキュメントを更新（必要な場合）
+## Checklist
+- [ ] Tests pass
+- [ ] Code review requested
+- [ ] Documentation updated (if needed)
 
-## 関連Issue
-<!-- 関連するIssueがあればリンクを追加 -->
+## Related Issues
+<!-- Add links to related issues if any -->
 " --web
         echo -e "${GREEN}✅ PRが作成されました！${NC}"
     else
