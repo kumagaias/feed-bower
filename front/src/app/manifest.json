@@ -1,0 +1,17 @@
+{
+  "name": "Feed Bower",
+  "short_name": "Feed Bower",
+  "description": "AI-powered RSS feed management - Organize your feeds like a bird's nest",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5DC",
+  "theme_color": "#003333",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

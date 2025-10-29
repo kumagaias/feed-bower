@@ -39,8 +39,19 @@ interface AppProviderProps {
   children: ReactNode
 }
 
+// Detect browser language and return 'ja' or 'en'
+const detectBrowserLanguage = (): 'ja' | 'en' => {
+  if (typeof window === 'undefined') return 'en'
+  
+  // Get browser language (e.g., 'ja', 'ja-JP', 'en-US', 'en')
+  const browserLang = navigator.language || (navigator as any).userLanguage
+  
+  // If language starts with 'ja', use Japanese, otherwise use English
+  return browserLang.toLowerCase().startsWith('ja') ? 'ja' : 'en'
+}
+
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<'ja' | 'en'>('en')
+  const [language, setLanguageState] = useState<'ja' | 'en'>(detectBrowserLanguage())
   const [bowers, setBowers] = useState<any[]>([])
   const [chickStats, setChickStats] = useState<ChickStats>({
     totalLikes: 0,
@@ -62,7 +73,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const token = await getAuthToken()
         
         if (!token) {
-          // User not logged in, use default language
+          // User not logged in, use browser language
           return
         }
         
@@ -72,6 +83,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const userData = await authApi.getMe()
         if (userData && userData.language) {
           setLanguageState(userData.language as 'ja' | 'en')
+        } else {
+          // If user doesn't have language set, update it with browser language
+          const browserLang = detectBrowserLanguage()
+          try {
+            await authApi.updateMe({ language: browserLang })
+            setLanguageState(browserLang)
+            console.log('✅ Language preference initialized from browser:', browserLang)
+          } catch (updateError) {
+            console.log('Could not update language preference:', updateError)
+          }
         }
         
         // Load chick stats

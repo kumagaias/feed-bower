@@ -23,6 +23,31 @@ const (
 	UserKey UserContextKey = "user"
 )
 
+// detectPreferredLanguage extracts preferred language from Accept-Language header
+func detectPreferredLanguage(acceptLanguage string) string {
+	if acceptLanguage == "" {
+		return ""
+	}
+
+	// Parse Accept-Language header (e.g., "ja,en-US;q=0.9,en;q=0.8")
+	// Take the first language
+	parts := strings.Split(acceptLanguage, ",")
+	if len(parts) > 0 {
+		lang := strings.TrimSpace(parts[0])
+		// Extract language code (e.g., "ja" from "ja-JP")
+		if idx := strings.Index(lang, "-"); idx > 0 {
+			lang = lang[:idx]
+		}
+		// Remove quality value if present
+		if idx := strings.Index(lang, ";"); idx > 0 {
+			lang = lang[:idx]
+		}
+		return strings.ToLower(strings.TrimSpace(lang))
+	}
+
+	return ""
+}
+
 // Auth middleware for JWT token validation
 func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 	if config == nil || config.AuthService == nil {
@@ -32,6 +57,17 @@ func Auth(config *AuthConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("🔐 Auth middleware: Processing request to %s", r.URL.Path)
+
+			// Extract and store preferred language from Accept-Language header
+			acceptLanguage := r.Header.Get("Accept-Language")
+			if acceptLanguage != "" {
+				preferredLang := detectPreferredLanguage(acceptLanguage)
+				if preferredLang != "" {
+					ctx := context.WithValue(r.Context(), "preferred_language", preferredLang)
+					r = r.WithContext(ctx)
+					log.Printf("🌐 Detected preferred language: %s", preferredLang)
+				}
+			}
 
 			// Check if path should skip authentication
 			if shouldSkipAuth(r.URL.Path, config.SkipPaths) {
@@ -93,6 +129,16 @@ func OptionalAuth(config *AuthConfig) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Extract and store preferred language from Accept-Language header
+			acceptLanguage := r.Header.Get("Accept-Language")
+			if acceptLanguage != "" {
+				preferredLang := detectPreferredLanguage(acceptLanguage)
+				if preferredLang != "" {
+					ctx := context.WithValue(r.Context(), "preferred_language", preferredLang)
+					r = r.WithContext(ctx)
+				}
+			}
+
 			// Extract token from Authorization header
 			authHeader := r.Header.Get("Authorization")
 			if authHeader != "" {

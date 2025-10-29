@@ -340,6 +340,20 @@ func (s *CognitoAuthService) DeleteUser(ctx context.Context, userID string) erro
 	return nil
 }
 
+// detectLanguageFromContext detects language from context (set by middleware from Accept-Language header)
+func detectLanguageFromContext(ctx context.Context) string {
+	// Try to get language from context
+	if lang, ok := ctx.Value("preferred_language").(string); ok && lang != "" {
+		// Normalize to 'ja' or 'en'
+		if strings.HasPrefix(strings.ToLower(lang), "ja") {
+			return "ja"
+		}
+		return "en"
+	}
+	// Default to Japanese
+	return "ja"
+}
+
 // getOrCreateUser gets an existing user or creates a new one
 func (s *CognitoAuthService) getOrCreateUser(ctx context.Context, cognitoUserID, email string) (*model.User, error) {
 	// Try to get user by Cognito user ID first
@@ -363,12 +377,16 @@ func (s *CognitoAuthService) getOrCreateUser(ctx context.Context, cognitoUserID,
 		return user, nil
 	}
 
+	// Detect language from context (browser's Accept-Language header)
+	language := detectLanguageFromContext(ctx)
+	log.Printf("🌐 Creating new user with detected language: %s", language)
+
 	// Create new user
 	user = &model.User{
 		UserID:    cognitoUserID,
 		Email:     email,
 		Name:      strings.Split(email, "@")[0], // Use email prefix as default name
-		Language:  "ja",                         // Default to Japanese
+		Language:  language,                     // Use detected language
 		CreatedAt: time.Now().Unix(),
 		UpdatedAt: time.Now().Unix(),
 	}
