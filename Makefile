@@ -1,6 +1,6 @@
 # Feed Bower API - Makefile
 
-.PHONY: help install test test-frontend test-backend test-coverage clean build lint format dev-all dev-stop dev-frontend dev-backend
+.PHONY: help install test test-frontend test-backend test-coverage clean build lint format dev-all dev-stop dev-frontend dev-backend pr
 
 # Default target
 help:
@@ -18,6 +18,7 @@ help:
 	@echo "  dev-stop       - Stop all development services"
 	@echo "  dev-frontend   - Start frontend development server only"
 	@echo "  dev-backend    - Start backend development server only"
+	@echo "  pr             - Create a pull request (interactive)"
 
 # Install dependencies
 install:
@@ -179,3 +180,7 @@ install-air:
 	@echo "Installing Air for hot reload..."
 	@go install github.com/air-verse/air@latest || go install github.com/cosmtrek/air@v1.49.0
 	@echo "✅ Air installed"
+
+# Create a pull request
+pr:
+	@./scripts/create-pr.sh

@@ -48,11 +48,12 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const { register, error: authError, clearError } = useAuth();
   const t = useTranslation(language);
   
+  // Initialize form with browser language
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
-    language: language,
+    language: language, // This will be the browser-detected language
   });
   
   const [errors, setErrors] = useState<{
@@ -135,8 +136,11 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
       
       console.log("✅ Signup successful! Email verification link sent.");
       
-      // Update language preference
+      // Update language preference locally
       setLanguage(formData.language as "ja" | "en");
+      
+      // Note: Language will be saved to backend after email verification and first login
+      // The AppContext will automatically update the backend when user logs in
       
       // 成功メッセージを表示
       setShowSuccess(true);

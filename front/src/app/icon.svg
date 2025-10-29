@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Nest base (brown) -->
+  <ellipse cx="50" cy="70" rx="40" ry="15" fill="#8B4513" opacity="0.8"/>
+  
+  <!-- Nest structure (interwoven twigs) -->
+  <path d="M 20 65 Q 30 60, 40 65 Q 50 70, 60 65 Q 70 60, 80 65" 
+        stroke="#654321" stroke-width="2" fill="none"/>
+  <path d="M 25 68 Q 35 63, 45 68 Q 55 73, 65 68 Q 75 63, 85 68" 
+        stroke="#654321" stroke-width="2" fill="none"/>
+  <path d="M 22 71 Q 32 66, 42 71 Q 52 76, 62 71 Q 72 66, 82 71" 
+        stroke="#654321" stroke-width="2" fill="none"/>
+  
+  <!-- Nest interior (darker) -->
+  <ellipse cx="50" cy="65" rx="30" ry="10" fill="#654321" opacity="0.6"/>
+  
+  <!-- Eggs in nest (light blue/white) -->
+  <ellipse cx="45" cy="63" rx="8" ry="10" fill="#E8F4F8" stroke="#B0D4E3" stroke-width="1"/>
+  <ellipse cx="55" cy="63" rx="8" ry="10" fill="#E8F4F8" stroke="#B0D4E3" stroke-width="1"/>
+  <ellipse cx="50" cy="60" rx="7" ry="9" fill="#F0F8FF" stroke="#B0D4E3" stroke-width="1"/>
+  
+  <!-- Small twigs sticking out -->
+  <line x1="15" y1="68" x2="10" y2="70" stroke="#654321" stroke-width="2"/>
+  <line x1="85" y1="68" x2="90" y2="70" stroke="#654321" stroke-width="2"/>
+  <line x1="20" y1="72" x2="15" y2="75" stroke="#654321" stroke-width="1.5"/>
+  <line x1="80" y1="72" x2="85" y2="75" stroke="#654321" stroke-width="1.5"/>
+  
+  <!-- Highlights on eggs -->
+  <ellipse cx="47" cy="61" rx="2" ry="3" fill="white" opacity="0.7"/>
+  <ellipse cx="57" cy="61" rx="2" ry="3" fill="white" opacity="0.7"/>
+  <ellipse cx="52" cy="58" rx="1.5" ry="2.5" fill="white" opacity="0.7"/>
+</svg>

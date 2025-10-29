@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Background -->
+  <rect width="180" height="180" fill="#F5F5DC" rx="40"/>
+  
+  <!-- Nest base (brown) -->
+  <ellipse cx="90" cy="120" rx="65" ry="25" fill="#8B4513" opacity="0.8"/>
+  
+  <!-- Nest structure (interwoven twigs) -->
+  <path d="M 35 110 Q 50 100, 65 110 Q 80 120, 95 110 Q 110 100, 125 110 Q 140 100, 155 110" 
+        stroke="#654321" stroke-width="3" fill="none"/>
+  <path d="M 40 115 Q 55 105, 70 115 Q 85 125, 100 115 Q 115 105, 130 115 Q 145 105, 160 115" 
+        stroke="#654321" stroke-width="3" fill="none"/>
+  <path d="M 37 120 Q 52 110, 67 120 Q 82 130, 97 120 Q 112 110, 127 120 Q 142 110, 157 120" 
+        stroke="#654321" stroke-width="3" fill="none"/>
+  <path d="M 42 125 Q 57 115, 72 125 Q 87 135, 102 125 Q 117 115, 132 125 Q 147 115, 162 125" 
+        stroke="#654321" stroke-width="3" fill="none"/>
+  
+  <!-- Nest interior (darker) -->
+  <ellipse cx="90" cy="115" rx="50" ry="18" fill="#654321" opacity="0.6"/>
+  
+  <!-- Eggs in nest (light blue/white) -->
+  <ellipse cx="75" cy="110" rx="14" ry="18" fill="#E8F4F8" stroke="#B0D4E3" stroke-width="2"/>
+  <ellipse cx="95" cy="110" rx="14" ry="18" fill="#E8F4F8" stroke="#B0D4E3" stroke-width="2"/>
+  <ellipse cx="105" cy="110" rx="14" ry="18" fill="#E8F4F8" stroke="#B0D4E3" stroke-width="2"/>
+  <ellipse cx="85" cy="105" rx="12" ry="16" fill="#F0F8FF" stroke="#B0D4E3" stroke-width="2"/>
+  
+  <!-- Small twigs sticking out -->
+  <line x1="25" y1="115" x2="15" y2="120" stroke="#654321" stroke-width="3"/>
+  <line x1="155" y1="115" x2="165" y2="120" stroke="#654321" stroke-width="3"/>
+  <line x1="30" y1="122" x2="20" y2="128" stroke="#654321" stroke-width="2.5"/>
+  <line x1="150" y1="122" x2="160" y2="128" stroke="#654321" stroke-width="2.5"/>
+  <line x1="35" y1="128" x2="25" y2="135" stroke="#654321" stroke-width="2"/>
+  <line x1="145" y1="128" x2="155" y2="135" stroke="#654321" stroke-width="2"/>
+  
+  <!-- Highlights on eggs -->
+  <ellipse cx="72" cy="107" rx="4" ry="6" fill="white" opacity="0.7"/>
+  <ellipse cx="92" cy="107" rx="4" ry="6" fill="white" opacity="0.7"/>
+  <ellipse cx="102" cy="107" rx="4" ry="6" fill="white" opacity="0.7"/>
+  <ellipse cx="82" cy="102" rx="3" ry="5" fill="white" opacity="0.7"/>
+  
+  <!-- Title text -->
+  <text x="90" y="60" font-family="Arial, sans-serif" font-size="24" font-weight="bold" 
+        text-anchor="middle" fill="#003333">Feed Bower</text>
+</svg>
