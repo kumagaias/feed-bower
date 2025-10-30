@@ -21,10 +21,11 @@ function HomeContent() {
     console.log('📅 Build Time:', process.env.NEXT_PUBLIC_BUILD_TIME || 'unknown');
   }, []);
 
-  // Check for demo mode
+  // Check for demo or guest mode
   useEffect(() => {
     const demoParam = searchParams.get('demo')
-    if (demoParam === 'true') {
+    const guestParam = searchParams.get('guest')
+    if (demoParam === 'true' || guestParam === 'true') {
       setIsDemoMode(true)
       setDemoMode(true)
     }

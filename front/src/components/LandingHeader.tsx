@@ -294,6 +294,35 @@ export default function LandingHeader() {
               </div>
             )}
 
+            {/* Guest User Login */}
+            {(typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('guest') === 'true') && (
+              <div className="mb-4">
+                <button
+                  onClick={async () => {
+                    setEmail('feed-bower-guest@example.com');
+                    setPassword('aj8JipqmRCYG');
+                    setError('');
+                    clearError();
+                    setIsSubmitting(true);
+                    try {
+                      await login('feed-bower-guest@example.com', 'aj8JipqmRCYG');
+                      setShowLogin(false);
+                      window.location.href = '/bowers';
+                    } catch (error) {
+                      setError(language === 'ja' ? 'ゲストユーザーでのログインに失敗しました' : 'Guest user login failed');
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span>👤</span>
+                  {language === 'ja' ? 'ゲストユーザーでログイン' : 'Login as Guest User'}
+                </button>
+              </div>
+            )}
+
             {/* Signup Link */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
