@@ -9,3 +9,10 @@
 
 # Demo user password in README.md
 1868fca24e35e3f82a8127ef15c01702169f6da1:README.md:generic-api-key:128
+
+# Guest user credentials - intentionally public for demo purposes
+# Guest user password in create script
+6a8d38c65505508c180a3ae5c403f7a0fb62f328:scripts/create-guest-user.sh:generic-api-key:10
+
+# Guest user password in landing header
+6a8d38c65505508c180a3ae5c403f7a0fb62f328:front/src/components/LandingHeader.tsx:generic-api-key:291
