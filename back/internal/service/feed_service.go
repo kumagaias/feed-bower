@@ -727,7 +727,17 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			{URL: "https://www.theverge.com/rss/index.xml", Title: "The Verge", Description: "Technology news and reviews", Category: "Technology"},
 			{URL: "https://arstechnica.com/feed/", Title: "Ars Technica", Description: "Technology news and analysis", Category: "Technology"},
 		},
+		"テクノロジー": {
+			{URL: "https://techcrunch.com/feed/", Title: "TechCrunch", Description: "Latest technology news", Category: "Technology"},
+			{URL: "https://www.theverge.com/rss/index.xml", Title: "The Verge", Description: "Technology news and reviews", Category: "Technology"},
+			{URL: "https://arstechnica.com/feed/", Title: "Ars Technica", Description: "Technology news and analysis", Category: "Technology"},
+		},
 		"programming": {
+			{URL: "https://dev.to/feed", Title: "DEV Community", Description: "Programming articles and tutorials", Category: "Programming"},
+			{URL: "https://stackoverflow.blog/feed/", Title: "Stack Overflow Blog", Description: "Programming insights", Category: "Programming"},
+			{URL: "https://github.blog/feed/", Title: "GitHub Blog", Description: "Software development news", Category: "Programming"},
+		},
+		"プログラミング": {
 			{URL: "https://dev.to/feed", Title: "DEV Community", Description: "Programming articles and tutorials", Category: "Programming"},
 			{URL: "https://stackoverflow.blog/feed/", Title: "Stack Overflow Blog", Description: "Programming insights", Category: "Programming"},
 			{URL: "https://github.blog/feed/", Title: "GitHub Blog", Description: "Software development news", Category: "Programming"},
@@ -737,6 +747,10 @@ func (s *feedService) getStaticFeedRecommendations(bowerID string, keywords []st
 			{URL: "https://deepmind.google/blog/rss.xml", Title: "Google DeepMind", Description: "AI research", Category: "AI"},
 		},
 		"machine learning": {
+			{URL: "https://www.reddit.com/r/MachineLearning/.rss", Title: "r/MachineLearning", Description: "Machine learning discussions", Category: "AI"},
+			{URL: "https://machinelearningmastery.com/feed/", Title: "Machine Learning Mastery", Description: "ML tutorials", Category: "AI"},
+		},
+		"機械学習": {
 			{URL: "https://www.reddit.com/r/MachineLearning/.rss", Title: "r/MachineLearning", Description: "Machine learning discussions", Category: "AI"},
 			{URL: "https://machinelearningmastery.com/feed/", Title: "Machine Learning Mastery", Description: "ML tutorials", Category: "AI"},
 		},
