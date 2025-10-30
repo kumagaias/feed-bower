@@ -349,7 +349,7 @@ exports.handler = async (event) => {
     }
     
     const language = parameters.language || null;
-    const limit = parseInt(parameters.limit || '5');
+    const limit = parseInt(parameters.limit || '20');
     
     console.log(`Searching feeds for keywords: ${keywords.join(', ')}, language: ${language || 'any'}, limit: ${limit}`);
     
