@@ -1313,20 +1313,6 @@
     "lastUpdated": "2025-10-23T21:38:37Z"
   },
   {
-    "url": "https://cookpad.com/rss/recipe",
-    "title": "クックパッド",
-    "description": "レシピとクッキング",
-    "category": "Food",
-    "language": "ja",
-    "tags": [
-      "料理",
-      "food",
-      "レシピ",
-      "クッキング"
-    ],
-    "lastUpdated": "2025-10-23T21:38:37Z"
-  },
-  {
     "url": "https://www.lonelyplanet.com/feed",
     "title": "Lonely Planet",
     "description": "Travel guides and tips",
