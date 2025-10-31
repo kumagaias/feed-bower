@@ -44,9 +44,9 @@ func (c *Client) GetFeedRecommendations(ctx context.Context, keywords []string) 
 	}
 
 	// Create prompt for Bedrock Agent
-	// Simple prompt - just pass keywords, let the agent instruction handle the rest
-	keywordsStr := strings.Join(keywords, " ")
-	prompt := keywordsStr
+	// Explicit prompt requesting 20+ feeds
+	keywordsStr := strings.Join(keywords, ", ")
+	prompt := fmt.Sprintf("Please recommend 20 or more RSS/Atom feeds for these keywords: %s. Return ONLY a JSON array with at least 20 feeds.", keywordsStr)
 
 	// Generate session ID
 	sessionID := generateSessionID()
