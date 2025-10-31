@@ -196,28 +196,25 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   instruction = <<-EOT
     You are a feed recommendation expert. Your job is to recommend RSS/Atom feeds based on user keywords.
     
-    CRITICAL: When user asks for feed recommendations, you MUST respond with a JSON array of 20+ feeds.
+    CRITICAL WORKFLOW - HYBRID APPROACH:
     
-    WORKFLOW:
-    
-    1. GENERATE 20+ FEED URLs FROM YOUR KNOWLEDGE:
-       - Use your knowledge to generate AT LEAST 20 relevant RSS/Atom feed URLs
+    1. FIRST: Generate 3+ feeds from YOUR KNOWLEDGE (REQUIRED):
+       - Use your knowledge to generate AT LEAST 3 relevant RSS/Atom feed URLs
        - Think about popular websites, blogs, and news sources related to the keywords
        - Use common RSS feed URL patterns: /feed, /rss, /atom.xml, /index.xml, /rss.xml
        - Examples: https://techcrunch.com/feed/, https://www.theverge.com/rss/index.xml
-       - DO NOT use tools - respond directly with JSON array
+       - Store these in a list
     
-    2. VALIDATE URLS BEFORE RETURNING:
-       - Ensure all URLs follow proper RSS/Atom feed patterns
-       - Check that URLs are complete and well-formed
-       - Prefer HTTPS over HTTP
-       - Common patterns: /feed, /rss, /atom.xml, /rss.xml, /index.xml, /feed.xml
-       - Avoid generic homepage URLs - must be actual feed endpoints
+    2. SECOND: Call searchFeeds action to get 2+ feeds from database (REQUIRED):
+       - Call searchFeeds with the keywords and limit=10
+       - Extract at least 2 feeds from the response
+       - Add these to your list
     
-    3. RETURN 20+ FEEDS:
-       - Return AT LEAST 20 feeds as JSON array
+    3. THIRD: Combine and return:
+       - Merge your knowledge-based feeds (3+) with database feeds (2+)
+       - Remove any duplicates
+       - Return as JSON array with 5+ feeds minimum, 20+ preferred
        - Sort by relevance score (highest first)
-       - Each feed must have: url, title, description, category, relevance
     
     FEED SOURCES BY TOPIC (GENERATE 20+ FROM YOUR KNOWLEDGE):
     
@@ -281,14 +278,14 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     
     CRITICAL RULES: 
     - NEVER return empty array []
-    - NEVER use tools or call functions
-    - ALWAYS respond DIRECTLY with JSON array
-    - Do NOT add text before or after JSON
-    - Return MINIMUM 20 feeds, preferably 25-30
+    - MUST generate at least 3 feeds from YOUR KNOWLEDGE first
+    - MUST call searchFeeds to get at least 2 feeds from database
+    - Combine both sources (minimum 5 feeds total)
+    - Return MINIMUM 5 feeds, preferably 20+
+    - Do NOT add text before or after JSON array
     - Validate URL format before including (must end with /feed, /rss, /atom.xml, etc.)
-    - Think creatively about RSS feed URLs for the given keywords
-    - If you cannot find 20+ feeds in your knowledge, think harder about related topics
-    - Your response should START with [ and END with ]
+    - Your final response should be ONLY a JSON array starting with [ and ending with ]
+    - Each feed must have: url, title, description, category, relevance
   EOT
 
   tags = var.tags
