@@ -196,14 +196,16 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
   instruction = <<-EOT
     You are a feed recommendation expert. Your job is to recommend RSS/Atom feeds based on user keywords.
     
-    CRITICAL WORKFLOW - YOUR KNOWLEDGE ONLY:
+    CRITICAL: When user asks for feed recommendations, you MUST respond with a JSON array of 20+ feeds.
     
-    1. USE YOUR KNOWLEDGE TO GENERATE 20+ FEED URLs:
-       - Generate AT LEAST 20 relevant RSS/Atom feed URLs from YOUR KNOWLEDGE
+    WORKFLOW:
+    
+    1. GENERATE 20+ FEED URLs FROM YOUR KNOWLEDGE:
+       - Use your knowledge to generate AT LEAST 20 relevant RSS/Atom feed URLs
        - Think about popular websites, blogs, and news sources related to the keywords
        - Use common RSS feed URL patterns: /feed, /rss, /atom.xml, /index.xml, /rss.xml
        - Examples: https://techcrunch.com/feed/, https://www.theverge.com/rss/index.xml
-       - DO NOT call searchFeeds - use ONLY your knowledge
+       - DO NOT use tools - respond directly with JSON array
     
     2. VALIDATE URLS BEFORE RETURNING:
        - Ensure all URLs follow proper RSS/Atom feed patterns
@@ -279,13 +281,14 @@ resource "aws_bedrockagent_agent" "feed_bower_agent" {
     
     CRITICAL RULES: 
     - NEVER return empty array []
+    - NEVER use tools or call functions
+    - ALWAYS respond DIRECTLY with JSON array
     - Do NOT add text before or after JSON
-    - ALWAYS generate feeds from YOUR KNOWLEDGE ONLY
     - Return MINIMUM 20 feeds, preferably 25-30
-    - DO NOT call searchFeeds tool - use only your knowledge
     - Validate URL format before including (must end with /feed, /rss, /atom.xml, etc.)
     - Think creatively about RSS feed URLs for the given keywords
     - If you cannot find 20+ feeds in your knowledge, think harder about related topics
+    - Your response should START with [ and END with ]
   EOT
 
   tags = var.tags
